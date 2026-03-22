@@ -1,0 +1,242 @@
+{
+  "main": {
+    "id": "549ca5126a036e57",
+    "type": "split",
+    "children": [
+      {
+        "id": "4a3e2e728643cdd1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c5a8a0976fca16e6",
+            "type": "leaf",
+            "pinned": true,
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "__private/workspace/prompt/prompt_weekView.md",
+                "mode": "source",
+                "source": false
+              },
+              "pinned": true,
+              "icon": "lucide-file",
+              "title": "prompt_weekView"
+            }
+          },
+          {
+            "id": "018bcbc0b870c2e2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "__private/workspace/plan/v1.0に向けて/ユーザcss規約.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ユーザcss規約"
+            }
+          },
+          {
+            "id": "b0ddde37d379f2db",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/0010-event-edit-dialog.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "0010-event-edit-dialog"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "6425cf6772074a6e",
+    "type": "split",
+    "children": [
+      {
+        "id": "5a591889073ba041",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a521277e6aff025f",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "ファイルエクスプローラ"
+            }
+          },
+          {
+            "id": "29a72ed2bbd49ba1",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "検索"
+            }
+          },
+          {
+            "id": "778bc418ec09ffe4",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "ブックマーク"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "3c26514a576ae9c8",
+    "type": "split",
+    "children": [
+      {
+        "id": "c1344e4194c97a55",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9cd252f33d138264",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "instructions/current_task.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "current_taskへのバックリンク"
+            }
+          },
+          {
+            "id": "8f5c0bdbfa2c7a13",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "instructions/current_task.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "current_taskからのアウトゴーイングリンク"
+            }
+          },
+          {
+            "id": "56bb271c06628092",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "タグ"
+            }
+          },
+          {
+            "id": "5ecc765f4bddb2b0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "すべてのプロパティ"
+            }
+          },
+          {
+            "id": "3a1459adc86aadf1",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "instructions/current_task.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "current_taskのアウトライン"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:クイックスイッチャーを開く": false,
+      "graph:グラフビューを開く": false,
+      "canvas:新規キャンバスを作成": false,
+      "daily-notes:今日のデイリーノートを開く": false,
+      "templates:テンプレートを挿入": false,
+      "command-palette:コマンドパレットを開く": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "018bcbc0b870c2e2",
+  "lastOpenFiles": [
+    "__private/workspace/plan/□実装したいリスト.md",
+    "issues/0010-event-edit-dialog.md",
+    "__private/workspace/plan/v1.0に向けて/ユーザcss規約.md",
+    "decisions/0001-governance-is-file-based.md",
+    "__private/workspace/prompt/prompt_weekView.md",
+    "__private/workspace/prompt/prompt_monthView.md",
+    "__private/workspace/plan/v1.0に向けて/phase1 メモ.md",
+    "__private/workspace/plan/v1.0に向けて/phase1 実装仕様書.md",
+    "__private/workspace/plan/v1.0に向けて/実装計画の残タスク洗い出し.md",
+    "__private/workspace/plan/初期要件洗い出し.md",
+    "instructions/current_task.md",
+    "issues/0012-tag-based-style.md",
+    "issues/0011-business-hours.md",
+    "__private/workspace/prompt/memo.md",
+    "issues/0009-calendar-storage.md",
+    "issues/0008-refactor-weekview-monthview.md",
+    "issues/0006-deadline-item.md",
+    "issues/0007-temporal-model-redesign.md",
+    "issues/0005-settings-inline-panel.md",
+    "issues/0003-clip-items-outside-time-range.md",
+    "issues/0004-weekview-allday-lane.md",
+    "issues/0002-sticky-day-header-in-week-view.md"
+  ]
+}

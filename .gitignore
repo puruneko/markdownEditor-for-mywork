@@ -1,0 +1,11 @@
+node_modules
+dist
+.svelte-kit
+build
+.DS_Store
+*.log
+.vite
+.cache
+tmp_rovodev_*
+playwright-report
+test-results
