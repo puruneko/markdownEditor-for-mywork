@@ -9,3 +9,5 @@ build
 tmp_rovodev_*
 playwright-report
 test-results
+.obsidian-cache
+main.js

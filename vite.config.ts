@@ -34,7 +34,14 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
-    exclude: ['tests/e2e/**', 'node_modules/**'],
+    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+    exclude: ['tests/e2e/**', 'tests/obs-e2e/**', 'node_modules/**'],
+    alias: [
+      // Obsidian is a runtime-only package; replace with mock for tests.
+      {
+        find: /^obsidian$/,
+        replacement: resolve(__dirname, 'tests/mocks/obsidian.ts'),
+      },
+    ],
   },
 })
