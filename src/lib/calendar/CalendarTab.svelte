@@ -1,6 +1,6 @@
 <script lang="ts">
   import 'svelte-calendar-lib/dist/index.css'
-  import { CalendarView } from 'svelte-calendar-lib'
+  import { CalendarView, CalendarStorage, LocalStorageBackend } from 'svelte-calendar-lib'
   import type { CalendarItem } from 'svelte-calendar-lib'
   import { DateTime } from 'luxon'
   import { extractCalendarItems } from './ast-to-calendar'
@@ -16,6 +16,8 @@
   }
 
   let { mdValue, doc, onMdChange }: Props = $props()
+
+  const storage = new CalendarStorage(new LocalStorageBackend())
 
   // Derive CalendarItem[] from AST every time doc changes
   let calendarItems = $derived(extractCalendarItems(doc))
@@ -71,6 +73,7 @@
 <div class="calendar-tab">
   <CalendarView
     items={calendarItems}
+    {storage}
     onItemMove={handleItemMove}
     onItemResize={handleItemResize}
     onItemUpdate={handleItemUpdate}
