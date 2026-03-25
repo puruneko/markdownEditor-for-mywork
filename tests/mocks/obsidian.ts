@@ -16,6 +16,9 @@ export class Plugin {
   addRibbonIcon = vi.fn()
   addStatusBarItem = vi.fn()
   addSettingTab = vi.fn()
+  registerEditorExtension = vi.fn()
+  loadData = vi.fn().mockResolvedValue(null)
+  saveData = vi.fn().mockResolvedValue(undefined)
 }
 
 export class ItemView {
@@ -59,6 +62,24 @@ export class MarkdownView extends ItemView {
 
 export class Notice {
   constructor(_message: string) {}
+}
+
+export class PluginSettingTab {
+  app: MockApp
+  containerEl: HTMLElement
+  constructor(app: MockApp, _plugin: unknown) {
+    this.app = app
+    this.containerEl = document.createElement('div')
+  }
+  display(): void {}
+}
+
+export class Setting {
+  constructor(_containerEl: HTMLElement) {}
+  setName = vi.fn().mockReturnThis()
+  setDesc = vi.fn().mockReturnThis()
+  addToggle = vi.fn().mockReturnThis()
+  addText = vi.fn().mockReturnThis()
 }
 
 export interface MockVault {

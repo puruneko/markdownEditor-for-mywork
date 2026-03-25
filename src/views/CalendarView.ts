@@ -1,0 +1,67 @@
+import { ItemView, WorkspaceLeaf } from 'obsidian'
+import type { TFile } from 'obsidian'
+import { mount, unmount } from 'svelte'
+import CalendarViewMount from './CalendarViewMount.svelte'
+import type { FileSync } from '../sync/file-sync'
+import type { Document } from '../lib/parser/types'
+
+export const CALENDAR_VIEW_TYPE = 'md-ast-editor-calendar-view'
+
+const EMPTY_DOC: Document = { type: 'document', sections: [] }
+
+export class CalendarView extends ItemView {
+  private fileSync: FileSync
+  private component: Record<string, unknown> | null = null
+  private updater: ((md: string, doc: Document) => void) | null = null
+  private onChange: (doc: Document, file: TFile) => void
+
+  constructor(leaf: WorkspaceLeaf, fileSync: FileSync) {
+    super(leaf)
+    this.fileSync = fileSync
+    this.onChange = (doc) => {
+      const md = this.fileSync.getCurrentMarkdown() ?? ''
+      if (this.updater) this.updater(md, doc)
+    }
+  }
+
+  getViewType(): string { return CALENDAR_VIEW_TYPE }
+  getDisplayText(): string { return 'Calendar View' }
+  getIcon(): string { return 'calendar' }
+
+  async onOpen(): Promise<void> {
+    const container = this.containerEl.children[1] as HTMLElement
+    container.empty()
+    container.addClass('calendar-view')
+
+    const initialMd = this.fileSync.getCurrentMarkdown() ?? ''
+    const initialDoc = this.fileSync.getCurrentDocument() ?? EMPTY_DOC
+
+    this.component = mount(CalendarViewMount, {
+      target: container,
+      props: {
+        initialMd,
+        initialDoc,
+        onMdChange: (newMd: string) => void this.handleMdChange(newMd),
+        registerUpdater: (fn: (md: string, doc: Document) => void) => {
+          this.updater = fn
+        },
+      },
+    })
+
+    this.fileSync.subscribe(this.onChange)
+  }
+
+  async onClose(): Promise<void> {
+    this.fileSync.unsubscribe(this.onChange)
+    if (this.component) {
+      unmount(this.component)
+      this.component = null
+    }
+  }
+
+  private async handleMdChange(newMd: string): Promise<void> {
+    const file = this.fileSync.getCurrentFile()
+    if (!file) return
+    await this.app.vault.modify(file, newMd)
+  }
+}

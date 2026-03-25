@@ -12,6 +12,7 @@ export class FileSync {
   private app: App
   private handlers: Set<DocumentChangeHandler> = new Set()
   private currentDoc: Document | null = null
+  private currentMarkdown: string | null = null
   private currentFile: TFile | null = null
   private debounceTimer: ReturnType<typeof setTimeout> | null = null
   private readonly debounceMs = 300
@@ -33,6 +34,11 @@ export class FileSync {
   /** 現在のDocumentを返す。未解析の場合はnullを返す。 */
   getCurrentDocument(): Document | null {
     return this.currentDoc
+  }
+
+  /** 現在のMarkdown文字列を返す。未読み込みの場合はnullを返す。 */
+  getCurrentMarkdown(): string | null {
+    return this.currentMarkdown
   }
 
   /** 現在のアクティブファイルを返す。 */
@@ -87,6 +93,7 @@ export class FileSync {
       const content = await this.app.vault.read(file)
       const doc = parseMarkdown(content)
       this.currentDoc = doc
+      this.currentMarkdown = content
       this.currentFile = file
       this.notify(doc, file)
     } catch {

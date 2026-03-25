@@ -16,6 +16,8 @@
     "obs:update:manifest": "cp ./main.js ./manifest.json /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
   },
   "devDependencies": {
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.40.0",
     "@playwright/test": "^1.58.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@types/luxon": "^3.7.1",
@@ -26,11 +28,14 @@
     "@wdio/mocha-framework": "^9.27.0",
     "builtin-modules": "^5.0.0",
     "esbuild": "^0.27.4",
+    "esbuild-svelte": "^0.9.4",
+    "jsdom": "^29.0.1",
     "mocha": "^11.7.5",
     "obsidian": "^1.12.3",
     "playwright": "^1.58.2",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
+    "svelte-preprocess": "^6.0.3",
     "typescript": "^5.5.0",
     "vite": "^6.0.0",
     "vitest": "^2.0.0",
