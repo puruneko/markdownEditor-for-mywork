@@ -1,17 +1,6 @@
 import { browser, expect } from '@wdio/globals'
 import { obsidianPage } from 'wdio-obsidian-service'
-
-/** Vault内のMarkdownファイルをObsidian APIで開く。 */
-async function openFile(path: string): Promise<void> {
-  await browser.execute((filePath: string) => {
-    const app = (window as any).app
-    const file = app.vault.getAbstractFileByPath(filePath)
-    if (file) {
-      void app.workspace.getLeaf(false).openFile(file)
-    }
-  }, path)
-  await browser.pause(800)
-}
+import { openFile } from './helpers/obsidian-helpers'
 
 describe('タスクデコレーション', function () {
   before(async function () {
@@ -64,8 +53,7 @@ describe('タスクデコレーション', function () {
   it('ブロッククォート内のタスクはハイライトされない', async function () {
     await openFile('test-tasks.md')
     // ブロッククォート内にタスク記法があっても、ハイライトされないことを確認する。
-    // .ast-view が存在する場合はASTからquoteノードとして解析されていることを確認。
-    await browser.pause(1000)
+    await browser.pause(800)
     // ブロッククォート行（">"始まり）はハイライト対象外なので、
     // 通常のハイライト要素の数がquoteブロック分だけ増えていないことを確認する。
     const todoElements = await browser.$$('.md-ast-task-status-todo')

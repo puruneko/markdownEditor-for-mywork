@@ -14,7 +14,7 @@ describe('FileSync', () => {
 
   beforeEach(() => {
     app = createMockApp()
-    fileSync = new FileSync(app as any)
+    fileSync = new FileSync(app as any, 300)
   })
 
   afterEach(() => {

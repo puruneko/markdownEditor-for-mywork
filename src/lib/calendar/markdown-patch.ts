@@ -61,23 +61,58 @@ export function findNodeById(doc: Document, nodeId: string): TaskNode | null {
 // ----------------------------------------------------------------
 
 /**
- * Replace a @schedule line in-place.
- * Finds the exact line `@schedule: <oldSchedule>` and replaces only that value.
- * All other content (blank lines, indentation, other text) is preserved.
+ * Replace the first occurrence of "- @schedule: oldSchedule" with the new value.
+ * Preserves indentation; replaces only the first matching line.
  */
 export function patchSchedule(md: string, oldSchedule: string, newSchedule: string): string {
   if (oldSchedule === newSchedule) return md
-  // Match the trimmed content of the line to avoid indentation issues,
-  // but keep the original indentation by replacing only the value part.
+  const target = `- @schedule: ${oldSchedule}`
+  const lines = md.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trimStart() === target) {
+      lines[i] = lines[i].replace(target, `- @schedule: ${newSchedule}`)
+      return lines.join('\n')
+    }
+  }
   return md
-    .split('\n')
-    .map(line => {
-      if (line.trimStart() === `@schedule: ${oldSchedule}`) {
-        return line.replace(oldSchedule, newSchedule)
-      }
-      return line
-    })
-    .join('\n')
+}
+
+/**
+ * Replace a @schedule line for a specific task node.
+ * Uses the task title line as an anchor to locate the correct @schedule line,
+ * preventing false matches when multiple tasks share the same schedule value.
+ */
+export function patchScheduleForNode(md: string, node: TaskNode, newSchedule: string): string {
+  const oldSchedule = node.meta?.schedule
+  if (!oldSchedule || oldSchedule === newSchedule) return md
+
+  const marker = statusToMarker(node.status)
+  const titlePattern = `- ${marker} ${node.text}`
+
+  const lines = md.split('\n')
+  let taskLineIdx = -1
+  let taskIndent = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trimStart() === titlePattern) {
+      taskLineIdx = i
+      taskIndent = lines[i].length - lines[i].trimStart().length
+      break
+    }
+  }
+  if (taskLineIdx === -1) return md
+
+  for (let i = taskLineIdx + 1; i < lines.length; i++) {
+    const line = lines[i]
+    if (line.trim() === '') continue
+    const lineIndent = line.length - line.trimStart().length
+    if (lineIndent <= taskIndent) break
+    if (line.trimStart() === `- @schedule: ${oldSchedule}`) {
+      lines[i] = line.replace(oldSchedule, newSchedule)
+      return lines.join('\n')
+    }
+  }
+  return md
 }
 
 /**

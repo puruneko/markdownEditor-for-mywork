@@ -1,20 +1,52 @@
-import { Plugin } from 'obsidian'
+import { Plugin, MarkdownView } from 'obsidian'
+import type { WorkspaceLeaf } from 'obsidian'
 import { AstView, AST_VIEW_TYPE } from './views/AstView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { FileSync } from './sync/file-sync'
+import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
 
 export class MdAstEditorPlugin extends Plugin {
-  private fileSync!: FileSync
+  fileSync!: FileSync
+  editorEventBus!: EditorEventBus
   settings!: MdAstEditorSettings
 
   async onload(): Promise<void> {
     await this.loadSettings()
 
-    this.fileSync = new FileSync(this.app)
+    this.fileSync = new FileSync(this.app, this.settings.debounceMs)
+    this.editorEventBus = new EditorEventBus()
+
+    // カレンダー/ガントからのカーソル移動要求をエディタに反映する。
+    this.editorEventBus.onFocusLine((lineNumber) => {
+      void (async () => {
+        const currentFile = this.fileSync.getCurrentFile()
+        if (!currentFile) return
+
+        // FileSync が追跡しているファイルを表示している既存リーフを探す。
+        let targetLeaf: WorkspaceLeaf | null = null
+        this.app.workspace.iterateAllLeaves((leaf) => {
+          if (!targetLeaf && leaf.view instanceof MarkdownView && leaf.view.file?.path === currentFile.path) {
+            targetLeaf = leaf
+          }
+        })
+
+        if (!targetLeaf) {
+          // 開いているタブがなければ新規リーフでファイルを開く。
+          targetLeaf = this.app.workspace.getLeaf(false)
+          if (!targetLeaf) return
+          await (targetLeaf as WorkspaceLeaf).openFile(currentFile)
+        }
+
+        this.app.workspace.revealLeaf(targetLeaf as WorkspaceLeaf)
+        const mdView = (targetLeaf as WorkspaceLeaf).view as MarkdownView
+        mdView.editor.setCursor({ line: lineNumber, ch: 0 })
+        mdView.editor.focus()
+      })()
+    })
 
     this.registerView(
       AST_VIEW_TYPE,
@@ -23,12 +55,12 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       CALENDAR_VIEW_TYPE,
-      (leaf) => new CalendarView(leaf, this.fileSync),
+      (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus),
     )
 
     this.registerView(
       GANTT_VIEW_TYPE,
-      (leaf) => new GanttView(leaf, this.fileSync),
+      (leaf) => new GanttView(leaf, this.fileSync, this.editorEventBus),
     )
 
     this.addCommand({
@@ -52,6 +84,12 @@ export class MdAstEditorPlugin extends Plugin {
     if (this.settings.showRibbonIcon) {
       this.addRibbonIcon('code-2', 'AST View を開く', () => {
         void this.openView(AST_VIEW_TYPE)
+      })
+      this.addRibbonIcon('calendar', 'Calendar View を開く', () => {
+        void this.openView(CALENDAR_VIEW_TYPE)
+      })
+      this.addRibbonIcon('bar-chart-2', 'Gantt View を開く', () => {
+        void this.openView(GANTT_VIEW_TYPE)
       })
     }
 

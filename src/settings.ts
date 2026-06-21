@@ -29,7 +29,7 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('リボンアイコンを表示')
-      .setDesc('左サイドバーにAST Viewを開くアイコンを表示します。')
+      .setDesc('左サイドバーにAST / Calendar / Gantt Viewを開くアイコンを表示します。')
       .addToggle(toggle =>
         toggle
           .setValue(this.plugin.settings.showRibbonIcon)
@@ -62,6 +62,7 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
             const num = parseInt(value, 10)
             if (!isNaN(num) && num >= 0) {
               this.plugin.settings.debounceMs = num
+              this.plugin.fileSync.setDebounceMs(num)
               await this.plugin.saveSettings()
             }
           }),

@@ -37,10 +37,10 @@ describe('parseSchedule', () => {
 
 const MD_WITH_SCHEDULE = `
 - [ ] タスクA
-  @schedule: 2026-04-01T10:00/2026-04-01T12:00
+  - @schedule: 2026-04-01T10:00/2026-04-01T12:00
 - [ ] タスクB（スケジュールなし）
 - [x] タスクC
-  @schedule: 2026-04-02T09:00/2026-04-02T17:00
+  - @schedule: 2026-04-02T09:00/2026-04-02T17:00
 `
 
 describe('extractCalendarItems', () => {
@@ -76,7 +76,7 @@ describe('extractCalendarItems', () => {
   })
 
   it('maps blocked/hold to todo', () => {
-    const md = `- [!] ブロック中\n  @schedule: 2026-04-01T10:00/2026-04-01T11:00\n- [-] 保留\n  @schedule: 2026-04-01T11:00/2026-04-01T12:00\n`
+    const md = `- [!] ブロック中\n  - @schedule: 2026-04-01T10:00/2026-04-01T11:00\n- [-] 保留\n  - @schedule: 2026-04-01T11:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items).toHaveLength(2)
@@ -84,7 +84,7 @@ describe('extractCalendarItems', () => {
   })
 
   it('ignores quote nodes', () => {
-    const md = `> - [ ] クォート内タスク\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n- [ ] 通常タスク\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `> - [ ] クォート内タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n- [ ] 通常タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items).toHaveLength(1)
@@ -92,21 +92,21 @@ describe('extractCalendarItems', () => {
   })
 
   it('ignores tasks with invalid schedule format', () => {
-    const md = `- [ ] タスク\n  @schedule: invalid-format\n`
+    const md = `- [ ] タスク\n  - @schedule: invalid-format\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items).toHaveLength(0)
   })
 
   it('extracts tasks from nested sections', () => {
-    const md = `# セクション1\n\n- [ ] タスク1\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n\n## サブセクション\n\n- [ ] タスク2\n  @schedule: 2026-04-02T10:00/2026-04-02T12:00\n`
+    const md = `# セクション1\n\n- [ ] タスク1\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n\n## サブセクション\n\n- [ ] タスク2\n  - @schedule: 2026-04-02T10:00/2026-04-02T12:00\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items).toHaveLength(2)
   })
 
   it('extracts tasks recursively from nested children', () => {
-    const md = `- グループ\n  - [ ] 子タスク\n    @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- グループ\n  - [ ] 子タスク\n    - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items).toHaveLength(1)
@@ -120,7 +120,7 @@ describe('extractCalendarItems', () => {
   })
 
   it('sets parents from path', () => {
-    const md = `- 親\n  - [ ] 子タスク\n    @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- 親\n  - [ ] 子タスク\n    - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const items = extractCalendarItems(doc)
     expect(items[0].parents).toContain('親')
@@ -133,7 +133,7 @@ describe('extractCalendarItems', () => {
 
 describe('updateNodeSchedule', () => {
   it('updates meta.schedule of the target node', () => {
-    const md = `- [ ] タスク\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const node = doc.sections[0].children[0] as any
     const newStart = DateTime.fromISO('2026-04-05T09:00')
@@ -144,7 +144,7 @@ describe('updateNodeSchedule', () => {
   })
 
   it('does not modify other nodes', () => {
-    const md = `- [ ] タスクA\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n- [ ] タスクB\n  @schedule: 2026-04-02T10:00/2026-04-02T12:00\n`
+    const md = `- [ ] タスクA\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n- [ ] タスクB\n  - @schedule: 2026-04-02T10:00/2026-04-02T12:00\n`
     const doc = parseMarkdown(md)
     const nodeA = doc.sections[0].children[0] as any
     const newDoc = updateNodeSchedule(doc, nodeA.id, DateTime.fromISO('2026-05-01T09:00'), DateTime.fromISO('2026-05-01T10:00'))
@@ -153,7 +153,7 @@ describe('updateNodeSchedule', () => {
   })
 
   it('returns unchanged doc structure when id not found', () => {
-    const md = `- [ ] タスク\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const newDoc = updateNodeSchedule(doc, 'nonexistent-id', DateTime.now(), DateTime.now().plus({ hours: 1 }))
     const node = newDoc.sections[0].children[0] as any
@@ -167,7 +167,7 @@ describe('updateNodeSchedule', () => {
 
 describe('updateNodeText', () => {
   it('updates text of the target node', () => {
-    const md = `- [ ] 旧タイトル\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- [ ] 旧タイトル\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const node = doc.sections[0].children[0] as any
     const newDoc = updateNodeText(doc, node.id, '新タイトル')
@@ -176,7 +176,7 @@ describe('updateNodeText', () => {
   })
 
   it('serializes updated text correctly', () => {
-    const md = `- [ ] 旧タイトル\n  @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
+    const md = `- [ ] 旧タイトル\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const doc = parseMarkdown(md)
     const node = doc.sections[0].children[0] as any
     const newDoc = updateNodeText(doc, node.id, '新タイトル')

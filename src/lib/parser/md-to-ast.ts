@@ -7,14 +7,16 @@ import type { Document, Section, Node, TaskNode, ListNode, QuoteNode, Status, Me
 interface RawLine {
   indent: number
   content: string
+  lineIndex: number  // 0-based absolute line index in original markdown
 }
 
 function tokenize(text: string): RawLine[] {
   return text
     .split('\n')
-    .map(line => ({
+    .map((line, idx) => ({
       indent: line.match(/^( *)/)?.[1].length ?? 0,
       content: line.trimStart(),
+      lineIndex: idx,
     }))
     .filter(l => l.content !== '')
 }
@@ -96,6 +98,7 @@ function parseNodes(
 
     // ---- Blockquote ----
     if (content.startsWith('>')) {
+      const firstLineIndex = line.lineIndex
       const rawParts: string[] = []
       while (i < rawLines.length && rawLines[i].content.startsWith('>')) {
         rawParts.push(rawLines[i].content.replace(/^>\s?/, ''))
@@ -106,6 +109,7 @@ function parseNodes(
         type: 'quote',
         id: generateId(path),
         raw: rawParts.join('\n'),
+        lineNumber: firstLineIndex,
         hasTaskDescendant: false,
         isGroup: false,
         isMemo: true,
@@ -117,6 +121,7 @@ function parseNodes(
 
     // ---- List item ----
     if (content.startsWith('- ')) {
+      const itemLineIndex = line.lineIndex
       const itemContent = content.slice(2)
       let taskStatus: Status | null = null
       let text = itemContent
@@ -135,28 +140,32 @@ function parseNodes(
 
       i++
 
-      // Collect child lines and meta lines.
-      // @meta lines at exactly baseIndent+2 belong to THIS item.
-      // @meta lines deeper than baseIndent+2 belong to a descendant — pass through as childLines.
+      // Collect all child lines (sub-list @meta items and comments are included).
       const childLines: RawLine[] = []
-      const meta: Partial<Meta> = {}
 
       while (i < rawLines.length && rawLines[i].indent > baseIndent) {
-        const cl = rawLines[i]
-        const isDirectMeta =
-          cl.indent === baseIndent + 2 && cl.content.startsWith('@')
-        if (isDirectMeta) {
-          const metaMatch = cl.content.match(/^@(\w+):\s*(.*)$/)
-          if (metaMatch) parseMeta(meta, metaMatch[1], metaMatch[2])
-          i++
-        } else {
-          childLines.push(cl)
-          i++
-        }
+        childLines.push(rawLines[i])
+        i++
       }
 
       const nodePath = [...parentPath, `${text.trim()}[${siblingIndex}]`]
-      const children = parseNodes(childLines, baseIndent + 2, depth + 1, nodePath)
+      const rawChildren = parseNodes(childLines, baseIndent + 2, depth + 1, nodePath)
+
+      // Extract @meta items: list items matching "- @key: value" with no own children
+      // are pulled out as structured metadata and removed from the children array.
+      const meta: Partial<Meta> = {}
+      const children: Node[] = []
+      for (const child of rawChildren) {
+        if (child.type === 'list' && child.children.length === 0) {
+          const metaMatch = child.text.match(/^@(\w+):\s*(.*)$/)
+          if (metaMatch) {
+            parseMeta(meta, metaMatch[1], metaMatch[2])
+            continue
+          }
+        }
+        children.push(child)
+      }
+
       const hasTD = computeHasTaskDescendant(children)
       const nodeId = generateId(nodePath)
       const hasMeta = Object.keys(meta).length > 0
@@ -169,6 +178,7 @@ function parseNodes(
           status: taskStatus,
           children,
           ...(hasMeta ? { meta: meta as Meta } : {}),
+          lineNumber: itemLineIndex,
           hasTaskDescendant: hasTD,
           isGroup: hasTD && children.length > 0,
           isLeafTask: children.length === 0,
@@ -184,6 +194,7 @@ function parseNodes(
           text: text.trim(),
           children,
           ...(hasMeta ? { meta: meta as Meta } : {}),
+          lineNumber: itemLineIndex,
           hasTaskDescendant: hasTD,
           isGroup: hasTD && children.length > 0,
           isMemo: !hasTD,
@@ -226,6 +237,7 @@ function parseSections(lines: RawLine[]): Section[] {
       id: 'section-0',
       depth: 0,
       title: '',
+      lineNumber: -1,
       children,
       subSections: [],
     })
@@ -241,6 +253,7 @@ function parseSections(lines: RawLine[]): Section[] {
       id: 'section-0',
       depth: 0,
       title: '',
+      lineNumber: -1,
       children,
       subSections: [],
     })
@@ -255,6 +268,7 @@ function parseSections(lines: RawLine[]): Section[] {
       id: `section-${hi + 1}`,
       depth: heading.depth,
       title: heading.title,
+      lineNumber: lines[heading.pos].lineIndex,
       children,
       subSections: [],
     })
@@ -291,8 +305,29 @@ function nestSections(sections: Section[]): Section[] {
 // Public API
 // ----------------------------------------------------------------
 
+function buildNodeLineMap(sections: Section[]): Map<string, number> {
+  const map = new Map<string, number>()
+
+  function walkNode(node: Node): void {
+    map.set(node.id, node.lineNumber)
+    if (node.type !== 'quote') {
+      for (const child of node.children) walkNode(child)
+    }
+  }
+
+  function walkSection(section: Section): void {
+    if (section.lineNumber >= 0) map.set(section.id, section.lineNumber)
+    for (const child of section.children) walkNode(child)
+    for (const sub of section.subSections) walkSection(sub)
+  }
+
+  for (const section of sections) walkSection(section)
+  return map
+}
+
 export function parseMarkdown(markdown: string): Document {
   const lines = tokenize(markdown)
   const sections = parseSections(lines)
-  return { type: 'document', sections }
+  const nodeLineMap = buildNodeLineMap(sections)
+  return { type: 'document', sections, nodeLineMap }
 }

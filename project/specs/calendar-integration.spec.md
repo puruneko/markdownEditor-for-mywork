@@ -47,9 +47,12 @@ BR-008 CalendarItem の `id` はASTノードの `id` と同一でなければな
 
 BR-009 CalendarItem の `title` はASTノードの `text` と同一でなければならない。
 
-BR-010 CalendarItem の `temporal` は `meta.schedule` をパースした `CalendarDateTimeRange` でなければならない。
+BR-010 CalendarItem の `temporal` は `meta.schedule` の形式に応じて以下のルールで決定しなければならない。
+  - 日付のみ形式（`YYYY-MM-DD/YYYY-MM-DD`）のときは `CalendarDateRange` を生成しなければならない。
+  - 時刻付き同一日形式（`YYYY-MM-DDTHH:mm/YYYY-MM-DDTHH:mm` で start と end が同一日）のときは `CalendarDateTimeRange` を生成しなければならない。
+  - 時刻付き複数日形式（start と end が異なる日）のときは `CalendarDateRange` を生成しなければならない。
 
-BR-011 schedule文字列のパース形式は `YYYY-MM-DDTHH:mm/YYYY-MM-DDTHH:mm` でなければならない。
+BR-011 schedule文字列のパース形式は `YYYY-MM-DDTHH:mm/YYYY-MM-DDTHH:mm`（時刻付き）または `YYYY-MM-DD/YYYY-MM-DD`（日付のみ）でなければならない。
 
 BR-012 schedule文字列が不正な場合、そのノードはCalendarItemに変換してはならない。
 

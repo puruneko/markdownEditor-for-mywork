@@ -20,11 +20,11 @@ function statusToMarker(status: Status): string {
 
 function serializeMeta(meta: Meta): string[] {
   const lines: string[] = []
-  if (meta.schedule  !== undefined) lines.push(`@schedule: ${meta.schedule}`)
-  if (meta.due       !== undefined) lines.push(`@due: ${meta.due}`)
-  if (meta.priority  !== undefined) lines.push(`@priority: ${meta.priority}`)
-  if (meta.dependsOn !== undefined) lines.push(`@dependsOn: ${meta.dependsOn.join(', ')}`)
-  if (meta.tags      !== undefined) lines.push(`@tags: ${meta.tags.join(', ')}`)
+  if (meta.schedule  !== undefined) lines.push(`- @schedule: ${meta.schedule}`)
+  if (meta.due       !== undefined) lines.push(`- @due: ${meta.due}`)
+  if (meta.priority  !== undefined) lines.push(`- @priority: ${meta.priority}`)
+  if (meta.dependsOn !== undefined) lines.push(`- @dependsOn: ${meta.dependsOn.join(', ')}`)
+  if (meta.tags      !== undefined) lines.push(`- @tags: ${meta.tags.join(', ')}`)
   return lines
 }
 

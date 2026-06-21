@@ -2,7 +2,6 @@ import esbuild from 'esbuild'
 import process from 'process'
 import builtins from 'builtin-modules'
 import esbuildSvelte from 'esbuild-svelte'
-import { sveltePreprocess } from 'svelte-preprocess'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -11,6 +10,7 @@ const prod = process.argv[2] === 'production'
 
 import { createRequire } from 'module'
 import { readFile } from 'fs/promises'
+import { realpathSync } from 'fs'
 const require = createRequire(import.meta.url)
 
 /**
@@ -53,9 +53,15 @@ const svelteModuleTypeStripPlugin = {
 const svelteLibSourcePlugin = {
   name: 'svelte-lib-source',
   setup(build) {
+    // Use realpathSync to resolve symlinks to their real paths.
+    // node_modules/svelte-calendar-lib and svelte-gantt-lib are symlinks to workspace siblings.
+    // Without resolving to real paths, esbuild loads the same .svelte files via both the
+    // symlink path and the real path, treating them as separate modules. This causes component
+    // functions (e.g. WeekView) to be renamed (WeekView → WeekView2) in one copy while the
+    // other copy's call sites still reference the original name, resulting in ReferenceError.
     const libs = {
-      'svelte-calendar-lib': resolve(__dirname, 'node_modules/svelte-calendar-lib/src/index.ts'),
-      'svelte-gantt-lib': resolve(__dirname, 'node_modules/svelte-gantt-lib/src/index.ts'),
+      'svelte-calendar-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-calendar-lib')), 'src/index.ts'),
+      'svelte-gantt-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-gantt-lib')), 'src/index.ts'),
     }
 
     // Exact lib package names → source entry
@@ -71,9 +77,23 @@ const svelteLibSourcePlugin = {
       return { contents: '', loader: 'js' }
     })
 
+    // Always resolve luxon from this project's node_modules.
+    // workspace siblings (calendar-for-mywork, ganttchart-for-mywork) each have their own
+    // node_modules/luxon. If those copies are used, DateTime instanceof checks fail because
+    // the DateTime class from the main project and the lib are different objects.
+    build.onResolve({ filter: /^luxon$/ }, () => {
+      return { path: require.resolve('luxon', { paths: [__dirname] }) }
+    })
+
     // Always resolve svelte/* from this project's node_modules (fixes workspace Svelte 4 clash)
     build.onResolve({ filter: /^svelte(\/|$)/ }, (args) => {
       try {
+        if (args.path === 'svelte') {
+          // require.resolve uses Node CJS "default" condition which resolves to
+          // index-server.js in Svelte 5, causing "mount() is not available on the server".
+          // Explicitly use the browser (client) entry instead.
+          return { path: resolve(__dirname, 'node_modules/svelte/src/index-client.js') }
+        }
         const resolved = require.resolve(args.path, { paths: [__dirname] })
         return { path: resolved }
       } catch {
@@ -106,9 +126,9 @@ const context = await esbuild.context({
     svelteModuleTypeStripPlugin,
     svelteLibSourcePlugin,
     esbuildSvelte({
-      preprocess: sveltePreprocess(),
       compilerOptions: {
         css: 'injected',
+        generate: 'client',
         // Do NOT set runes: true globally — legacy components (e.g. GanttChart.svelte)
         // use 'export let' syntax. Svelte 5 auto-detects runes per file.
       },

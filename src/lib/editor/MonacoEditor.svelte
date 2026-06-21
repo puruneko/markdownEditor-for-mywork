@@ -8,6 +8,8 @@
     theme?: string
     readonly?: boolean
     onchange?: (value: string) => void
+    /** エディタ生成後に呼ばれるコールバック。引数の関数で指定行（0-based）にスクロール＆カーソル移動できる。 */
+    registerReveal?: (fn: (line: number) => void) => void
   }
 
   let {
@@ -16,6 +18,7 @@
     theme = 'md-task-dark',
     readonly = false,
     onchange,
+    registerReveal,
   }: Props = $props()
 
   let container: HTMLDivElement
@@ -44,6 +47,14 @@
       const current = editor!.getValue()
       value = current
       onchange?.(current)
+    })
+
+    // Monaco は 1-based 行番号。引数は 0-based で受け取り +1 して渡す。
+    registerReveal?.((line) => {
+      const monacoLine = line + 1
+      editor!.revealLineInCenter(monacoLine)
+      editor!.setPosition({ lineNumber: monacoLine, column: 1 })
+      editor!.focus()
     })
   })
 

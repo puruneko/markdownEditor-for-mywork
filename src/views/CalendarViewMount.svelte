@@ -7,9 +7,10 @@
     initialDoc: Document
     onMdChange: (md: string) => void
     registerUpdater: (fn: (md: string, doc: Document) => void) => void
+    onNodeClick: (nodeId: string) => void
   }
 
-  let { initialMd, initialDoc, onMdChange, registerUpdater }: Props = $props()
+  let { initialMd, initialDoc, onMdChange, registerUpdater, onNodeClick }: Props = $props()
 
   let mdValue = $state(initialMd)
   let doc = $state(initialDoc)
@@ -20,4 +21,4 @@
   })
 </script>
 
-<CalendarTab {mdValue} {doc} {onMdChange} />
+<CalendarTab {mdValue} {doc} {onMdChange} {onNodeClick} />

@@ -1,18 +1,6 @@
 import { browser, expect } from '@wdio/globals'
 import { obsidianPage } from 'wdio-obsidian-service'
-
-/** Vault内のMarkdownファイルをObsidian APIで開く。 */
-async function openFile(path: string): Promise<void> {
-  await browser.execute((filePath: string) => {
-    const app = (window as any).app
-    const file = app.vault.getAbstractFileByPath(filePath)
-    if (file) {
-      void app.workspace.getLeaf(false).openFile(file)
-    }
-  }, path)
-  // ファイルが開かれてFileSync が parse するまで待つ。
-  await browser.pause(500)
-}
+import { openFile } from './helpers/obsidian-helpers'
 
 describe('ASTビュー', function () {
   before(async function () {

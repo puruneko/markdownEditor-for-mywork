@@ -1,4 +1,5 @@
 import type { App, TFile } from 'obsidian'
+import type { Section, Node } from '../lib/parser/types'
 import { MarkdownView } from 'obsidian'
 import { parseMarkdown } from '../lib/parser/md-to-ast'
 import type { Document } from '../lib/parser/types'
@@ -15,10 +16,15 @@ export class FileSync {
   private currentMarkdown: string | null = null
   private currentFile: TFile | null = null
   private debounceTimer: ReturnType<typeof setTimeout> | null = null
-  private readonly debounceMs = 300
+  private debounceMs: number
 
-  constructor(app: App) {
+  constructor(app: App, debounceMs: number) {
     this.app = app
+    this.debounceMs = debounceMs
+  }
+
+  setDebounceMs(ms: number): void {
+    this.debounceMs = ms
   }
 
   /** ハンドラーを登録する。 */
@@ -73,9 +79,6 @@ export class FileSync {
     const file = this.getActiveMarkdownFile()
     if (file && file.path !== this.currentFile?.path) {
       void this.parseFile(file)
-    } else if (!file && this.currentFile !== null) {
-      this.currentDoc = null
-      this.currentFile = null
     }
   }
 
@@ -91,14 +94,58 @@ export class FileSync {
   private async parseFile(file: TFile): Promise<void> {
     try {
       const content = await this.app.vault.read(file)
+      // 内容が変わっていなければ再パース・再通知をスキップする。
+      if (content === this.currentMarkdown) return
       const doc = parseMarkdown(content)
       this.currentDoc = doc
       this.currentMarkdown = content
       this.currentFile = file
+      this.debugLog(file.path, doc)
       this.notify(doc, file)
     } catch {
       // 読み取りエラーは無視する（ファイルが削除された場合など）。
     }
+  }
+
+  private debugLog(filePath: string, doc: Document): void {
+    type Count = { tasks: number; scheduled: number }
+
+    const countNodes = (nodes: Node[]): Count => {
+      let tasks = 0
+      let scheduled = 0
+      for (const n of nodes) {
+        if (n.type === 'task') {
+          tasks++
+          if (n.meta?.schedule) scheduled++
+          const c = countNodes(n.children)
+          tasks += c.tasks
+          scheduled += c.scheduled
+        } else if (n.type === 'list') {
+          const c = countNodes(n.children)
+          tasks += c.tasks
+          scheduled += c.scheduled
+        }
+      }
+      return { tasks, scheduled }
+    }
+
+    const walkSection = (sec: Section): Count => {
+      const own = countNodes(sec.children)
+      const sub = sec.subSections.reduce<Count>(
+        (acc, s) => { const r = walkSection(s); return { tasks: acc.tasks + r.tasks, scheduled: acc.scheduled + r.scheduled } },
+        { tasks: 0, scheduled: 0 },
+      )
+      return { tasks: own.tasks + sub.tasks, scheduled: own.scheduled + sub.scheduled }
+    }
+
+    const total = doc.sections.reduce<Count>(
+      (acc, s) => { const r = walkSection(s); return { tasks: acc.tasks + r.tasks, scheduled: acc.scheduled + r.scheduled } },
+      { tasks: 0, scheduled: 0 },
+    )
+
+    console.debug(`[MD-AST] ドキュメント更新: ${filePath}`)
+    console.debug(`[MD-AST] セクション数: ${doc.sections.length} | タスク数: ${total.tasks} | スケジュール付き: ${total.scheduled}`)
+    console.debug('[MD-AST] セクション一覧:', doc.sections.map(s => `"${s.title}"(depth=${s.depth}, sub=${s.subSections.length})`).join(', '))
   }
 
   private notify(doc: Document, file: TFile): void {

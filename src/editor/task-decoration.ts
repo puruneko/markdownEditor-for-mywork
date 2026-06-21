@@ -15,7 +15,7 @@ const STATUS_MARK: Record<string, string> = {
   '-': 'task-status-hold',
 }
 
-const META_RE = /^(\s*)@(schedule|due|priority|tags|dependsOn):/
+const META_RE = /^(\s*- )@(schedule|due|priority|tags|dependsOn):/
 
 // ----------------------------------------------------------------
 // Build decorations for visible lines

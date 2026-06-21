@@ -93,6 +93,25 @@ describe('MdAstEditorPlugin', () => {
     await plugin.onunload()
   })
 
+  it('onload()でCalendar/Ganttリボンアイコンが登録される', async () => {
+    const { MdAstEditorPlugin } = await import('../../src/plugin')
+    const plugin = new MdAstEditorPlugin(app as any, null as any)
+    await plugin.onload()
+
+    expect(plugin.addRibbonIcon).toHaveBeenCalledWith(
+      'calendar',
+      expect.any(String),
+      expect.any(Function),
+    )
+    expect(plugin.addRibbonIcon).toHaveBeenCalledWith(
+      'bar-chart-2',
+      expect.any(String),
+      expect.any(Function),
+    )
+
+    await plugin.onunload()
+  })
+
   it('onunload()でAST/Calendar/Gantt ViewのdetachLeavesOfTypeが呼ばれる', async () => {
     const { MdAstEditorPlugin } = await import('../../src/plugin')
     const plugin = new MdAstEditorPlugin(app as any, null as any)

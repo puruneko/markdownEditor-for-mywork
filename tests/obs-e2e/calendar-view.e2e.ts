@@ -1,17 +1,6 @@
 import { browser, expect } from '@wdio/globals'
 import { obsidianPage } from 'wdio-obsidian-service'
-
-/** Vault内のMarkdownファイルをObsidian APIで開く。 */
-async function openFile(path: string): Promise<void> {
-  await browser.execute((filePath: string) => {
-    const app = (window as any).app
-    const file = app.vault.getAbstractFileByPath(filePath)
-    if (file) {
-      void app.workspace.getLeaf(false).openFile(file)
-    }
-  }, path)
-  await browser.pause(500)
-}
+import { openFile } from './helpers/obsidian-helpers'
 
 describe('カレンダービュー', function () {
   before(async function () {
@@ -41,5 +30,20 @@ describe('カレンダービュー', function () {
     )
     const calendarView = browser.$('.calendar-view')
     await expect(calendarView).toExist()
+  })
+
+  it('カレンダービューにアイテムまたはallday要素が表示される', async function () {
+    await openFile('test-tasks.md')
+    await browser.executeObsidianCommand('md-ast-editor:open-calendar-view')
+    // WeekView が描画されるまで待つ
+    await browser.waitUntil(
+      async () => {
+        const weekView = await browser.$('.calendar-view .week-view')
+        return weekView.isExisting()
+      },
+      { timeout: 10000, interval: 500 },
+    )
+    const weekView = browser.$('.calendar-view .week-view')
+    await expect(weekView).toExist()
   })
 })
