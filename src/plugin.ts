@@ -3,6 +3,7 @@ import type { WorkspaceLeaf } from 'obsidian'
 import { AstView, AST_VIEW_TYPE } from './views/AstView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
+import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
 import { FileSync } from './sync/file-sync'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
@@ -63,6 +64,11 @@ export class MdAstEditorPlugin extends Plugin {
       (leaf) => new GanttView(leaf, this.fileSync, this.editorEventBus),
     )
 
+    this.registerView(
+      KANBAN_VIEW_TYPE,
+      (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus),
+    )
+
     this.addCommand({
       id: 'open-ast-view',
       name: 'AST View を開く',
@@ -81,6 +87,12 @@ export class MdAstEditorPlugin extends Plugin {
       callback: () => void this.openView(GANTT_VIEW_TYPE),
     })
 
+    this.addCommand({
+      id: 'open-kanban-view',
+      name: 'Kanban View を開く',
+      callback: () => void this.openView(KANBAN_VIEW_TYPE),
+    })
+
     if (this.settings.showRibbonIcon) {
       this.addRibbonIcon('code-2', 'AST View を開く', () => {
         void this.openView(AST_VIEW_TYPE)
@@ -90,6 +102,9 @@ export class MdAstEditorPlugin extends Plugin {
       })
       this.addRibbonIcon('bar-chart-2', 'Gantt View を開く', () => {
         void this.openView(GANTT_VIEW_TYPE)
+      })
+      this.addRibbonIcon('layout-grid', 'Kanban View を開く', () => {
+        void this.openView(KANBAN_VIEW_TYPE)
       })
     }
 
@@ -107,6 +122,7 @@ export class MdAstEditorPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(AST_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(GANTT_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE)
   }
 
   async loadSettings(): Promise<void> {

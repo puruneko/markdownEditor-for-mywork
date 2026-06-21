@@ -1,0 +1,41 @@
+/* ============================================================
+ * MD AST Editor — Obsidian Plugin Styles
+ * Obsidian が自動でロードする。
+ * ============================================================ */
+
+/* ------------------------------------------------------------
+ * 共通: サイドビューコンテナの基本レイアウト
+ * ------------------------------------------------------------ */
+
+.gantt-view,
+.calendar-view,
+.kanban-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------
+ * Kanban — テーマ統合
+ *
+ * KanbanTab.svelte 内の .kanban-tab で CSS カスタムプロパティを
+ *   var(--obsidian-variable, dark-fallback)
+ * 形式で設定している。Obsidianが :root / body に
+ * --background-primary 等を定義するため、カスタムプロパティが
+ * 自動的に正しいテーマ値に解決される。追加設定不要。
+ * ------------------------------------------------------------ */
+
+/* svelte-dnd-action のドラッグゴーストをObsidianパネル内に収める */
+.kanban-view [data-is-dnd-shadow-item] {
+  opacity: 0.5;
+}
+
+/* Obsidianのグローバルリセットがカンバンのボタンスタイルを壊す場合の補正 */
+.kanban-view button {
+  font-family: inherit;
+  line-height: normal;
+}

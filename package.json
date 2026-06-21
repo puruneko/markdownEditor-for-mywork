@@ -45,6 +45,7 @@
     "luxon": "^3.7.2",
     "monaco-editor": "^0.52.0",
     "svelte-calendar-lib": "file:../calendar-for-mywork",
-    "svelte-gantt-lib": "file:../ganttchart-for-mywork"
+    "svelte-gantt-lib": "file:../ganttchart-for-mywork",
+    "svelte-kanban-lib": "file:../kanban-for-mywork"
   }
 }

@@ -62,15 +62,16 @@ const svelteLibSourcePlugin = {
     const libs = {
       'svelte-calendar-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-calendar-lib')), 'src/index.ts'),
       'svelte-gantt-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-gantt-lib')), 'src/index.ts'),
+      'svelte-kanban-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-kanban-lib')), 'src/index.ts'),
     }
 
     // Exact lib package names → source entry
-    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib)$/ }, (args) => {
+    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib)$/ }, (args) => {
       return { path: libs[args.path] }
     })
 
     // Lib subpath CSS imports → return empty module (css injected by esbuild-svelte; require() can't load css)
-    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib)\/.*\.css$/ }, () => {
+    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib)\/.*\.css$/ }, () => {
       return { path: 'empty', namespace: 'empty-css' }
     })
     build.onLoad({ filter: /.*/, namespace: 'empty-css' }, () => {

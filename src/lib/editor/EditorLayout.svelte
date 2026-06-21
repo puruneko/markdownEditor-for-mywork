@@ -2,6 +2,7 @@
   import MonacoEditor from './MonacoEditor.svelte'
   import CalendarTab from '../calendar/CalendarTab.svelte'
   import GanttTab from '../gantt/GanttTab.svelte'
+  import KanbanTab from '../kanban/KanbanTab.svelte'
   import { parseMarkdown } from '../parser/md-to-ast'
   import { serializeAst } from '../parser/ast-to-md'
   import type { Document } from '../parser/types'
@@ -11,7 +12,7 @@
   let direction: Direction = $state('idle')
 
   // Right panel tab state (#0013, #0020)
-  type RightTab = 'ast' | 'calendar' | 'gantt'
+  type RightTab = 'ast' | 'calendar' | 'gantt' | 'kanban'
   let rightTab: RightTab = $state('ast')
 
   // Initial markdown content (static — used only for initialization)
@@ -727,6 +728,10 @@
         class="tab-btn {rightTab === 'gantt' ? 'active' : ''}"
         onclick={() => rightTab = 'gantt'}
       >Gantt</button>
+      <button
+        class="tab-btn {rightTab === 'kanban' ? 'active' : ''}"
+        onclick={() => rightTab = 'kanban'}
+      >Kanban</button>
     </div>
 
     <!-- Tab content -->
@@ -744,8 +749,15 @@
           onMdChange={onCalendarMdChange}
           onNodeClick={handleNodeClick}
         />
-      {:else}
+      {:else if rightTab === 'gantt'}
         <GanttTab
+          mdValue={mdValue}
+          doc={currentDoc}
+          onMdChange={onCalendarMdChange}
+          onNodeClick={handleNodeClick}
+        />
+      {:else}
+        <KanbanTab
           mdValue={mdValue}
           doc={currentDoc}
           onMdChange={onCalendarMdChange}

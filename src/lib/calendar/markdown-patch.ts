@@ -116,6 +116,24 @@ export function patchScheduleForNode(md: string, node: TaskNode, newSchedule: st
 }
 
 /**
+ * Replace the status marker on the exact line recorded in node.lineNumber.
+ * Uses the 0-based absolute line index to avoid title-based false matches.
+ */
+export function patchNodeStatus(
+  md: string,
+  node: TaskNode,
+  newStatus: Status,
+): string {
+  if (node.status === newStatus) return md
+  const lines = md.split('\n')
+  const lineIdx = node.lineNumber
+  if (lineIdx < 0 || lineIdx >= lines.length) return md
+  const newMarker = statusToMarker(newStatus)
+  lines[lineIdx] = lines[lineIdx].replace(/(\s*- )\[[xX>!\- ]\]/, `$1${newMarker}`)
+  return lines.join('\n')
+}
+
+/**
  * Replace a task title line in-place.
  * Finds `- <marker> <oldTitle>` and replaces only the title part.
  * The checkbox marker is preserved; indentation and surrounding lines are untouched.
