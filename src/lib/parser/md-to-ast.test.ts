@@ -76,7 +76,7 @@ describe('parseMarkdown', () => {
     const { sections } = parseMarkdown(md)
     const node = sections[0].children[0] as TaskNode
 
-    expect(node.meta?.schedule).toBe('2026-04-01T10:00/12:00')
+    expect(node.meta?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
     expect(node.meta?.priority).toBe(2)
     expect(node.isLeafTask).toBe(true)
   })
@@ -138,7 +138,7 @@ describe('parseMarkdown', () => {
     const { sections } = parseMarkdown(md)
     const task = sections[0].children[0] as TaskNode
 
-    expect(task.meta?.schedule).toBe('2026-04-01T10:00/12:00')
+    expect(task.meta?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
     // 2 comment children: QuoteNode and ListNode(isMemo)
     expect(task.children).toHaveLength(2)
     const quote = task.children[0] as QuoteNode
@@ -246,5 +246,42 @@ describe('parseMarkdown', () => {
     const memo = kikaku.children[1] as ListNode
     expect(memo.text).toBe('メモ')
     expect(memo.isMemo).toBe(true)
+  })
+
+  // ---- abbreviated date notation (obs-0028) ----
+
+  it('normalizes 2-digit year in @schedule', () => {
+    const md = `- [ ] タスク\n  - @schedule: 26-06-01T10:00/26-06-01T11:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01T10:00/2026-06-01T11:00')
+  })
+
+  it('normalizes omitted minutes in @schedule', () => {
+    const md = `- [ ] タスク\n  - @schedule: 2026-06-01T10/2026-06-01T11\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01T10:00/2026-06-01T11:00')
+  })
+
+  it('normalizes time-continuation in @schedule', () => {
+    const md = `- [ ] タスク\n  - @schedule: 26-06-27T08:00/12:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-27T08:00/2026-06-27T12:00')
+  })
+
+  it('normalizes day-continuation in @schedule', () => {
+    const md = `- [ ] タスク\n  - @schedule: 26-06-01/05\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01/2026-06-05')
+  })
+
+  it('normalizes 2-digit year in @due', () => {
+    const md = `- [ ] タスク\n  - @due: 26-06-30\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.due).toBe('2026-06-30')
   })
 })

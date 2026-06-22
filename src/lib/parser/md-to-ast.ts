@@ -1,4 +1,5 @@
 import type { Document, Section, Node, TaskNode, ListNode, QuoteNode, Status, Meta } from './types'
+import { normalizeSchedule, normalizeDue } from './schedule-normalize'
 
 // ----------------------------------------------------------------
 // Tokenizer
@@ -42,10 +43,10 @@ function generateId(path: string[]): string {
 function parseMeta(meta: Partial<Meta>, key: string, value: string): void {
   switch (key) {
     case 'schedule':
-      meta.schedule = value
+      meta.schedule = normalizeSchedule(value)
       break
     case 'due':
-      meta.due = value
+      meta.due = normalizeDue(value)
       break
     case 'priority':
       meta.priority = parseInt(value, 10)
