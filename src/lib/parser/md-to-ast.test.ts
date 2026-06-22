@@ -344,4 +344,68 @@ describe('parseMarkdown', () => {
     expect(task.children[0].type).toBe('quote')
     expect((task.children[0] as QuoteNode).raw).toBe('コメント')
   })
+
+  // ---- tab indentation (Obsidian default) ----
+
+  it('parses child indented with 1 tab', () => {
+    // Obsidian inserts \t when Tab is pressed (regardless of visual tab size)
+    const md = '- [ ] 親タスク\n\t- [ ] 子タスク'
+    const { sections } = parseMarkdown(md)
+    const parent = sections[0].children[0] as TaskNode
+    expect(parent.isGroup).toBe(true)
+    expect(parent.children).toHaveLength(1)
+    expect((parent.children[0] as TaskNode).text).toBe('子タスク')
+  })
+
+  it('parses @meta indented with 1 tab', () => {
+    const md = '- [ ] タスク\n\t- @schedule: 2026-06-01T10:00/2026-06-01T11:00\n\t- @due: 2026-06-01'
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01T10:00/2026-06-01T11:00')
+    expect(node.meta?.due).toBe('2026-06-01')
+    expect(node.isLeafTask).toBe(true)
+  })
+
+  it('parses 3-level hierarchy with tab indent', () => {
+    const md = '- グループ\n\t- [ ] 親タスク\n\t\t- [ ] 子タスク'
+    const { sections } = parseMarkdown(md)
+    const group = sections[0].children[0] as ListNode
+    expect(group.isGroup).toBe(true)
+    const parent = group.children[0] as TaskNode
+    expect(parent.text).toBe('親タスク')
+    expect(parent.isGroup).toBe(true)
+    const child = parent.children[0] as TaskNode
+    expect(child.text).toBe('子タスク')
+    expect(child.isLeafTask).toBe(true)
+  })
+
+  it('parses blockquote child indented with 1 tab', () => {
+    const md = '- [ ] タスク\n\t> コメント'
+    const { sections } = parseMarkdown(md)
+    const task = sections[0].children[0] as TaskNode
+    expect(task.children).toHaveLength(1)
+    expect((task.children[0] as QuoteNode).type).toBe('quote')
+    expect((task.children[0] as QuoteNode).raw).toBe('コメント')
+  })
+
+  it('treats tab-indented and space-indented siblings as equivalent structure', () => {
+    // tab version
+    const mdTab = '- [ ] タスクA\n\t- @due: 2026-06-10\n- [ ] タスクB\n\t- @due: 2026-06-11'
+    // space version (4 spaces)
+    const mdSpc = '- [ ] タスクA\n    - @due: 2026-06-10\n- [ ] タスクB\n    - @due: 2026-06-11'
+    const docTab = parseMarkdown(mdTab)
+    const docSpc = parseMarkdown(mdSpc)
+    const [a1, b1] = docTab.sections[0].children as TaskNode[]
+    const [a2, b2] = docSpc.sections[0].children as TaskNode[]
+    expect(a1.meta?.due).toBe(a2.meta?.due)
+    expect(b1.meta?.due).toBe(b2.meta?.due)
+  })
+
+  it('handles abbreviated dates with tab-indented @meta', () => {
+    const md = '- [ ] タスク\n\t- @schedule: 26-06-27T08/12\n\t- @due: 26-06-27'
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-27T08:00/2026-06-27T12:00')
+    expect(node.meta?.due).toBe('2026-06-27')
+  })
 })

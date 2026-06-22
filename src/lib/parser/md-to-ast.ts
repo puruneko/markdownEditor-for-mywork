@@ -11,14 +11,47 @@ interface RawLine {
   lineIndex: number  // 0-based absolute line index in original markdown
 }
 
+// Obsidian (CodeMirror 6) inserts real tab characters when Tab is pressed,
+// regardless of the visual "Tab size" setting. We expand tabs using a fixed
+// width of 4 (Obsidian's default) so nesting levels are always detected
+// correctly. The parser only needs childIndent > parentIndent, so even if the
+// user changes Obsidian's visual tab width, the indent ordering stays valid.
+const TAB_WIDTH = 4
+
+/**
+ * Expand leading tabs (and any interleaved spaces) to spaces using tab-stop
+ * semantics. Only the leading whitespace region is touched; the rest of the
+ * line is returned verbatim.
+ */
+function expandLeadingTabs(line: string): string {
+  let col = 0
+  let i = 0
+  while (i < line.length) {
+    const ch = line[i]
+    if (ch === '\t') {
+      col += TAB_WIDTH - (col % TAB_WIDTH)
+      i++
+    } else if (ch === ' ') {
+      col++
+      i++
+    } else {
+      break
+    }
+  }
+  return ' '.repeat(col) + line.slice(i)
+}
+
 function tokenize(text: string): RawLine[] {
   return text
     .split('\n')
-    .map((line, idx) => ({
-      indent: line.match(/^( *)/)?.[1].length ?? 0,
-      content: line.trimStart(),
-      lineIndex: idx,
-    }))
+    .map((line, idx) => {
+      const expanded = expandLeadingTabs(line)
+      return {
+        indent: expanded.match(/^( *)/)?.[1].length ?? 0,
+        content: expanded.trimStart(),
+        lineIndex: idx,
+      }
+    })
     .filter(l => l.content !== '')
 }
 
