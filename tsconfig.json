@@ -12,6 +12,12 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "main.ts",
+    "tests/**/*.ts",
+    "wdio.conf.mts"
+  ],
   "exclude": ["node_modules"]
 }

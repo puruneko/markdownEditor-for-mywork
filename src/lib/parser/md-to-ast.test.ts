@@ -72,7 +72,7 @@ describe('parseMarkdown', () => {
   })
 
   it('parses @meta fields', () => {
-    const md = `- [ ] タスク\n  @schedule: 2026-04-01T10:00/12:00\n  @priority: 2`
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-01T10:00/12:00\n  - @priority: 2`
     const { sections } = parseMarkdown(md)
     const node = sections[0].children[0] as TaskNode
 
@@ -120,6 +120,77 @@ describe('parseMarkdown', () => {
     expect(sections[0].subSections[0].parentSectionId).toBe(sections[0].id)
   })
 
+  it('parses > blockquote as child comment of a task', () => {
+    const md = `- [ ] タスク\n  > コメント行1\n  > コメント行2\n`
+    const { sections } = parseMarkdown(md)
+    const task = sections[0].children[0] as TaskNode
+
+    expect(task.type).toBe('task')
+    expect(task.children).toHaveLength(1)
+    const quote = task.children[0] as QuoteNode
+    expect(quote.type).toBe('quote')
+    expect(quote.raw).toBe('コメント行1\nコメント行2')
+    expect(quote.isMemo).toBe(true)
+  })
+
+  it('parses both > and - as comments alongside @meta', () => {
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-01T10:00/12:00\n  > blockquoteコメント\n  - listコメント\n`
+    const { sections } = parseMarkdown(md)
+    const task = sections[0].children[0] as TaskNode
+
+    expect(task.meta?.schedule).toBe('2026-04-01T10:00/12:00')
+    // 2 comment children: QuoteNode and ListNode(isMemo)
+    expect(task.children).toHaveLength(2)
+    const quote = task.children[0] as QuoteNode
+    expect(quote.type).toBe('quote')
+    const listMemo = task.children[1] as ListNode
+    expect(listMemo.type).toBe('list')
+    expect(listMemo.isMemo).toBe(true)
+  })
+
+  it('attaches lineNumber to nodes (absolute 0-based)', () => {
+    const md = `# セクション\n\n- [ ] タスクA\n  - @schedule: 2026-04-01T10:00/12:00\n- リストB\n`
+    //           line0             line1(empty)  line2           line3                  line4
+    const doc = parseMarkdown(md)
+    const section = doc.sections[0]
+    expect(section.lineNumber).toBe(0)  // "# セクション" is line 0
+
+    const taskA = section.children[0] as TaskNode
+    expect(taskA.lineNumber).toBe(2)    // "- [ ] タスクA" is line 2
+
+    const listB = section.children[1] as TaskNode
+    expect((listB as unknown as { lineNumber: number }).lineNumber).toBe(4)  // "- リストB" is line 4
+  })
+
+  it('attaches lineNumber to QuoteNode', () => {
+    const md = `- [ ] タスク\n  > コメント\n`
+    //           line0            line1
+    const doc = parseMarkdown(md)
+    const task = doc.sections[0].children[0] as TaskNode
+    expect(task.lineNumber).toBe(0)
+    const quote = task.children[0]
+    expect(quote.lineNumber).toBe(1)
+  })
+
+  it('builds nodeLineMap covering all nodes and named sections', () => {
+    const md = `# セクション\n\n- [ ] タスク\n`
+    //           line0             line1(empty)  line2
+    const doc = parseMarkdown(md)
+    const section = doc.sections[0]
+    const task = section.children[0] as TaskNode
+
+    expect(doc.nodeLineMap.get(section.id)).toBe(0)
+    expect(doc.nodeLineMap.get(task.id)).toBe(2)
+  })
+
+  it('anonymous section has lineNumber -1 and is not in nodeLineMap', () => {
+    const md = `- [ ] タスク\n`
+    const doc = parseMarkdown(md)
+    const section = doc.sections[0]
+    expect(section.lineNumber).toBe(-1)
+    expect(doc.nodeLineMap.has(section.id)).toBe(false)
+  })
+
   it('generates unique IDs for siblings with same text', () => {
     const md = `- [ ] タスク\n- [ ] タスク`
     const { sections } = parseMarkdown(md)
@@ -134,7 +205,7 @@ describe('parseMarkdown', () => {
 
 - 企画
   - [x] 要件整理
-    @schedule: 2026-04-01T10:00/2026-04-01T12:00
+    - @schedule: 2026-04-01T10:00/2026-04-01T12:00
     - [x] 機能洗い出し
   - メモ
     - MVP重視

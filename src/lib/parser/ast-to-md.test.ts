@@ -76,8 +76,8 @@ describe('serializeAst', () => {
       }],
     }
     const md = serializeAst(doc)
-    expect(md).toContain('@schedule: 2026-04-01T10:00/12:00')
-    expect(md).toContain('@priority: 1')
+    expect(md).toContain('- @schedule: 2026-04-01T10:00/12:00')
+    expect(md).toContain('- @priority: 1')
   })
 
   it('serializes nested tasks with correct indentation', () => {
@@ -107,7 +107,7 @@ describe('serializeAst', () => {
 
 - 企画
   - [x] 要件整理
-    @schedule: 2026-04-01T10:00/2026-04-01T12:00
+    - @schedule: 2026-04-01T10:00/2026-04-01T12:00
     - [x] 機能洗い出し
   - メモ
     - MVP重視
@@ -123,7 +123,7 @@ describe('serializeAst', () => {
     expect(result).toContain('# Webアプリ開発')
     expect(result).toContain('- 企画')
     expect(result).toContain('  - [x] 要件整理')
-    expect(result).toContain('    @schedule: 2026-04-01T10:00/2026-04-01T12:00')
+    expect(result).toContain('    - @schedule: 2026-04-01T10:00/2026-04-01T12:00')
     expect(result).toContain('    - [x] 機能洗い出し')
     expect(result).toContain('  - メモ')
     expect(result).toContain('    - MVP重視')

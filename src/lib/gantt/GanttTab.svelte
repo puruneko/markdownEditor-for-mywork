@@ -2,7 +2,7 @@
   import { GanttChart, getTickDefinitionForScale } from 'svelte-gantt-lib'
   import type { GanttNode, GanttEventHandlers, GanttConfig } from 'svelte-gantt-lib'
   import { extractGanttNodes } from './ast-to-gantt'
-  import { findNodeById, patchSchedule, formatSchedule } from '../calendar/markdown-patch'
+  import { findNodeById, patchScheduleForNode, formatSchedule } from '../calendar/markdown-patch'
   import type { Document } from '../parser/types'
 
   interface Props {
@@ -11,9 +11,11 @@
     /** Parsed AST — used for GanttNode extraction and node lookup */
     doc: Document
     onMdChange: (newMd: string) => void
+    /** バークリック時にノードIDを通知するコールバック。エディタカーソル移動に使用。 */
+    onNodeClick?: (nodeId: string) => void
   }
 
-  let { mdValue, doc, onMdChange }: Props = $props()
+  let { mdValue, doc, onMdChange, onNodeClick }: Props = $props()
 
   // Derive GanttNode[] from AST every time doc changes
   let ganttNodes: GanttNode[] = $derived(extractGanttNodes(doc))
@@ -41,12 +43,18 @@
   // ----------------------------------------------------------------
 
   const handlers: GanttEventHandlers = {
-    onBarDrag(nodeId, newStart, newEnd) {
+    onBarDrag(_nodeId, _newStart, _newEnd) {
+      // ドラッグ中は markdown を更新しない。ライブラリが視覚プレビューを管理する。
+    },
+    onBarDragEnd(nodeId, finalStart, finalEnd) {
       const node = findNodeById(doc, nodeId)
       if (!node || !node.meta?.schedule) return
-      const newSchedule = formatSchedule(newStart, newEnd)
+      const newSchedule = formatSchedule(finalStart, finalEnd)
       if (newSchedule === node.meta.schedule) return
-      onMdChange(patchSchedule(mdValue, node.meta.schedule, newSchedule))
+      onMdChange(patchScheduleForNode(mdValue, node, newSchedule))
+    },
+    onBarClick(ganttNode) {
+      onNodeClick?.(ganttNode.id)
     },
     onZoomChange(scale) {
       ganttConfig = {

@@ -16,6 +16,7 @@ export type TaskNode = {
   children: Node[]
   parentId?: string
   meta?: Meta
+  lineNumber: number         // 0-based absolute line index in source markdown
   // Derived
   hasTaskDescendant: boolean // true if any descendant is a task (self excluded)
   isGroup: boolean           // hasTaskDescendant && children.length > 0
@@ -32,6 +33,7 @@ export type ListNode = {
   children: Node[]
   parentId?: string
   meta?: Meta
+  lineNumber: number         // 0-based absolute line index in source markdown
   // Derived
   hasTaskDescendant: boolean
   isGroup: boolean
@@ -45,6 +47,7 @@ export type QuoteNode = {
   id: string
   raw: string
   parentId?: string
+  lineNumber: number         // 0-based absolute line index of first quote line
   hasTaskDescendant: false
   isGroup: false
   isMemo: true
@@ -57,6 +60,7 @@ export type Section = {
   id: string
   depth: number
   title: string
+  lineNumber: number         // 0-based absolute line index of heading; -1 for anonymous section
   parentSectionId?: string
   children: Node[]
   subSections: Section[]
@@ -65,4 +69,6 @@ export type Section = {
 export type Document = {
   type: 'document'
   sections: Section[]
+  /** nodeId / sectionId → 0-based absolute line index。クリック→エディタカーソル移動に使用。 */
+  nodeLineMap: Map<string, number>
 }

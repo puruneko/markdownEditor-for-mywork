@@ -4,7 +4,7 @@
   import type { CalendarItem } from 'svelte-calendar-lib'
   import { DateTime } from 'luxon'
   import { extractCalendarItems } from './ast-to-calendar'
-  import { findNodeById, patchSchedule, patchTaskTitle, formatSchedule } from './markdown-patch'
+  import { findNodeById, patchScheduleForNode, patchTaskTitle, formatSchedule } from './markdown-patch'
   import type { Document } from '../parser/types'
 
   interface Props {
@@ -13,9 +13,11 @@
     /** Parsed AST — used for CalendarItem extraction and node lookup */
     doc: Document
     onMdChange: (newMd: string) => void
+    /** アイテムクリック時にノードIDを通知するコールバック。エディタカーソル移動に使用。 */
+    onNodeClick?: (nodeId: string) => void
   }
 
-  let { mdValue, doc, onMdChange }: Props = $props()
+  let { mdValue, doc, onMdChange, onNodeClick }: Props = $props()
 
   const storage = new CalendarStorage(new LocalStorageBackend())
 
@@ -28,21 +30,31 @@
 
   function handleItemMove(item: CalendarItem, newStart: DateTime, newEnd: DateTime) {
     if (item.temporal.kind !== 'CalendarDateTimeRange') return
-    const oldSchedule = formatSchedule(item.temporal.start, item.temporal.end)
+    const node = findNodeById(doc, item.id)
+    if (!node) return
     const newSchedule = formatSchedule(newStart, newEnd)
-    onMdChange(patchSchedule(mdValue, oldSchedule, newSchedule))
+    onMdChange(patchScheduleForNode(mdValue, node, newSchedule))
   }
 
-  function handleItemResize(item: CalendarItem, newStart: DateTime, newEnd: DateTime) {
+  function handleItemResize(_item: CalendarItem, _newStart: DateTime, _newEnd: DateTime) {
+    // ドラッグ中は markdown を更新しない。ライブラリが視覚プレビューを管理する。
+  }
+
+  function handleItemResizeEnd(item: CalendarItem, finalStart: DateTime, finalEnd: DateTime) {
     if (item.temporal.kind !== 'CalendarDateTimeRange') return
-    const oldSchedule = formatSchedule(item.temporal.start, item.temporal.end)
-    const newSchedule = formatSchedule(newStart, newEnd)
-    onMdChange(patchSchedule(mdValue, oldSchedule, newSchedule))
+    const node = findNodeById(doc, item.id)
+    if (!node) return
+    const newSchedule = formatSchedule(finalStart, finalEnd)
+    onMdChange(patchScheduleForNode(mdValue, node, newSchedule))
   }
 
   // ----------------------------------------------------------------
   // #0018: edit dialog save → patch title and/or @schedule line only
   // ----------------------------------------------------------------
+
+  function handleItemClick(item: CalendarItem) {
+    onNodeClick?.(item.id)
+  }
 
   function handleItemUpdate(item: CalendarItem) {
     const oldNode = findNodeById(doc, item.id)
@@ -62,7 +74,7 @@
     ) {
       const newSchedule = formatSchedule(item.temporal.start, item.temporal.end)
       if (newSchedule !== oldNode.meta.schedule) {
-        newMd = patchSchedule(newMd, oldNode.meta.schedule, newSchedule)
+        newMd = patchScheduleForNode(newMd, oldNode, newSchedule)
       }
     }
 
@@ -74,8 +86,10 @@
   <CalendarView
     items={calendarItems}
     {storage}
+    onItemClick={handleItemClick}
     onItemMove={handleItemMove}
     onItemResize={handleItemResize}
+    onItemResizeEnd={handleItemResizeEnd}
     onItemUpdate={handleItemUpdate}
   />
 </div>
