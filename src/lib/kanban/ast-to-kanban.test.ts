@@ -116,19 +116,31 @@ describe('DEFAULT_KANBAN_CONFIG', () => {
 })
 
 describe('createKanbanConfig', () => {
-  it('groupBy: sectionTitle を設定する', () => {
+  it('groupBy: groupTitle を設定する', () => {
     const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
     const config = createKanbanConfig(cards)
-    expect(config.groupBy).toBe('sectionTitle')
+    expect(config.groupBy).toBe('groupTitle')
   })
 
-  it('カードのsectionTitleからグループを生成する', () => {
+  it('直接セクション配下のタスクはsectionTitleをgroupTitleとして使用する', () => {
     const md = '# セクションA\n\n- [ ] タスク1\n\n# セクションB\n\n- [x] タスク2'
     const cards = extractKanbanCards(parseMarkdown(md))
     const config = createKanbanConfig(cards)
     const groupIds = (config.groups ?? []).map(g => g.id)
     expect(groupIds).toContain('セクションA')
     expect(groupIds).toContain('セクションB')
+  })
+
+  it('ListNode配下のタスクはListNodeのテキストをgroupTitleとして使用する', () => {
+    const md = '# S\n\n- グループA\n  - [ ] T1\n  - [ ] T2\n- グループB\n  - [ ] T3'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards.find(c => c.title === 'T1')?.groupTitle).toBe('グループA')
+    expect(cards.find(c => c.title === 'T2')?.groupTitle).toBe('グループA')
+    expect(cards.find(c => c.title === 'T3')?.groupTitle).toBe('グループB')
+    const config = createKanbanConfig(cards)
+    const groupIds = (config.groups ?? []).map(g => g.id)
+    expect(groupIds).toContain('グループA')
+    expect(groupIds).toContain('グループB')
   })
 
   it('グループはカード出現順に並ぶ', () => {
@@ -139,7 +151,7 @@ describe('createKanbanConfig', () => {
     expect(ids).toEqual(['A', 'B', 'C'])
   })
 
-  it('重複するsectionTitleは1グループにまとまる', () => {
+  it('同じgroupTitleのタスクは1グループにまとまる', () => {
     const md = '# S\n\n- [ ] a\n- [ ] b'
     const cards = extractKanbanCards(parseMarkdown(md))
     const config = createKanbanConfig(cards)

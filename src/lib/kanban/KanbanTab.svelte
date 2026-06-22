@@ -60,7 +60,20 @@
     class="kanban-card-inner"
     role="button"
     tabindex="0"
-    onclick={() => onNodeClick?.(card.id)}
+    onpointerdown={(e) => {
+      // KanbanCard calls e.preventDefault() on pointerdown (for DnD), which suppresses
+      // the click event. Work around by tracking movement via window pointerup capture.
+      const startX = e.clientX
+      const startY = e.clientY
+      const id = card.id
+      const handleUp = (evt: PointerEvent): void => {
+        window.removeEventListener('pointerup', handleUp, true)
+        const dx = evt.clientX - startX
+        const dy = evt.clientY - startY
+        if (dx * dx + dy * dy < 64) onNodeClick?.(id)  // < 8px = click
+      }
+      window.addEventListener('pointerup', handleUp, { capture: true, once: true })
+    }}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNodeClick?.(card.id) }}
   >
     <div class="card-title">{c.title}</div>

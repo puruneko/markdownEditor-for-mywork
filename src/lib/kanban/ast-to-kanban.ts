@@ -10,6 +10,7 @@ export type KanbanCard = CardData & {
   title: string
   status: string        // 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
   sectionTitle: string
+  groupTitle: string    // parent list node text, or sectionTitle if directly in section
   depth: number
   schedule?: string
   due?: string
@@ -69,6 +70,7 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
     options: ['todo', 'doing', 'done', 'blocked', 'hold'],
   },
   { key: 'sectionTitle', label: 'セクション', type: 'string' },
+  { key: 'groupTitle', label: 'グループ', type: 'string' },
   { key: 'priority', label: '優先度', type: 'number' },
   { key: 'due', label: '期限', type: 'date' },
   { key: 'schedule', label: 'スケジュール', type: 'string' },
@@ -79,12 +81,13 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
 // Node traversal — builds flat KanbanCard[] from Document AST
 // ----------------------------------------------------------------
 
-function taskToCard(node: TaskNode, sectionTitle: string): KanbanCard {
+function taskToCard(node: TaskNode, sectionTitle: string, groupTitle: string): KanbanCard {
   const card: KanbanCard = {
     id: node.id,
     title: node.text,
     status: node.status,
     sectionTitle,
+    groupTitle,
     depth: node.depth,
   }
   if (node.meta?.schedule !== undefined) card.schedule = node.meta.schedule
@@ -94,24 +97,26 @@ function taskToCard(node: TaskNode, sectionTitle: string): KanbanCard {
   return card
 }
 
-function extractFromNodes(nodes: Node[], sectionTitle: string, result: KanbanCard[]): void {
+function extractFromNodes(nodes: Node[], sectionTitle: string, groupTitle: string, result: KanbanCard[]): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
     if (node.type === 'task') {
-      result.push(taskToCard(node, sectionTitle))
+      result.push(taskToCard(node, sectionTitle, groupTitle))
       if (node.children.length > 0) {
-        extractFromNodes(node.children, sectionTitle, result)
+        extractFromNodes(node.children, sectionTitle, groupTitle, result)
       }
     } else if (node.type === 'list') {
       if (node.children.length > 0) {
-        extractFromNodes(node.children, sectionTitle, result)
+        // Use the list node's text as the group for its children,
+        // so adjacent tasks under different list nodes appear as separate blocks.
+        extractFromNodes(node.children, sectionTitle, node.text, result)
       }
     }
   }
 }
 
 function extractFromSection(section: Section, result: KanbanCard[]): void {
-  extractFromNodes(section.children, section.title, result)
+  extractFromNodes(section.children, section.title, section.title, result)
   for (const sub of section.subSections) {
     extractFromSection(sub, result)
   }
@@ -138,11 +143,11 @@ export function createKanbanConfig(cards: KanbanCard[]): KanbanBoardConfig {
   const groups: GroupDefinition[] = []
 
   for (const card of cards) {
-    if (!seen.has(card.sectionTitle)) {
-      seen.add(card.sectionTitle)
+    if (!seen.has(card.groupTitle)) {
+      seen.add(card.groupTitle)
       groups.push({
-        id: card.sectionTitle,
-        label: card.sectionTitle || '（未分類）',
+        id: card.groupTitle,
+        label: card.groupTitle || '（未分類）',
         order: groups.length,
       })
     }
@@ -150,7 +155,7 @@ export function createKanbanConfig(cards: KanbanCard[]): KanbanBoardConfig {
 
   return {
     ...DEFAULT_KANBAN_CONFIG,
-    groupBy: 'sectionTitle',
+    groupBy: 'groupTitle',
     groups,
   }
 }

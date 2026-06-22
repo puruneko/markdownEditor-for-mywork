@@ -4,9 +4,31 @@ import builtins from 'builtin-modules'
 import esbuildSvelte from 'esbuild-svelte'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { copyFile } from 'fs/promises'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const prod = process.argv[2] === 'production'
+
+const OBSIDIAN_PLUGIN_DIR =
+  '/mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor'
+
+const obsidianCopyPlugin = {
+  name: 'obsidian-copy',
+  setup(build) {
+    build.onEnd(async (result) => {
+      if (result.errors.length > 0) return
+      try {
+        await Promise.all([
+          copyFile('main.js', `${OBSIDIAN_PLUGIN_DIR}/main.js`),
+          copyFile('manifest.json', `${OBSIDIAN_PLUGIN_DIR}/manifest.json`),
+        ])
+        console.log('[obsidian-copy] コピー完了')
+      } catch (e) {
+        console.error('[obsidian-copy] コピー失敗:', e.message)
+      }
+    })
+  },
+}
 
 import { createRequire } from 'module'
 import { readFile } from 'fs/promises'
@@ -134,6 +156,7 @@ const context = await esbuild.context({
         // use 'export let' syntax. Svelte 5 auto-detects runes per file.
       },
     }),
+    ...(prod ? [] : [obsidianCopyPlugin]),
   ],
   format: 'cjs',
   target: 'es2018',
