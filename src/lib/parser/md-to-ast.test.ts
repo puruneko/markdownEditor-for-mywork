@@ -408,4 +408,62 @@ describe('parseMarkdown', () => {
     expect(node.meta?.schedule).toBe('2026-06-27T08:00/2026-06-27T12:00')
     expect(node.meta?.due).toBe('2026-06-27')
   })
+
+  // ---- fundamental parser: indent-relative sibling detection ----
+
+  it('recognizes top-level tasks even when indented with tab (no parent)', () => {
+    // Simulates user pressing Tab before the first item in a section in Obsidian.
+    // The item is at indent=4 but there is no containing parent list.
+    const md = '\t- [ ] タスク'
+    const { sections } = parseMarkdown(md)
+    expect(sections[0].children).toHaveLength(1)
+    const task = sections[0].children[0] as TaskNode
+    expect(task.type).toBe('task')
+    expect(task.text).toBe('タスク')
+  })
+
+  it('recognizes multiple top-level tasks all at tab indent', () => {
+    const md = '\t- [ ] T1\n\t- [ ] T2\n\t- [ ] T3'
+    const { sections } = parseMarkdown(md)
+    const tasks = sections[0].children as TaskNode[]
+    expect(tasks).toHaveLength(3)
+    expect(tasks.map(t => t.text)).toEqual(['T1', 'T2', 'T3'])
+  })
+
+  it('re-injects tasks that landed under a @meta line due to mixed indent', () => {
+    // Scenario: serializer wrote T1 with 2-space indent, user added T2 via
+    // Obsidian Tab (→4sp). T2's indent(4) > @due(2), so naive parsing would
+    // bury T2 inside @due. The fundamental parser re-injects it as T1's child.
+    const md = [
+      '- [ ] T1',
+      '  - @due: 2026-06-01',    // 2sp from serializer
+      '\t- [ ] T2',              // 1 tab (4sp) from Obsidian
+      '\t  - @due: 2026-06-02',  // 1 tab + 2sp (6sp)
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const t1 = sections[0].children[0] as TaskNode
+    expect(t1.meta?.due).toBe('2026-06-01')
+    // T2 should be T1's child (not buried inside @due)
+    expect(t1.children).toHaveLength(1)
+    const t2 = t1.children[0] as TaskNode
+    expect(t2.type).toBe('task')
+    expect(t2.text).toBe('T2')
+    expect(t2.meta?.due).toBe('2026-06-02')
+  })
+
+  it('re-injects when multiple siblings have @meta at different indent widths', () => {
+    // T1 and T2 are siblings at indent=0.
+    // T1's @meta is at 2sp, T2's @meta is at 4sp.
+    // A 3rd sibling T3 is added via Tab (4sp) — it gets re-injected under T2.
+    const md = [
+      '- [ ] T1',
+      '  - @due: 2026-06-01',
+      '- [ ] T2',
+      '    - @due: 2026-06-02',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const [t1, t2] = sections[0].children as TaskNode[]
+    expect(t1.meta?.due).toBe('2026-06-01')
+    expect(t2.meta?.due).toBe('2026-06-02')
+  })
 })

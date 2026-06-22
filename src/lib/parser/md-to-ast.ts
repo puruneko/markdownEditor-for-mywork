@@ -11,18 +11,11 @@ interface RawLine {
   lineIndex: number  // 0-based absolute line index in original markdown
 }
 
-// Obsidian (CodeMirror 6) inserts real tab characters when Tab is pressed,
-// regardless of the visual "Tab size" setting. We expand tabs using a fixed
-// width of 4 (Obsidian's default) so nesting levels are always detected
-// correctly. The parser only needs childIndent > parentIndent, so even if the
-// user changes Obsidian's visual tab width, the indent ordering stays valid.
+// Obsidian (CodeMirror 6) inserts real tab characters when Tab is pressed.
+// Expand leading tabs using tab-stop semantics so indent comparisons work
+// regardless of the user's visual "Tab size" setting.
 const TAB_WIDTH = 4
 
-/**
- * Expand leading tabs (and any interleaved spaces) to spaces using tab-stop
- * semantics. Only the leading whitespace region is touched; the rest of the
- * line is returned verbatim.
- */
 function expandLeadingTabs(line: string): string {
   let col = 0
   let i = 0
@@ -109,12 +102,35 @@ function computeHasTaskDescendant(children: Node[]): boolean {
 // Node parser
 // ----------------------------------------------------------------
 
+/**
+ * Parse a flat list of RawLines into a Node tree.
+ *
+ * Design principles:
+ * - No `baseIndent` parameter. Instead the sibling-level indent is derived
+ *   from the minimum indent in `rawLines`. This makes the parser
+ *   indent-relative rather than indent-absolute, so it handles any
+ *   consistent indent width (2sp, 4sp, 8sp, tabs) without special-casing,
+ *   and also tolerates files where indent widths are mixed (e.g. serializer
+ *   output uses 2sp while Obsidian's Tab key produces 4sp-equivalent).
+ *
+ * - @meta items that "captured" children due to mixed indentation are still
+ *   extracted as metadata; their captured children are re-injected into the
+ *   containing node's children list.
+ */
 function parseNodes(
   rawLines: RawLine[],
-  baseIndent: number,
   depth: number,
   parentPath: string[],
 ): Node[] {
+  if (rawLines.length === 0) return []
+
+  // Determine sibling indent: the minimum indent present in rawLines.
+  // All lines at this indent are siblings; lines more indented are children.
+  let siblingIndent = rawLines[0].indent
+  for (const l of rawLines) {
+    if (l.indent < siblingIndent) siblingIndent = l.indent
+  }
+
   const nodes: Node[] = []
   let i = 0
   let siblingIndex = 0
@@ -122,8 +138,10 @@ function parseNodes(
   while (i < rawLines.length) {
     const line = rawLines[i]
 
-    // Skip lines not at this exact indent level (should not happen in normal input)
-    if (line.indent !== baseIndent) {
+    // Lines at a deeper indent than siblingIndent were already consumed as
+    // children of the preceding sibling. If any remain here it means they
+    // had no parent sibling to attach to — skip them gracefully.
+    if (line.indent !== siblingIndent) {
       i++
       continue
     }
@@ -134,7 +152,10 @@ function parseNodes(
     if (content.startsWith('>')) {
       const firstLineIndex = line.lineIndex
       const rawParts: string[] = []
-      while (i < rawLines.length && rawLines[i].content.startsWith('>')) {
+      // Only collect consecutive '>' lines at the SAME indent level.
+      // Lines at a different indent are either a separate blockquote
+      // (deeper, child context) or a sibling at a different level.
+      while (i < rawLines.length && rawLines[i].indent === siblingIndent && rawLines[i].content.startsWith('>')) {
         rawParts.push(rawLines[i].content.replace(/^>\s?/, ''))
         i++
       }
@@ -174,30 +195,35 @@ function parseNodes(
 
       i++
 
-      // Collect all child lines (sub-list @meta items and comments are included).
+      // Collect all child lines: every line more indented than siblingIndent
+      // up to (but not including) the next sibling.
       const childLines: RawLine[] = []
-
-      while (i < rawLines.length && rawLines[i].indent > baseIndent) {
+      while (i < rawLines.length && rawLines[i].indent > siblingIndent) {
         childLines.push(rawLines[i])
         i++
       }
 
-      // Detect child indent level from the first child line instead of assuming
-      // baseIndent + 2. This allows any indent width >= 2 (e.g. 2, 4, 8 spaces).
-      const childBaseIndent = childLines.length > 0 ? childLines[0].indent : baseIndent + 2
-
       const nodePath = [...parentPath, `${text.trim()}[${siblingIndex}]`]
-      const rawChildren = parseNodes(childLines, childBaseIndent, depth + 1, nodePath)
+      const rawChildren = parseNodes(childLines, depth + 1, nodePath)
 
-      // Extract @meta items: list items matching "- @key: value" with no own children
-      // are pulled out as structured metadata and removed from the children array.
+      // Extract @meta items from children.
+      //
+      // Normally an @meta item is a leaf list node matching "- @key: value".
+      // However, in files with mixed indentation (e.g. 2-space serializer
+      // output + Obsidian Tab input), sibling tasks can end up indented
+      // under an @meta line. We still extract the @meta value and re-inject
+      // those accidentally-nested children back into this node's children.
       const meta: Partial<Meta> = {}
       const children: Node[] = []
       for (const child of rawChildren) {
-        if (child.type === 'list' && child.children.length === 0) {
+        if (child.type === 'list') {
           const metaMatch = child.text.match(/^@(\w+):\s*(.*)$/)
           if (metaMatch) {
             parseMeta(meta, metaMatch[1], metaMatch[2])
+            // Re-inject any children the @meta item captured due to mixed indent
+            if (child.children.length > 0) {
+              children.push(...child.children)
+            }
             continue
           }
         }
@@ -269,7 +295,7 @@ function parseSections(lines: RawLine[]): Section[] {
 
   if (headings.length === 0) {
     // No headings → single anonymous section
-    const children = parseNodes(lines, 0, 1, [])
+    const children = parseNodes(lines, 1, [])
     flatSections.push({
       type: 'section',
       id: 'section-0',
@@ -285,7 +311,7 @@ function parseSections(lines: RawLine[]): Section[] {
   // Content before first heading (if any)
   if (headings[0].pos > 0) {
     const preLines = lines.slice(0, headings[0].pos)
-    const children = parseNodes(preLines, 0, 1, [])
+    const children = parseNodes(preLines, 1, [])
     flatSections.push({
       type: 'section',
       id: 'section-0',
@@ -300,7 +326,7 @@ function parseSections(lines: RawLine[]): Section[] {
   headings.forEach((heading, hi) => {
     const nextPos = hi + 1 < headings.length ? headings[hi + 1].pos : lines.length
     const contentLines = lines.slice(heading.pos + 1, nextPos)
-    const children = parseNodes(contentLines, 0, 1, [heading.title])
+    const children = parseNodes(contentLines, 1, [heading.title])
     flatSections.push({
       type: 'section',
       id: `section-${hi + 1}`,

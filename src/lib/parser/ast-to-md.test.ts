@@ -80,12 +80,13 @@ describe('serializeAst', () => {
     expect(md).toContain('- @priority: 1')
   })
 
-  it('serializes nested tasks with correct indentation', () => {
+  it('serializes nested tasks with tab indentation', () => {
     const md = `- [ ] 親\n  - [x] 子`
     const doc = parseMarkdown(md)
     const result = serializeAst(doc)
     expect(result).toContain('- [ ] 親')
-    expect(result).toContain('  - [x] 子')
+    // Serializer outputs tabs (matching Obsidian's native Tab-key behavior)
+    expect(result).toContain('\t- [x] 子')
   })
 
   it('serializes blockquote', () => {
@@ -119,17 +120,17 @@ describe('serializeAst', () => {
 `
     const doc = parseMarkdown(original)
     const result = serializeAst(doc)
-    // Key structural elements must be preserved
+    // Key structural elements must be preserved (serializer uses tabs)
     expect(result).toContain('# Webアプリ開発')
     expect(result).toContain('- 企画')
-    expect(result).toContain('  - [x] 要件整理')
-    expect(result).toContain('    - @schedule: 2026-04-01T10:00/2026-04-01T12:00')
-    expect(result).toContain('    - [x] 機能洗い出し')
-    expect(result).toContain('  - メモ')
-    expect(result).toContain('    - MVP重視')
+    expect(result).toContain('\t- [x] 要件整理')
+    expect(result).toContain('\t\t- @schedule: 2026-04-01T10:00/2026-04-01T12:00')
+    expect(result).toContain('\t\t- [x] 機能洗い出し')
+    expect(result).toContain('\t- メモ')
+    expect(result).toContain('\t\t- MVP重視')
     expect(result).toContain('- 設計')
-    expect(result).toContain('  - [ ] 画面設計')
-    expect(result).toContain('    - [ ] ワイヤー作成')
-    expect(result).toContain('    - [ ] UIレビュー')
+    expect(result).toContain('\t- [ ] 画面設計')
+    expect(result).toContain('\t\t- [ ] ワイヤー作成')
+    expect(result).toContain('\t\t- [ ] UIレビュー')
   })
 })

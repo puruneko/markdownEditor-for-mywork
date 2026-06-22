@@ -32,8 +32,15 @@ function serializeMeta(meta: Meta): string[] {
 // Node serialization
 // ----------------------------------------------------------------
 
-function serializeNode(node: Node, indent: number): string[] {
-  const pad = ' '.repeat(indent)
+/**
+ * Serialize a node at a given nesting level using tab-based indentation.
+ * Using tabs matches Obsidian's native Tab-key behavior, so files written
+ * by this serializer and files edited in Obsidian share the same indent
+ * character, preventing mixed-indent issues in the parser.
+ */
+function serializeNode(node: Node, level: number): string[] {
+  const pad = '\t'.repeat(level)
+  const childPad = '\t'.repeat(level + 1)
   const lines: string[] = []
 
   if (node.type === 'quote') {
@@ -44,18 +51,18 @@ function serializeNode(node: Node, indent: number): string[] {
   if (node.type === 'task') {
     lines.push(`${pad}- ${statusToMarker(node.status)} ${node.text}`)
     if (node.meta) {
-      serializeMeta(node.meta).forEach(ml => lines.push(`${pad}  ${ml}`))
+      serializeMeta(node.meta).forEach(ml => lines.push(`${childPad}${ml}`))
     }
-    node.children.forEach(child => lines.push(...serializeNode(child, indent + 2)))
+    node.children.forEach(child => lines.push(...serializeNode(child, level + 1)))
     return lines
   }
 
   if (node.type === 'list') {
     lines.push(`${pad}- ${node.text}`)
     if (node.meta) {
-      serializeMeta(node.meta).forEach(ml => lines.push(`${pad}  ${ml}`))
+      serializeMeta(node.meta).forEach(ml => lines.push(`${childPad}${ml}`))
     }
-    node.children.forEach(child => lines.push(...serializeNode(child, indent + 2)))
+    node.children.forEach(child => lines.push(...serializeNode(child, level + 1)))
     return lines
   }
 
