@@ -1,78 +1,26 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
-import type { TFile } from 'obsidian'
-import { mount, unmount } from 'svelte'
+import { WorkspaceLeaf } from 'obsidian'
+import type { Component } from 'svelte'
 import KanbanViewMount from './KanbanViewMount.svelte'
 import type { FileSync } from '../sync/file-sync'
 import type { EditorEventBus } from '../sync/editor-event-bus'
-import type { Document } from '../lib/parser/types'
+import { ShadowItemView } from './ShadowItemView'
+import type { ViewMountProps } from './ShadowItemView'
 
 export const KANBAN_VIEW_TYPE = 'md-ast-editor-kanban-view'
 
-const EMPTY_DOC: Document = { type: 'document', sections: [], nodeLineMap: new Map() }
-
-export class KanbanView extends ItemView {
-  private fileSync: FileSync
-  private editorEventBus: EditorEventBus
-  private component: Record<string, unknown> | null = null
-  private updater: ((md: string, doc: Document) => void) | null = null
-  private onChange: (doc: Document, file: TFile) => void
-
+export class KanbanView extends ShadowItemView {
   constructor(leaf: WorkspaceLeaf, fileSync: FileSync, editorEventBus: EditorEventBus) {
-    super(leaf)
-    this.fileSync = fileSync
-    this.editorEventBus = editorEventBus
-    this.onChange = (doc) => {
-      const md = this.fileSync.getCurrentMarkdown() ?? ''
-      if (this.updater) this.updater(md, doc)
-    }
+    super(leaf, fileSync, editorEventBus)
   }
 
   getViewType(): string { return KANBAN_VIEW_TYPE }
   getDisplayText(): string { return 'Kanban View' }
   getIcon(): string { return 'layout-grid' }
 
-  async onOpen(): Promise<void> {
-    const container = this.containerEl.children[1] as HTMLElement
-    container.empty()
-    container.addClass('kanban-view')
+  protected getViewClass(): string { return 'kanban-view' }
 
-    const initialMd = this.fileSync.getCurrentMarkdown() ?? ''
-    const initialDoc = this.fileSync.getCurrentDocument() ?? EMPTY_DOC
-
-    const onNodeClick = (nodeId: string): void => {
-      const doc = this.fileSync.getCurrentDocument()
-      if (!doc) return
-      const lineNumber = doc.nodeLineMap.get(nodeId)
-      if (lineNumber !== undefined) this.editorEventBus.requestFocusLine(lineNumber)
-    }
-
-    this.component = mount(KanbanViewMount, {
-      target: container,
-      props: {
-        initialMd,
-        initialDoc,
-        onMdChange: (newMd: string) => void this.handleMdChange(newMd),
-        registerUpdater: (fn: (md: string, doc: Document) => void) => {
-          this.updater = fn
-        },
-        onNodeClick,
-      },
-    })
-
-    this.fileSync.subscribe(this.onChange)
-  }
-
-  async onClose(): Promise<void> {
-    this.fileSync.unsubscribe(this.onChange)
-    if (this.component) {
-      unmount(this.component)
-      this.component = null
-    }
-  }
-
-  private async handleMdChange(newMd: string): Promise<void> {
-    const file = this.fileSync.getCurrentFile()
-    if (!file) return
-    await this.app.vault.modify(file, newMd)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected getMountComponent(): Component<ViewMountProps, any, any> {
+    return KanbanViewMount
   }
 }

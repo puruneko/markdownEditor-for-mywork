@@ -1,5 +1,8 @@
 node_modules
 dist
+# Windows Zone.Identifier (NTFS alternate data streams)
+*:Zone.Identifier
+*Zone.Identifier
 .svelte-kit
 build
 .DS_Store

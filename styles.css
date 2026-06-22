@@ -20,22 +20,24 @@
 }
 
 /* ------------------------------------------------------------
- * Kanban — テーマ統合
+ * Shadow DOM 分離（全サイドパネルビュー共通）
  *
- * KanbanTab.svelte 内の .kanban-tab で CSS カスタムプロパティを
- *   var(--obsidian-variable, dark-fallback)
- * 形式で設定している。Obsidianが :root / body に
- * --background-primary 等を定義するため、カスタムプロパティが
- * 自動的に正しいテーマ値に解決される。追加設定不要。
+ * ShadowItemView.ts が全ビューで Shadow Root を生成する。
+ * Svelte 5 の append_styles() は anchor.getRootNode() で
+ * Shadow Root を検出し、コンポーネント CSS を Shadow Root 内に
+ * 自動注入する。これにより Obsidian のグローバル CSS が
+ * ビュー内部に侵入しない。
+ *
+ * .view-shadow-host は各ビューの唯一の flex 子要素。
+ * min-height: 0 は flex 子の暗黙的 min-height: auto を
+ * 上書きするために必須（内部スクロールを有効にする）。
  * ------------------------------------------------------------ */
 
-/* svelte-dnd-action のドラッグゴーストをObsidianパネル内に収める */
-.kanban-view [data-is-dnd-shadow-item] {
-  opacity: 0.5;
-}
-
-/* Obsidianのグローバルリセットがカンバンのボタンスタイルを壊す場合の補正 */
-.kanban-view button {
-  font-family: inherit;
-  line-height: normal;
+.gantt-view .view-shadow-host,
+.calendar-view .view-shadow-host,
+.kanban-view .view-shadow-host {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
