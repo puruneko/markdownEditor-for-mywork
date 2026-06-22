@@ -149,8 +149,12 @@ function parseNodes(
         i++
       }
 
+      // Detect child indent level from the first child line instead of assuming
+      // baseIndent + 2. This allows any indent width >= 2 (e.g. 2, 4, 8 spaces).
+      const childBaseIndent = childLines.length > 0 ? childLines[0].indent : baseIndent + 2
+
       const nodePath = [...parentPath, `${text.trim()}[${siblingIndex}]`]
-      const rawChildren = parseNodes(childLines, baseIndent + 2, depth + 1, nodePath)
+      const rawChildren = parseNodes(childLines, childBaseIndent, depth + 1, nodePath)
 
       // Extract @meta items: list items matching "- @key: value" with no own children
       // are pulled out as structured metadata and removed from the children array.

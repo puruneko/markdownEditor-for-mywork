@@ -284,4 +284,64 @@ describe('parseMarkdown', () => {
     const node = sections[0].children[0] as TaskNode
     expect(node.meta?.due).toBe('2026-06-30')
   })
+
+  // ---- flexible indentation (obs-0028-related) ----
+
+  it('parses children indented with 4 spaces', () => {
+    const md = `- [ ] 親タスク\n    - [ ] 子タスク`
+    const { sections } = parseMarkdown(md)
+    const parent = sections[0].children[0] as TaskNode
+    expect(parent.isGroup).toBe(true)
+    expect(parent.children).toHaveLength(1)
+    expect((parent.children[0] as TaskNode).text).toBe('子タスク')
+  })
+
+  it('parses @meta indented with 4 spaces', () => {
+    const md = `- [ ] タスク\n    - @schedule: 2026-06-01T10:00/2026-06-01T11:00\n    - @due: 2026-06-01\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01T10:00/2026-06-01T11:00')
+    expect(node.meta?.due).toBe('2026-06-01')
+    expect(node.isLeafTask).toBe(true)
+  })
+
+  it('parses 3-level hierarchy with 4-space indent', () => {
+    const md = [
+      '- グループ',
+      '    - [ ] 親タスク',
+      '        - [ ] 子タスク',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const group = sections[0].children[0] as ListNode
+    expect(group.isGroup).toBe(true)
+    const parent = group.children[0] as TaskNode
+    expect(parent.text).toBe('親タスク')
+    expect(parent.isGroup).toBe(true)
+    const child = parent.children[0] as TaskNode
+    expect(child.text).toBe('子タスク')
+    expect(child.isLeafTask).toBe(true)
+  })
+
+  it('parses siblings independently of each other\'s child indent', () => {
+    // sibling A uses 2-space children, sibling B uses 4-space children
+    const md = [
+      '- [ ] タスクA',
+      '  - @due: 2026-06-01',
+      '- [ ] タスクB',
+      '    - @due: 2026-06-02',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const [a, b] = sections[0].children as TaskNode[]
+    expect(a.meta?.due).toBe('2026-06-01')
+    expect(b.meta?.due).toBe('2026-06-02')
+  })
+
+  it('parses blockquote child indented with 4 spaces', () => {
+    const md = `- [ ] タスク\n    > コメント\n`
+    const { sections } = parseMarkdown(md)
+    const task = sections[0].children[0] as TaskNode
+    expect(task.children).toHaveLength(1)
+    expect(task.children[0].type).toBe('quote')
+    expect((task.children[0] as QuoteNode).raw).toBe('コメント')
+  })
 })
