@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown } from './md-to-ast'
+import { parseMarkdown } from './parse-markdown'
 import type { TaskNode, ListNode, QuoteNode } from './types'
 
 describe('parseMarkdown', () => {
@@ -20,6 +20,7 @@ describe('parseMarkdown', () => {
     const md = [
       '- [ ] todo',
       '- [x] done',
+      '- [X] done-uppercase',
       '- [>] doing',
       '- [!] blocked',
       '- [-] hold',
@@ -28,9 +29,10 @@ describe('parseMarkdown', () => {
     const nodes = sections[0].children as TaskNode[]
     expect(nodes[0].status).toBe('todo')
     expect(nodes[1].status).toBe('done')
-    expect(nodes[2].status).toBe('doing')
-    expect(nodes[3].status).toBe('blocked')
-    expect(nodes[4].status).toBe('hold')
+    expect(nodes[2].status).toBe('done')
+    expect(nodes[3].status).toBe('doing')
+    expect(nodes[4].status).toBe('blocked')
+    expect(nodes[5].status).toBe('hold')
   })
 
   it('parses a task group (task with child tasks)', () => {
@@ -81,6 +83,41 @@ describe('parseMarkdown', () => {
     expect(node.isLeafTask).toBe(true)
   })
 
+  it('parses @dependsOn as string array', () => {
+    const md = `- [ ] タスク\n  - @dependsOn: taskA, taskB, taskC`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.dependsOn).toEqual(['taskA', 'taskB', 'taskC'])
+    expect(node.isLeafTask).toBe(true)
+  })
+
+  it('parses @tags as string array', () => {
+    const md = `- [ ] タスク\n  - @tags: frontend, urgent`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.tags).toEqual(['frontend', 'urgent'])
+    expect(node.isLeafTask).toBe(true)
+  })
+
+  it('parses all @meta keys together', () => {
+    const md = [
+      '- [ ] タスク',
+      '  - @schedule: 2026-06-01T10:00/12:00',
+      '  - @due: 2026-06-30',
+      '  - @priority: 1',
+      '  - @dependsOn: A, B',
+      '  - @tags: x, y',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-06-01T10:00/2026-06-01T12:00')
+    expect(node.meta?.due).toBe('2026-06-30')
+    expect(node.meta?.priority).toBe(1)
+    expect(node.meta?.dependsOn).toEqual(['A', 'B'])
+    expect(node.meta?.tags).toEqual(['x', 'y'])
+    expect(node.isLeafTask).toBe(true)
+  })
+
   it('treats blockquote as raw/memo', () => {
     const md = `> 補足説明`
     const { sections } = parseMarkdown(md)
@@ -96,7 +133,6 @@ describe('parseMarkdown', () => {
     const md = `> - [ ] タスク`
     const { sections } = parseMarkdown(md)
     const quote = sections[0].children[0] as QuoteNode
-    // raw扱い: quote node, not task
     expect(quote.type).toBe('quote')
   })
 
@@ -107,6 +143,12 @@ describe('parseMarkdown', () => {
     expect(sections).toHaveLength(2)
     expect(sections[0].title).toBe('プロジェクトA')
     expect(sections[1].title).toBe('プロジェクトB')
+  })
+
+  it('parses heading title with inline code', () => {
+    const md = `# My \`code\` section\n- [ ] タスク`
+    const { sections } = parseMarkdown(md)
+    expect(sections[0].title).toBe('My code section')
   })
 
   it('nests sub-sections correctly', () => {
@@ -139,7 +181,6 @@ describe('parseMarkdown', () => {
     const task = sections[0].children[0] as TaskNode
 
     expect(task.meta?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
-    // 2 comment children: QuoteNode and ListNode(isMemo)
     expect(task.children).toHaveLength(2)
     const quote = task.children[0] as QuoteNode
     expect(quote.type).toBe('quote')
@@ -150,21 +191,19 @@ describe('parseMarkdown', () => {
 
   it('attaches lineNumber to nodes (absolute 0-based)', () => {
     const md = `# セクション\n\n- [ ] タスクA\n  - @schedule: 2026-04-01T10:00/12:00\n- リストB\n`
-    //           line0             line1(empty)  line2           line3                  line4
     const doc = parseMarkdown(md)
     const section = doc.sections[0]
-    expect(section.lineNumber).toBe(0)  // "# セクション" is line 0
+    expect(section.lineNumber).toBe(0)
 
     const taskA = section.children[0] as TaskNode
-    expect(taskA.lineNumber).toBe(2)    // "- [ ] タスクA" is line 2
+    expect(taskA.lineNumber).toBe(2)
 
-    const listB = section.children[1] as TaskNode
-    expect((listB as unknown as { lineNumber: number }).lineNumber).toBe(4)  // "- リストB" is line 4
+    const listB = section.children[1]
+    expect(listB.lineNumber).toBe(4)
   })
 
   it('attaches lineNumber to QuoteNode', () => {
     const md = `- [ ] タスク\n  > コメント\n`
-    //           line0            line1
     const doc = parseMarkdown(md)
     const task = doc.sections[0].children[0] as TaskNode
     expect(task.lineNumber).toBe(0)
@@ -174,7 +213,6 @@ describe('parseMarkdown', () => {
 
   it('builds nodeLineMap covering all nodes and named sections', () => {
     const md = `# セクション\n\n- [ ] タスク\n`
-    //           line0             line1(empty)  line2
     const doc = parseMarkdown(md)
     const section = doc.sections[0]
     const task = section.children[0] as TaskNode
@@ -226,29 +264,23 @@ describe('parseMarkdown', () => {
     expect(main.title).toBe('Webアプリ開発')
     expect(main.subSections[0].title).toBe('運用')
 
-    // 企画 is a list-group
-    const kikaku = main.children[1] as ListNode // children[0] is the quote
+    const kikaku = main.children[1] as ListNode
     expect(kikaku.text).toBe('企画')
     expect(kikaku.isGroup).toBe(true)
 
-    // 要件整理 is a task-group
     const youken = kikaku.children[0] as TaskNode
     expect(youken.text).toBe('要件整理')
     expect(youken.isGroup).toBe(true)
     expect(youken.meta?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
 
-    // 機能洗い出し is a leaf task
     const kinou = youken.children[0] as TaskNode
     expect(kinou.text).toBe('機能洗い出し')
     expect(kinou.isLeafTask).toBe(true)
 
-    // メモ is a memo (no task descendants)
     const memo = kikaku.children[1] as ListNode
     expect(memo.text).toBe('メモ')
     expect(memo.isMemo).toBe(true)
   })
-
-  // ---- abbreviated date notation (obs-0028) ----
 
   it('normalizes 2-digit year in @schedule', () => {
     const md = `- [ ] タスク\n  - @schedule: 26-06-01T10:00/26-06-01T11:00\n`
@@ -284,8 +316,6 @@ describe('parseMarkdown', () => {
     const node = sections[0].children[0] as TaskNode
     expect(node.meta?.due).toBe('2026-06-30')
   })
-
-  // ---- flexible indentation (obs-0028-related) ----
 
   it('parses children indented with 4 spaces', () => {
     const md = `- [ ] 親タスク\n    - [ ] 子タスク`
@@ -323,7 +353,6 @@ describe('parseMarkdown', () => {
   })
 
   it('parses siblings independently of each other\'s child indent', () => {
-    // sibling A uses 2-space children, sibling B uses 4-space children
     const md = [
       '- [ ] タスクA',
       '  - @due: 2026-06-01',
@@ -345,10 +374,7 @@ describe('parseMarkdown', () => {
     expect((task.children[0] as QuoteNode).raw).toBe('コメント')
   })
 
-  // ---- tab indentation (Obsidian default) ----
-
   it('parses child indented with 1 tab', () => {
-    // Obsidian inserts \t when Tab is pressed (regardless of visual tab size)
     const md = '- [ ] 親タスク\n\t- [ ] 子タスク'
     const { sections } = parseMarkdown(md)
     const parent = sections[0].children[0] as TaskNode
@@ -389,9 +415,7 @@ describe('parseMarkdown', () => {
   })
 
   it('treats tab-indented and space-indented siblings as equivalent structure', () => {
-    // tab version
     const mdTab = '- [ ] タスクA\n\t- @due: 2026-06-10\n- [ ] タスクB\n\t- @due: 2026-06-11'
-    // space version (4 spaces)
     const mdSpc = '- [ ] タスクA\n    - @due: 2026-06-10\n- [ ] タスクB\n    - @due: 2026-06-11'
     const docTab = parseMarkdown(mdTab)
     const docSpc = parseMarkdown(mdSpc)
@@ -409,11 +433,7 @@ describe('parseMarkdown', () => {
     expect(node.meta?.due).toBe('2026-06-27')
   })
 
-  // ---- fundamental parser: indent-relative sibling detection ----
-
   it('recognizes top-level tasks even when indented with tab (no parent)', () => {
-    // Simulates user pressing Tab before the first item in a section in Obsidian.
-    // The item is at indent=4 but there is no containing parent list.
     const md = '\t- [ ] タスク'
     const { sections } = parseMarkdown(md)
     expect(sections[0].children).toHaveLength(1)
@@ -431,19 +451,15 @@ describe('parseMarkdown', () => {
   })
 
   it('re-injects tasks that landed under a @meta line due to mixed indent', () => {
-    // Scenario: serializer wrote T1 with 2-space indent, user added T2 via
-    // Obsidian Tab (→4sp). T2's indent(4) > @due(2), so naive parsing would
-    // bury T2 inside @due. The fundamental parser re-injects it as T1's child.
     const md = [
       '- [ ] T1',
-      '  - @due: 2026-06-01',    // 2sp from serializer
-      '\t- [ ] T2',              // 1 tab (4sp) from Obsidian
-      '\t  - @due: 2026-06-02',  // 1 tab + 2sp (6sp)
+      '  - @due: 2026-06-01',
+      '\t- [ ] T2',
+      '\t  - @due: 2026-06-02',
     ].join('\n')
     const { sections } = parseMarkdown(md)
     const t1 = sections[0].children[0] as TaskNode
     expect(t1.meta?.due).toBe('2026-06-01')
-    // T2 should be T1's child (not buried inside @due)
     expect(t1.children).toHaveLength(1)
     const t2 = t1.children[0] as TaskNode
     expect(t2.type).toBe('task')
@@ -452,9 +468,6 @@ describe('parseMarkdown', () => {
   })
 
   it('re-injects when multiple siblings have @meta at different indent widths', () => {
-    // T1 and T2 are siblings at indent=0.
-    // T1's @meta is at 2sp, T2's @meta is at 4sp.
-    // A 3rd sibling T3 is added via Tab (4sp) — it gets re-injected under T2.
     const md = [
       '- [ ] T1',
       '  - @due: 2026-06-01',

@@ -1,4 +1,5 @@
 import type { Document, Section, Node, TaskNode, ListNode, QuoteNode, Meta, Status } from './types'
+import { META_KEYS } from './meta-keys'
 
 // ----------------------------------------------------------------
 // Status → Checkbox marker
@@ -20,11 +21,11 @@ function statusToMarker(status: Status): string {
 
 function serializeMeta(meta: Meta): string[] {
   const lines: string[] = []
-  if (meta.schedule  !== undefined) lines.push(`- @schedule: ${meta.schedule}`)
-  if (meta.due       !== undefined) lines.push(`- @due: ${meta.due}`)
-  if (meta.priority  !== undefined) lines.push(`- @priority: ${meta.priority}`)
-  if (meta.dependsOn !== undefined) lines.push(`- @dependsOn: ${meta.dependsOn.join(', ')}`)
-  if (meta.tags      !== undefined) lines.push(`- @tags: ${meta.tags.join(', ')}`)
+  if (meta.schedule  !== undefined) lines.push(`- @${META_KEYS.schedule}: ${meta.schedule}`)
+  if (meta.due       !== undefined) lines.push(`- @${META_KEYS.due}: ${meta.due}`)
+  if (meta.priority  !== undefined) lines.push(`- @${META_KEYS.priority}: ${meta.priority}`)
+  if (meta.dependsOn !== undefined) lines.push(`- @${META_KEYS.dependsOn}: ${meta.dependsOn.join(', ')}`)
+  if (meta.tags      !== undefined) lines.push(`- @${META_KEYS.tags}: ${meta.tags.join(', ')}`)
   return lines
 }
 

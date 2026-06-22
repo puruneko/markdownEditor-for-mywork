@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown } from './md-to-ast'
+import { parseMarkdown } from './parse-markdown'
 import { serializeAst } from './ast-to-md'
 import type { Document, TaskNode, ListNode } from './types'
 

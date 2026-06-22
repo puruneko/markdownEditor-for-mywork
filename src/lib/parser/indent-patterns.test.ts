@@ -5,7 +5,7 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { describe, it, expect, beforeAll } from 'vitest'
-import { parseMarkdown } from './md-to-ast'
+import { parseMarkdown } from './parse-markdown'
 import type { Document, Section, TaskNode, ListNode, QuoteNode } from './types'
 
 // ----------------------------------------------------------------
@@ -126,19 +126,19 @@ describe('セクション2: 4スペース', () => {
 })
 
 // ----------------------------------------------------------------
-// セクション 3: 8スペース
+// セクション 3: 4スペース（深いネスト）
 // ----------------------------------------------------------------
 
-describe('セクション3: 8スペース', () => {
+describe('セクション3: 4スペース（深いネスト）', () => {
   it('親グループが2つの子タスクを持つ', () => {
-    const sec = findSection('3. 8スペース')
+    const sec = findSection('3. 4スペース（深いネスト）')
     const group = sec.children.find(n => n.type === 'list') as ListNode
     expect(group.isGroup).toBe(true)
     expect(group.children).toHaveLength(2)
   })
 
-  it('@meta が16スペースから正しく抽出される', () => {
-    const sec = findSection('3. 8スペース')
+  it('@meta が8スペースから正しく抽出される', () => {
+    const sec = findSection('3. 4スペース（深いネスト）')
     const group = sec.children.find(n => n.type === 'list') as ListNode
     const todo = group.children[0] as TaskNode
     expect(todo.meta?.schedule).toBe('2026-06-01T09:00/2026-06-01T10:00')
@@ -146,12 +146,12 @@ describe('セクション3: 8スペース', () => {
   })
 
   it('blockquote が QuoteNode として認識される', () => {
-    const sec = findSection('3. 8スペース')
+    const sec = findSection('3. 4スペース（深いネスト）')
     const group = sec.children.find(n => n.type === 'list') as ListNode
     const todo = group.children[0] as TaskNode
     const quote = todo.children[0] as QuoteNode
     expect(quote.type).toBe('quote')
-    expect(quote.raw).toBe('8スペースのコメント')
+    expect(quote.raw).toBe('4スペースのコメント（深いネスト）')
   })
 })
 
@@ -184,7 +184,7 @@ describe('セクション4: 兄弟間で異なるインデント幅', () => {
     expect(tasks[1].isLeafTask).toBe(true)
   })
 
-  it('タスクCの@metaが8スペース子から正しく抽出される', () => {
+  it('タスクCの@metaが4スペース子から正しく抽出される', () => {
     const sec = findSection('4. 兄弟間で異なるインデント幅')
     const tasks = sec.children.filter(n => n.type === 'task') as TaskNode[]
     expect(tasks[2].text).toContain('タスクC')
@@ -287,7 +287,7 @@ describe('セクション7: 日付省略記法 × 各インデント幅', () => 
     expect(tasks[1].meta?.due).toBe('2026-06-05')
   })
 
-  it('8スペース + 分省略 + 2桁年が正規化される', () => {
+  it('4スペース + 分省略 + 2桁年が正規化される', () => {
     const sec = findSection('7. 日付省略記法 × 各インデント幅')
     const tasks = sec.children.filter(n => n.type === 'task') as TaskNode[]
     expect(tasks[2].meta?.schedule).toBe('2026-07-01T10:00/2026-07-01T11:00')

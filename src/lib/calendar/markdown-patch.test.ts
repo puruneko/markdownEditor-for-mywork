@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown } from '../parser/md-to-ast'
+import { parseMarkdown } from '../parser/parse-markdown'
 import { findNodeById, patchSchedule, patchTaskTitle, formatSchedule } from './markdown-patch'
 import { DateTime } from 'luxon'
 

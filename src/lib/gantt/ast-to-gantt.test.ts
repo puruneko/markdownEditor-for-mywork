@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown } from '../parser/md-to-ast'
+import { parseMarkdown } from '../parser/parse-markdown'
 import { extractGanttNodes } from './ast-to-gantt'
 
 // ----------------------------------------------------------------

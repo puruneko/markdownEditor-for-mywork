@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown } from '../parser/md-to-ast'
+import { parseMarkdown } from '../parser/parse-markdown'
 import { extractCalendarItems, parseSchedule } from './ast-to-calendar'
 import { updateNodeSchedule, updateNodeText } from './calendar-to-ast'
 import { DateTime } from 'luxon'

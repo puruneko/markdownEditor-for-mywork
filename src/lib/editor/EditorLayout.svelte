@@ -3,7 +3,7 @@
   import CalendarTab from '../calendar/CalendarTab.svelte'
   import GanttTab from '../gantt/GanttTab.svelte'
   import KanbanTab from '../kanban/KanbanTab.svelte'
-  import { parseMarkdown } from '../parser/md-to-ast'
+  import { parseMarkdown } from '../parser/parse-markdown'
   import { serializeAst } from '../parser/ast-to-md'
   import type { Document } from '../parser/types'
 

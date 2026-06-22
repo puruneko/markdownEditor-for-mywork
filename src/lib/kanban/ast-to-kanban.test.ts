@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { extractKanbanCards, createKanbanConfig, DEFAULT_KANBAN_CONFIG } from './ast-to-kanban'
-import { parseMarkdown } from '../parser/md-to-ast'
+import { parseMarkdown } from '../parser/parse-markdown'
 
 describe('extractKanbanCards', () => {
   it('空のドキュメントは空配列を返す', () => {

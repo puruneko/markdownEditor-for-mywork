@@ -1,7 +1,7 @@
 import type { App, TFile } from 'obsidian'
 import type { Section, Node } from '../lib/parser/types'
 import { MarkdownView } from 'obsidian'
-import { parseMarkdown } from '../lib/parser/md-to-ast'
+import { parseMarkdown } from '../lib/parser/parse-markdown'
 import type { Document } from '../lib/parser/types'
 
 export type DocumentChangeHandler = (doc: Document, file: TFile) => void
