@@ -146,6 +146,7 @@ export class FileSync {
     console.debug(`[MD-AST] ドキュメント更新: ${filePath}`)
     console.debug(`[MD-AST] セクション数: ${doc.sections.length} | タスク数: ${total.tasks} | スケジュール付き: ${total.scheduled}`)
     console.debug('[MD-AST] セクション一覧:', doc.sections.map(s => `"${s.title}"(depth=${s.depth}, sub=${s.subSections.length})`).join(', '))
+    console.log('[MD-AST] Document (full AST):', doc)
   }
 
   private notify(doc: Document, file: TFile): void {
