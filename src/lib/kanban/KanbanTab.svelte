@@ -29,13 +29,18 @@
 
   // ユーザーがカスタマイズできるレーン定義と board 設定
   let userLanes: LaneDefinition[] = $state([...DEFAULT_KANBAN_CONFIG.lanes])
+  let userGroupBy = $state<string>('section')
+  let userSectionDepth = $state<number>(2)
   let allowCrossGroupMove = $state(false)
+  let cardTitleMultiline = $state(false)
 
-  // doc 由来のグループ（セクション順）＋ユーザー設定を合成した最終 config
+  // ライブラリの section 配列フィールド + sectionDepth を使った config を生成する。
+  // groups 定義は渡さず、ライブラリがカードから自動収集する。
   const config: KanbanBoardConfig = $derived({
-    ...createKanbanConfig(cards),
+    ...createKanbanConfig(cards, userGroupBy, userSectionDepth),
     lanes: userLanes,
     allowCrossGroupMove,
+    cardTitleMultiline,
   })
 
   function handleCardMove(event: CardMoveEvent): void {
@@ -47,10 +52,13 @@
     if (newMd !== mdValue) onMdChange(newMd)
   }
 
-  // レーン定義・board 設定の変更を保持する（グループ情報は doc から再生成するため保存しない）
+  // ユーザーが変更したすべての board 設定を保持する
   function handleConfigChange(event: ConfigChangeEvent): void {
     userLanes = event.config.lanes
+    userGroupBy = event.config.groupBy ?? 'section'
+    userSectionDepth = event.config.sectionDepth ?? 2
     allowCrossGroupMove = event.config.allowCrossGroupMove ?? false
+    cardTitleMultiline = event.config.cardTitleMultiline ?? false
   }
 </script>
 

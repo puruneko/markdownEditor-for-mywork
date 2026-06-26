@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MD AST Editor — プロジェクト仕様書</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --bg2: #16213e;
+      --bg3: #0f3460;
+      --fg: #e0e0e0;
+      --fg2: #a0a0b0;
+      --accent: #4ec9b0;
+      --accent2: #569cd6;
+      --accent3: #ce9178;
+      --accent4: #dcdcaa;
+      --warn: #f48771;
+      --border: #2d2d50;
+      --code-bg: #0d1117;
+      --tag-bg: #1e3a5f;
+      --tag-fg: #7ec8e3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+    nav {
+      width: 260px;
+      min-width: 260px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+    nav .logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    nav .logo h1 { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .05em; }
+    nav .logo p { font-size: 11px; color: var(--fg2); margin-top: 2px; }
+    nav ul { list-style: none; }
+    nav ul li a {
+      display: block;
+      padding: 6px 20px;
+      font-size: 13px;
+      color: var(--fg2);
+      transition: background .15s, color .15s;
+    }
+    nav ul li a:hover { background: var(--bg3); color: var(--fg); text-decoration: none; }
+    nav .section-label {
+      padding: 16px 20px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--fg2);
+      text-transform: uppercase;
+    }
+    nav ul li.sub a { padding-left: 32px; font-size: 12px; }
+
+    main {
+      flex: 1;
+      max-width: 960px;
+      padding: 48px 48px 80px;
+    }
+
+    /* Typography */
+    h1 { font-size: 2em; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+    h2 {
+      font-size: 1.4em; font-weight: 700; color: var(--accent2);
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    h3 { font-size: 1.1em; font-weight: 700; color: var(--accent4); margin: 32px 0 12px; }
+    h4 { font-size: 1em; font-weight: 600; color: var(--accent3); margin: 20px 0 8px; }
+    p { margin: 8px 0; color: var(--fg); }
+    ul, ol { padding-left: 24px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    strong { color: var(--fg); }
+
+    /* Code */
+    code {
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: .88em;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: .85em;
+      line-height: 1.6;
+    }
+    pre code { background: none; padding: 0; color: var(--fg); font-size: inherit; }
+    .kw { color: #569cd6; }    /* keyword */
+    .ty { color: #4ec9b0; }    /* type */
+    .st { color: #ce9178; }    /* string */
+    .cm { color: #6a9955; }    /* comment */
+    .fn { color: #dcdcaa; }    /* function */
+    .nm { color: #b5cea8; }    /* number */
+    .op { color: #d4d4d4; }    /* operator */
+    .pu { color: #d4d4d4; }    /* punctuation */
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    th {
+      background: var(--bg3);
+      color: var(--accent2);
+      font-weight: 600;
+      padding: 10px 14px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    td {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+    /* Callouts */
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: rgba(78,201,176,.07);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .callout.warn {
+      border-color: var(--warn);
+      background: rgba(244,135,113,.07);
+    }
+    .callout.info {
+      border-color: var(--accent2);
+      background: rgba(86,156,214,.07);
+    }
+    .callout p { margin: 0; font-size: 13px; }
+    .callout strong { color: var(--accent); }
+    .callout.warn strong { color: var(--warn); }
+    .callout.info strong { color: var(--accent2); }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      font-size: 11px;
+      padding: 1px 8px;
+      border-radius: 10px;
+      margin: 0 2px;
+      font-weight: 600;
+    }
+
+    /* Architecture diagram */
+    .arch {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin: 16px 0;
+      font-family: 'Cascadia Code', monospace;
+      font-size: 13px;
+    }
+    .arch-layer {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+    }
+    .arch-layer h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); }
+    .arch-layer .items { display: flex; flex-wrap: wrap; gap: 6px; }
+    .arch-layer .item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--fg);
+    }
+
+    /* Marker demo */
+    .marker-demo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .marker-item {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .marker-item code { font-size: 13px; }
+    .marker-item .status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .s-todo    { background: #2d3748; color: #a0aec0; }
+    .s-doing   { background: #1a3a5f; color: #63b3ed; }
+    .s-done    { background: #1a3a2a; color: #68d391; }
+    .s-blocked { background: #3a1a1a; color: #fc8181; }
+    .s-hold    { background: #2d2a3a; color: #b794f4; }
+
+    /* Section scroll target */
+    section { scroll-margin-top: 24px; }
+
+    /* Header meta */
+    .meta { color: var(--fg2); font-size: 13px; margin-bottom: 32px; }
+    .meta span { margin-right: 16px; }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .flow-step {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 16px;
+      min-width: 320px;
+    }
+    .flow-arrow {
+      color: var(--accent);
+      padding: 2px 0 2px 22px;
+      font-size: 16px;
+    }
+    .flow-step .step-title { font-weight: 600; color: var(--accent2); }
+    .flow-step .step-desc { color: var(--fg2); font-size: 12px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ===== Navigation ===== -->
+<nav>
+  <div class="logo">
+    <h1>MD AST Editor</h1>
+    <p>プロジェクト仕様書 v0.0.1</p>
+  </div>
+  <div class="section-label">概要</div>
+  <ul>
+    <li><a href="#overview">プロジェクト概要</a></li>
+    <li><a href="#stack">技術スタック</a></li>
+    <li><a href="#architecture">アーキテクチャ</a></li>
+    <li><a href="#directory">ディレクトリ構成</a></li>
+  </ul>
+  <div class="section-label">Markdown仕様</div>
+  <ul>
+    <li><a href="#syntax-task">タスク記法</a></li>
+    <li><a href="#syntax-meta">メタフィールド</a></li>
+    <li><a href="#syntax-schedule">スケジュール書式</a></li>
+    <li><a href="#syntax-section">セクション構造</a></li>
+  </ul>
+  <div class="section-label">パーサー</div>
+  <ul>
+    <li><a href="#parser-pipeline">処理パイプライン</a></li>
+    <li><a href="#parser-ast">ASTデータモデル</a></li>
+    <li><a href="#parser-serializer">シリアライザ</a></li>
+  </ul>
+  <div class="section-label">ビュー</div>
+  <ul>
+    <li><a href="#view-calendar">Calendarビュー</a></li>
+    <li><a href="#view-gantt">Ganttビュー</a></li>
+    <li><a href="#view-kanban">Kanbanビュー</a></li>
+    <li><a href="#view-ast">ASTビュー</a></li>
+  </ul>
+  <div class="section-label">システム</div>
+  <ul>
+    <li><a href="#sync">ファイル同期エンジン</a></li>
+    <li><a href="#editor">エディタ実装</a></li>
+    <li><a href="#settings">プラグイン設定</a></li>
+    <li><a href="#build">ビルド構成</a></li>
+    <li><a href="#test">テスト構成</a></li>
+    <li><a href="#dev-workflow">開発ワークフロー</a></li>
+  </ul>
+</nav>
+
+<!-- ===== Main Content ===== -->
+<main>
+
+  <h1>MD AST Editor</h1>
+  <div class="meta">
+    <span>バージョン: <strong>0.0.1</strong></span>
+    <span>最終更新: <strong>2026-06-26</strong></span>
+    <span>対象: Obsidian プラグイン（デスクトップ専用）</span>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview">
+    <h2>プロジェクト概要</h2>
+    <p>
+      <strong>MD AST Editor</strong> は Obsidian 上で動作するタスク管理プラグインです。
+      Markdown ファイルをリアルタイムで解析し、タスクを <strong>Calendar</strong>・<strong>Gantt</strong>・<strong>Kanban</strong> の3種類のビューで視覚化します。
+      ビュー上での操作（ドラッグ＆ドロップ、ステータス変更等）は即座に元の Markdown ファイルに書き戻されます。
+    </p>
+
+    <h3>主要機能</h3>
+    <ul>
+      <li>Markdown ファイルのリアルタイムパースと AST 生成</li>
+      <li>Calendar ビュー：スケジュール付きタスクをカレンダー形式で表示・編集</li>
+      <li>Gantt ビュー：タスクの期間と依存関係をガントチャートで表示</li>
+      <li>Kanban ビュー：ステータスとセクション階層でカード分類・ドラッグ移動</li>
+      <li>AST デバッグビュー：パース結果の JSON を表示</li>
+      <li>CodeMirror タスクハイライト：エディタ上でステータスをカラー装飾</li>
+      <li>ビュー上のノードクリックでエディタカーソルを対応行に移動</li>
+    </ul>
+
+    <div class="callout info">
+      <p><strong>設計方針</strong>：データストアは Markdown ファイルのみ。専用 DB や独自フォーマットは使用しない。
+      タスクのスケジュールや優先度はインラインのメタフィールド（<code>@schedule:</code> 等）として記述する。</p>
+    </div>
+  </section>
+
+  <!-- ===================== STACK ===================== -->
+  <section id="stack">
+    <h2>技術スタック</h2>
+
+    <table>
+      <thead><tr><th>カテゴリ</th><th>技術</th><th>バージョン</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>フレームワーク</td><td>Svelte 5</td><td>^5.0.0</td><td>全 UI コンポーネント（$state / $derived / $props リアクティビティ）</td></tr>
+        <tr><td>言語</td><td>TypeScript</td><td>^5.5.0</td><td>全ソースコード</td></tr>
+        <tr><td>エディタ</td><td>Monaco Editor</td><td>^0.52.0</td><td>Markdown テキスト編集（構文ハイライト付き）</td></tr>
+        <tr><td>エディタ統合</td><td>CodeMirror 6</td><td>^6.6.0</td><td>Obsidian ネイティブエディタへのタスク装飾プラグイン</td></tr>
+        <tr><td>Markdown パース</td><td>remark / unified</td><td>^11 / ^11</td><td>mdast 生成。remark-gfm で GFM 拡張対応</td></tr>
+        <tr><td>日時処理</td><td>Luxon</td><td>^3.7.2</td><td>スケジュール・期限の日時操作</td></tr>
+        <tr><td>ビルド（プラグイン）</td><td>esbuild</td><td>^0.27.4</td><td>Obsidian 用 CJS バンドル生成</td></tr>
+        <tr><td>ビルド（アプリ）</td><td>Vite 6</td><td>^6.0.0</td><td>開発サーバー・E2E テスト用 Vite アプリ</td></tr>
+        <tr><td>テスト（ユニット）</td><td>Vitest</td><td>^2.0.0</td><td>パーサー・変換ロジックのユニットテスト</td></tr>
+        <tr><td>テスト（ブラウザ）</td><td>Playwright</td><td>^1.58.2</td><td>Calendar/Gantt タブの E2E テスト</td></tr>
+        <tr><td>テスト（Obsidian）</td><td>WebdriverIO + wdio-obsidian-service</td><td>^9.27.0 / ^2.4.0</td><td>実 Obsidian 上での E2E テスト</td></tr>
+        <tr><td>ローカルライブラリ</td><td>svelte-calendar-lib</td><td>file:../calendar-for-mywork</td><td>Calendar UI コンポーネント</td></tr>
+        <tr><td>ローカルライブラリ</td><td>svelte-gantt-lib</td><td>file:../ganttchart-for-mywork</td><td>Gantt UI コンポーネント</td></tr>
+        <tr><td>ローカルライブラリ</td><td>svelte-kanban-lib</td><td>file:../kanban-for-mywork</td><td>Kanban UI コンポーネント</td></tr>
+        <tr><td>プラットフォーム</td><td>Obsidian</td><td>^1.12.3</td><td>ホスト環境（Plugin API）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>ローカルライブラリについて</strong>：Calendar・Gantt・Kanban の UI コンポーネントは兄弟ワークスペースに独立したパッケージとして存在し、<code>npm install</code> の <code>file:</code> 参照でリンクされます。
+      これらは頻繁に更新されるため、<code>npm run libs:update</code> で最新版を取り込みます（テスト・ビルド前に自動実行）。</p>
+    </div>
+  </section>
+
+  <!-- ===================== ARCHITECTURE ===================== -->
+  <section id="architecture">
+    <h2>アーキテクチャ</h2>
+    <p>レイヤー構成は以下の通りです。上位レイヤーが下位レイヤーに依存し、逆依存はありません。</p>
+
+    <div class="arch">
+      <div class="arch-layer">
+        <h4>Plugin Layer — Obsidian 統合</h4>
+        <div class="items">
+          <span class="item">MdAstEditorPlugin</span>
+          <span class="item">ShadowItemView（基底）</span>
+          <span class="item">CalendarView / GanttView / KanbanView / AstView</span>
+          <span class="item">SettingTab</span>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="arch-layer">
+        <h4>Sync Layer — ファイル監視・イベント仲介</h4>
+        <div class="items">
+          <span class="item">FileSync（ファイル変更 → AST 通知）</span>
+          <span class="item">EditorEventBus（ビュークリック → カーソル移動）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="arch-layer">
+        <h4>Parser Layer — Markdown ↔ AST 変換</h4>
+        <div class="items">
+          <span class="item">parseMarkdown()</span>
+          <span class="item">remark-task-status プラグイン</span>
+          <span class="item">remark-meta-fields プラグイン</span>
+          <span class="item">mdast-to-sections</span>
+          <span class="item">mdast-to-nodes</span>
+          <span class="item">serializeAst()</span>
+          <span class="item">schedule-normalize</span>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="arch-layer">
+        <h4>View Transform Layer — AST → ビュー型変換</h4>
+        <div class="items">
+          <span class="item">ast-to-calendar.ts</span>
+          <span class="item">ast-to-gantt.ts</span>
+          <span class="item">ast-to-kanban.ts</span>
+          <span class="item">markdown-patch.ts（書き戻し）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="arch-layer">
+        <h4>UI Layer — Svelte コンポーネント</h4>
+        <div class="items">
+          <span class="item">CalendarTab.svelte</span>
+          <span class="item">GanttTab.svelte</span>
+          <span class="item">KanbanTab.svelte</span>
+          <span class="item">EditorLayout.svelte</span>
+          <span class="item">MonacoEditor.svelte</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>データフロー</h3>
+    <pre><code><span class="cm">// 読み取り方向（Obsidian → ビュー）</span>
+Markdown ファイル
+  →  parseMarkdown()          <span class="cm">// remark + カスタムプラグインで Document AST を生成</span>
+  →  FileSync.notify()        <span class="cm">// 登録されたリスナー全員に通知</span>
+  →  各 ViewMount             <span class="cm">// doc を受け取り、ビュー型変換を実行</span>
+  →  extractCalendarItems()   <span class="cm">// / extractGanttNodes() / extractKanbanCards()</span>
+  →  ライブラリコンポーネント表示
+
+<span class="cm">// 書き込み方向（ビュー操作 → Markdown）</span>
+ユーザー操作（ドラッグ・クリック等）
+  →  onCardMove / onEventDrop 等
+  →  markdown-patch*()        <span class="cm">// 対象行のみ差分パッチ</span>
+  →  onMdChange()             <span class="cm">// 親コンポーネントへ通知</span>
+  →  Obsidian ファイル書き込み</code></pre>
+  </section>
+
+  <!-- ===================== DIRECTORY ===================== -->
+  <section id="directory">
+    <h2>ディレクトリ構成</h2>
+    <pre><code>markdownEditor-for-mywork/
+├── src/
+│   ├── plugin.ts                  <span class="cm"># Obsidian プラグイン本体（ビュー登録・コマンド定義）</span>
+│   ├── settings.ts                <span class="cm"># プラグイン設定（showRibbonIcon, enableTaskHighlight, debounceMs）</span>
+│   ├── App.svelte                 <span class="cm"># ルート Svelte コンポーネント（Vite アプリ用）</span>
+│   ├── editor/
+│   │   └── task-decoration.ts     <span class="cm"># CodeMirror ViewPlugin（タスク・メタ行のカラー装飾）</span>
+│   ├── lib/
+│   │   ├── parser/
+│   │   │   ├── types.ts           <span class="cm"># AST 全型定義（Document / Section / TaskNode / ListNode / QuoteNode）</span>
+│   │   │   ├── parse-markdown.ts  <span class="cm"># パースエントリー（remark パイプライン組立）</span>
+│   │   │   ├── mdast-to-sections.ts <span class="cm"># Heading ベースの Section 構築・ネスト化</span>
+│   │   │   ├── mdast-to-nodes.ts  <span class="cm"># ListItem → TaskNode/ListNode、Blockquote → QuoteNode</span>
+│   │   │   ├── ast-to-md.ts       <span class="cm"># Document → Markdown 逆シリアル化</span>
+│   │   │   ├── meta-keys.ts       <span class="cm"># @schedule / @due 等のキー定数</span>
+│   │   │   ├── schedule-normalize.ts <span class="cm"># 省略スケジュール書式の正規化</span>
+│   │   │   └── plugins/
+│   │   │       ├── remark-task-status.ts  <span class="cm"># Checkbox → Status 抽出プラグイン</span>
+│   │   │       └── remark-meta-fields.ts  <span class="cm"># @メタフィールド抽出・削除プラグイン</span>
+│   │   ├── calendar/
+│   │   │   ├── ast-to-calendar.ts  <span class="cm"># AST → CalendarItem 変換</span>
+│   │   │   ├── calendar-to-ast.ts  <span class="cm"># CalendarItem 変更 → Document 更新</span>
+│   │   │   └── markdown-patch.ts   <span class="cm"># Markdown 行差分パッチ（全ビュー共用）</span>
+│   │   ├── gantt/
+│   │   │   └── ast-to-gantt.ts     <span class="cm"># AST → GanttNode 変換</span>
+│   │   ├── kanban/
+│   │   │   ├── ast-to-kanban.ts    <span class="cm"># AST → KanbanCard 変換・設定生成</span>
+│   │   │   └── KanbanTab.svelte    <span class="cm"># Kanban タブ UI コンポーネント</span>
+│   │   ├── editor/
+│   │   │   ├── EditorLayout.svelte <span class="cm"># 3 分割エディタレイアウト</span>
+│   │   │   └── MonacoEditor.svelte <span class="cm"># Monaco Editor Svelte ラッパー</span>
+│   │   └── highlight/
+│   │       └── task-language.ts    <span class="cm"># Monaco カスタム言語定義</span>
+│   └── views/
+│       ├── ShadowItemView.ts       <span class="cm"># Shadow DOM 基底クラス（全ビュー継承）</span>
+│       ├── AstView.ts / AstViewMount.svelte
+│       ├── CalendarView.ts / CalendarViewMount.svelte
+│       ├── GanttView.ts / GanttViewMount.svelte
+│       └── KanbanView.ts / KanbanViewMount.svelte
+│
+├── src/sync/
+│   ├── file-sync.ts               <span class="cm"># Obsidian ファイル監視 → AST 配信</span>
+│   └── editor-event-bus.ts        <span class="cm"># ビュークリック → エディタカーソル移動</span>
+│
+├── tests/
+│   ├── integration/               <span class="cm"># FileSync / EditorEventBus / Plugin 統合テスト</span>
+│   ├── e2e/                       <span class="cm"># Playwright ブラウザ E2E（Calendar/Gantt タブ）</span>
+│   ├── obs-e2e/                   <span class="cm"># WebdriverIO 実 Obsidian E2E</span>
+│   └── mocks/obsidian.ts          <span class="cm"># Obsidian API モック（ユニットテスト用）</span>
+│
+├── esbuild.config.mjs             <span class="cm"># Obsidian プラグイン用 esbuild 設定</span>
+├── vite.config.ts                 <span class="cm"># Vite アプリ設定（E2E テストサーバー用）</span>
+├── wdio.conf.mts                  <span class="cm"># WebdriverIO 設定</span>
+├── playwright.config.ts           <span class="cm"># Playwright 設定</span>
+├── manifest.json                  <span class="cm"># Obsidian プラグイン宣言</span>
+├── main.ts                        <span class="cm"># プラグインエクスポート（src/plugin.ts → re-export）</span>
+├── main.js                        <span class="cm"># esbuild 生成済みバンドル（Obsidian が読み込む）</span>
+└── .npmrc                         <span class="cm"># legacy-peer-deps=true（CodeMirror ピア依存解決）</span></code></pre>
+  </section>
+
+  <!-- ===================== SYNTAX: TASK ===================== -->
+  <section id="syntax-task">
+    <h2>タスク記法</h2>
+    <p>タスクは GFM（GitHub Flavored Markdown）のチェックボックス形式をベースに、カスタムマーカーを追加した独自記法を使います。</p>
+
+    <h3>ステータスマーカー</h3>
+    <div class="marker-demo">
+      <div class="marker-item">
+        <code>- [ ] タスク</code>
+        <span class="status s-todo">todo</span>
+      </div>
+      <div class="marker-item">
+        <code>- [x] タスク</code>
+        <span class="status s-done">done</span>
+      </div>
+      <div class="marker-item">
+        <code>- [>] タスク</code>
+        <span class="status s-doing">doing</span>
+      </div>
+      <div class="marker-item">
+        <code>- [!] タスク</code>
+        <span class="status s-blocked">blocked</span>
+      </div>
+      <div class="marker-item">
+        <code>- [-] タスク</code>
+        <span class="status s-hold">hold</span>
+      </div>
+      <div class="marker-item">
+        <code>- [X] タスク</code>
+        <span class="status s-done">done（大文字 X も可）</span>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>マーカー</th><th>ステータス</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td><code>[ ]</code></td><td>todo</td><td>GFM 標準チェックボックス（未チェック）</td></tr>
+        <tr><td><code>[x]</code> / <code>[X]</code></td><td>done</td><td>GFM 標準チェックボックス（チェック済み）</td></tr>
+        <tr><td><code>[>]</code></td><td>doing</td><td>カスタムマーカー（作業中）</td></tr>
+        <tr><td><code>[!]</code></td><td>blocked</td><td>カスタムマーカー（ブロック中）</td></tr>
+        <tr><td><code>[-]</code></td><td>hold</td><td>カスタムマーカー（保留）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>非タスクリスト（ListNode）</h3>
+    <p>チェックボックスのないリスト項目はタスクではなく <strong>リストノード</strong> として扱われます。
+    Kanban ビューではグルーピングの境界として機能します。</p>
+    <pre><code>- グループ名（チェックボックスなし → ListNode）
+  - [ ] このタスクは「グループ名」セクション内に属する</code></pre>
+
+    <h3>ネスト構造</h3>
+    <p>タスクは任意の深さでネストできます。子タスクは親タスクのインデント配下に記述します。</p>
+    <pre><code>- [ ] 親タスク
+  - [>] 子タスク（作業中）
+    - [!] 孫タスク（ブロック中）
+  - @schedule: 2026-07-01T10:00/2026-07-01T12:00  <span class="cm">← 親タスクのメタ</span></code></pre>
+
+    <div class="callout warn">
+      <p><strong>注意</strong>：インデントはタブ文字を使用してください（Obsidian のデフォルト設定 "Use tabs" に合わせています）。
+      スペースインデントも許容されますが、タブに正規化されてシリアライズされます。</p>
+    </div>
+  </section>
+
+  <!-- ===================== SYNTAX: META ===================== -->
+  <section id="syntax-meta">
+    <h2>メタフィールド</h2>
+    <p>タスクの追加情報はタスク行の子リスト内に <code>@key: value</code> 形式で記述します。
+    パース時にメタフィールドは AST から除去され、タスクノードの <code>meta</code> プロパティに集約されます。</p>
+
+    <pre><code>- [ ] タスク名
+  - @schedule: 2026-07-01T10:00/2026-07-01T12:00
+  - @due: 2026-07-05
+  - @priority: 1
+  - @tags: frontend, urgent
+  - @dependsOn: task-id-abc, task-id-def</code></pre>
+
+    <table>
+      <thead><tr><th>キー</th><th>型</th><th>説明</th><th>例</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>@schedule</code></td>
+          <td>string（ISO 日時範囲）</td>
+          <td>作業予定期間。Calendar・Gantt ビューで使用。</td>
+          <td><code>2026-07-01T10:00/2026-07-01T12:00</code></td>
+        </tr>
+        <tr>
+          <td><code>@due</code></td>
+          <td>string（ISO 日付）</td>
+          <td>期限日。Kanban カードに表示。</td>
+          <td><code>2026-07-05</code></td>
+        </tr>
+        <tr>
+          <td><code>@priority</code></td>
+          <td>number</td>
+          <td>優先度（数値が小さいほど高優先）。Kanban カードに表示。</td>
+          <td><code>1</code></td>
+        </tr>
+        <tr>
+          <td><code>@tags</code></td>
+          <td>string[]（カンマ区切り）</td>
+          <td>タグ一覧。フィルタリング用。</td>
+          <td><code>frontend, urgent</code></td>
+        </tr>
+        <tr>
+          <td><code>@dependsOn</code></td>
+          <td>string[]（カンマ区切り）</td>
+          <td>依存タスクの ID。将来の依存関係表示に使用予定。</td>
+          <td><code>task-id-abc</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>実装詳細</strong>：メタフィールドは <code>remark-meta-fields</code> プラグインが処理します。
+      タスクノードの子リストを走査し <code>@key: value</code> パターンにマッチした行を収集・削除します。
+      シリアライズ時はタブインデントで再出力されます。</p>
+    </div>
+  </section>
+
+  <!-- ===================== SYNTAX: SCHEDULE ===================== -->
+  <section id="syntax-schedule">
+    <h2>スケジュール書式</h2>
+    <p>
+      <code>@schedule</code> の値は ISO 8601 の日時範囲形式で記述します。
+      パーサーは省略記法を自動展開します（<code>schedule-normalize.ts</code>）。
+    </p>
+
+    <h3>正規化ルール（3段階）</h3>
+    <table>
+      <thead><tr><th>段階</th><th>処理</th><th>入力例</th><th>展開後</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1. 継続展開</td>
+          <td>終了側に省略された日付を補完</td>
+          <td><code>26-01-01T10:00/11:30</code></td>
+          <td><code>26-01-01T10:00/26-01-01T11:30</code></td>
+        </tr>
+        <tr>
+          <td>1. 継続展開（日）</td>
+          <td>終了側に省略された年月を補完</td>
+          <td><code>26-01-01/02</code></td>
+          <td><code>26-01-01/26-01-02</code></td>
+        </tr>
+        <tr>
+          <td>2. 2桁年号展開</td>
+          <td><code>YY-</code> を <code>20YY-</code> に展開</td>
+          <td><code>26-01-01</code></td>
+          <td><code>2026-01-01</code></td>
+        </tr>
+        <tr>
+          <td>3. 分省略展開</td>
+          <td><code>THH</code> を <code>THH:00</code> に展開</td>
+          <td><code>2026-01-01T10</code></td>
+          <td><code>2026-01-01T10:00</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>書式パターン例</h3>
+    <pre><code><span class="cm"># 最も省略した書き方</span>
+- @schedule: 26-07-01T10/12    <span class="cm">→ 2026-07-01T10:00/2026-07-01T12:00</span>
+
+<span class="cm"># 日付のみ（終日イベント）</span>
+- @schedule: 2026-07-01/2026-07-03
+
+<span class="cm"># 時刻付き（同日）</span>
+- @schedule: 2026-07-01T10:00/2026-07-01T12:00
+
+<span class="cm"># 時刻付き（複数日）→ Calendar では dateRange として扱う</span>
+- @schedule: 2026-07-01T09:00/2026-07-03T18:00</code></pre>
+
+    <h3>Calendar ビューでの解釈</h3>
+    <table>
+      <thead><tr><th>種別</th><th>条件</th><th>Calendar 表示</th></tr></thead>
+      <tbody>
+        <tr><td>dateTimeRange</td><td>同日・時刻付き</td><td>開始〜終了時刻の時間ブロック</td></tr>
+        <tr><td>dateRange</td><td>日付のみ or 複数日・時刻付き</td><td>日付またがりの全日イベント</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== SYNTAX: SECTION ===================== -->
+  <section id="syntax-section">
+    <h2>セクション構造</h2>
+    <p>Markdown の Heading（<code>#</code> 〜 <code>######</code>）がセクション境界になります。
+    セクションは Heading レベルに基づいて自動的にネストされます。</p>
+
+    <pre><code># プロジェクトA （depth=1 Section）
+
+- [ ] 直接タスク
+
+## フェーズ1 （depth=2 Section、プロジェクトAのサブセクション）
+
+- 機能実装 （ListNode = グルーピング用）
+  - [>] API 設計         （section: ["フェーズ1", "機能実装"]）
+  - [ ] DB スキーマ設計   （section: ["フェーズ1", "機能実装"]）
+
+- テスト （ListNode）
+  - [ ] ユニットテスト作成  （section: ["フェーズ1", "テスト"]）</code></pre>
+
+    <div class="callout info">
+      <p><strong>無名セクション</strong>：最初の Heading より前にコンテンツがある場合、<code>id: 'section-0'</code>・<code>lineNumber: -1</code> の無名セクションとして扱われます。</p>
+    </div>
+  </section>
+
+  <!-- ===================== PARSER PIPELINE ===================== -->
+  <section id="parser-pipeline">
+    <h2>パーサー処理パイプライン</h2>
+    <p>エントリーポイントは <code>src/lib/parser/parse-markdown.ts</code> の <code>parseMarkdown(markdown: string): Document</code> 関数です。</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-title">① stripCommonIndent()</div>
+        <div class="step-desc">タブ/スペース混在インデントを正規化。Obsidian のタブインデントによる誤解析を防止。</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">② remark-parse + remark-gfm</div>
+        <div class="step-desc">Markdown → mdast.Root を生成。GFM テーブル・チェックボックス対応。</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">③ remark-task-status プラグイン</div>
+        <div class="step-desc">ListItem を走査し、<code>checked</code> フラグおよびカスタムマーカー（<code>[>][!][-]</code>）から Status を決定。<code>node.data.taskStatus</code> に格納。</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">④ remark-meta-fields プラグイン</div>
+        <div class="step-desc">タスク配下のリストから <code>@key: value</code> 行を検出・収集し <code>node.data.meta</code> に格納。該当 ListItem を mdast から削除。</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">⑤ buildSectionsFromRoot()</div>
+        <div class="step-desc">mdast を走査し Heading でセクションを区切り、<code>nestSections()</code> で深度ベースの階層を構築。<code>buildNodeLineMap()</code> で ID→行番号マップを生成。</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">⑥ Document 出力</div>
+        <div class="step-desc"><code>{ sections: Section[], nodeLineMap: Map&lt;string, number&gt; }</code> を返す。</div>
+      </div>
+    </div>
+
+    <h3>ID 生成（generateId）</h3>
+    <p>各ノードには <code>path: string[]</code>（セクション → ノードへのテキスト経路）の DJB2 ハッシュから決定論的な ID が生成されます。
+    同じ Markdown を再パースすると同じ ID が生成されるため、ビューとの紐付けが安定します。</p>
+  </section>
+
+  <!-- ===================== AST DATA MODEL ===================== -->
+  <section id="parser-ast">
+    <h2>AST データモデル</h2>
+    <p>型定義はすべて <code>src/lib/parser/types.ts</code> に集約されています。</p>
+
+    <h3>Document（ルート）</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">Document</span> <span class="pu">{</span>
+  <span class="nm">type</span><span class="op">:</span> <span class="st">'document'</span>
+  sections<span class="op">:</span> <span class="ty">Section</span><span class="pu">[]</span>
+  nodeLineMap<span class="op">:</span> <span class="ty">Map</span><span class="pu">&lt;</span><span class="ty">string</span><span class="pu">,</span> <span class="ty">number</span><span class="pu">&gt;</span>  <span class="cm">// id → 0-based 行番号（エディタカーソル移動用）</span>
+<span class="pu">}</span></code></pre>
+
+    <h3>Section（セクション）</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">Section</span> <span class="pu">{</span>
+  <span class="nm">type</span><span class="op">:</span>           <span class="st">'section'</span>
+  id<span class="op">:</span>            <span class="ty">string</span>           <span class="cm">// 決定論的ハッシュ ID</span>
+  depth<span class="op">:</span>         <span class="ty">number</span>           <span class="cm">// Heading レベル（1〜6）</span>
+  title<span class="op">:</span>         <span class="ty">string</span>           <span class="cm">// Heading テキスト</span>
+  lineNumber<span class="op">:</span>    <span class="ty">number</span>           <span class="cm">// 0-based 行番号（-1 = 無名セクション）</span>
+  parentSectionId<span class="op">?:</span> <span class="ty">string</span>
+  children<span class="op">:</span>     <span class="ty">Node</span><span class="pu">[]</span>            <span class="cm">// Section 直下のノード</span>
+  subSections<span class="op">:</span>  <span class="ty">Section</span><span class="pu">[]</span>         <span class="cm">// ネストされたサブセクション</span>
+<span class="pu">}</span></code></pre>
+
+    <h3>Node 共用体型</h3>
+    <pre><code><span class="kw">type</span> <span class="ty">Node</span> <span class="op">=</span> <span class="ty">TaskNode</span> <span class="op">|</span> <span class="ty">ListNode</span> <span class="op">|</span> <span class="ty">QuoteNode</span>
+<span class="kw">type</span> <span class="ty">Status</span> <span class="op">=</span> <span class="st">'todo'</span> <span class="op">|</span> <span class="st">'doing'</span> <span class="op">|</span> <span class="st">'done'</span> <span class="op">|</span> <span class="st">'blocked'</span> <span class="op">|</span> <span class="st">'hold'</span></code></pre>
+
+    <h3>TaskNode（タスク）</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">TaskNode</span> <span class="pu">{</span>
+  <span class="nm">type</span><span class="op">:</span>    <span class="st">'task'</span>
+  id<span class="op">:</span>      <span class="ty">string</span>
+  text<span class="op">:</span>    <span class="ty">string</span>    <span class="cm">// タスクタイトル（マーカー除く）</span>
+  status<span class="op">:</span>  <span class="ty">Status</span>
+  children<span class="op">:</span> <span class="ty">Node</span><span class="pu">[]</span>   <span class="cm">// ネスト子ノード</span>
+  meta<span class="op">?:</span> <span class="pu">{</span>
+    schedule<span class="op">?:</span>  <span class="ty">string</span>    <span class="cm">// ISO 日時範囲</span>
+    due<span class="op">?:</span>       <span class="ty">string</span>    <span class="cm">// ISO 日付</span>
+    priority<span class="op">?:</span>  <span class="ty">number</span>
+    dependsOn<span class="op">?:</span> <span class="ty">string</span><span class="pu">[]</span>
+    tags<span class="op">?:</span>      <span class="ty">string</span><span class="pu">[]</span>
+  <span class="pu">}</span>
+  lineNumber<span class="op">:</span>        <span class="ty">number</span>   <span class="cm">// 0-based</span>
+  depth<span class="op">:</span>             <span class="ty">number</span>   <span class="cm">// ネスト深さ</span>
+  path<span class="op">:</span>              <span class="ty">string</span><span class="pu">[]</span> <span class="cm">// セクション→ノードの経路（ID 生成に使用）</span>
+  hasTaskDescendant<span class="op">:</span> <span class="ty">boolean</span>
+  isGroup<span class="op">:</span>           <span class="ty">boolean</span>  <span class="cm">// hasTaskDescendant && children.length > 0</span>
+  isLeafTask<span class="op">:</span>        <span class="ty">boolean</span>  <span class="cm">// children.length === 0</span>
+  isMemo<span class="op">:</span>            <span class="kw">false</span>
+<span class="pu">}</span></code></pre>
+
+    <h3>ListNode（非タスクリスト）</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">ListNode</span> <span class="pu">{</span>
+  <span class="nm">type</span><span class="op">:</span>    <span class="st">'list'</span>
+  id<span class="op">:</span>      <span class="ty">string</span>
+  text<span class="op">:</span>    <span class="ty">string</span>
+  children<span class="op">:</span> <span class="ty">Node</span><span class="pu">[]</span>
+  lineNumber<span class="op">:</span>        <span class="ty">number</span>
+  depth<span class="op">:</span>             <span class="ty">number</span>
+  path<span class="op">:</span>              <span class="ty">string</span><span class="pu">[]</span>
+  hasTaskDescendant<span class="op">:</span> <span class="ty">boolean</span>
+  isGroup<span class="op">:</span>           <span class="ty">boolean</span>  <span class="cm">// Kanban グルーピング境界として機能</span>
+  isMemo<span class="op">:</span>            <span class="ty">boolean</span>  <span class="cm">// !hasTaskDescendant の場合 true</span>
+<span class="pu">}</span></code></pre>
+
+    <h3>QuoteNode（引用ブロック）</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">QuoteNode</span> <span class="pu">{</span>
+  <span class="nm">type</span><span class="op">:</span>              <span class="st">'quote'</span>
+  raw<span class="op">:</span>               <span class="ty">string</span>   <span class="cm">// 引用テキスト（改行含む）</span>
+  hasTaskDescendant<span class="op">:</span> <span class="kw">false</span>
+  isGroup<span class="op">:</span>           <span class="kw">false</span>
+  isMemo<span class="op">:</span>            <span class="kw">true</span>
+<span class="pu">}</span></code></pre>
+  </section>
+
+  <!-- ===================== SERIALIZER ===================== -->
+  <section id="parser-serializer">
+    <h2>シリアライザ（AST → Markdown）</h2>
+    <p>
+      <code>src/lib/parser/ast-to-md.ts</code> の <code>serializeAst(doc: Document): string</code> が
+      Document を Markdown 文字列に逆変換します。
+      ビュー上での操作後は直接 <code>markdown-patch.ts</code> の行差分パッチが使われるため、
+      シリアライザはエディタ上での手動呼び出しや テストで使用されます。
+    </p>
+
+    <h3>出力ルール</h3>
+    <table>
+      <thead><tr><th>ノード型</th><th>出力形式</th></tr></thead>
+      <tbody>
+        <tr><td>Section (depth=1)</td><td><code># タイトル</code></td></tr>
+        <tr><td>Section (depth=2)</td><td><code>## タイトル</code></td></tr>
+        <tr><td>TaskNode (todo)</td><td><code>- [ ] テキスト</code></td></tr>
+        <tr><td>TaskNode (doing)</td><td><code>- [>] テキスト</code></td></tr>
+        <tr><td>TaskNode (done)</td><td><code>- [x] テキスト</code></td></tr>
+        <tr><td>TaskNode (blocked)</td><td><code>- [!] テキスト</code></td></tr>
+        <tr><td>TaskNode (hold)</td><td><code>- [-] テキスト</code></td></tr>
+        <tr><td>ListNode</td><td><code>- テキスト</code></td></tr>
+        <tr><td>QuoteNode</td><td><code>&gt; テキスト</code></td></tr>
+        <tr><td>メタフィールド（子）</td><td><code>TAB- @key: value</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Markdown 行差分パッチ（markdown-patch.ts）</h3>
+    <p>
+      ビュー操作（カード移動・日程変更等）は AST 全体を再生成せず、
+      対象の <strong>特定行のみを差分パッチ</strong>します。これにより手動編集済みのコメント・空行・カスタムフォーマットが保持されます。
+    </p>
+    <table>
+      <thead><tr><th>関数</th><th>用途</th><th>検索戦略</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>patchNodeStatus()</code></td>
+          <td>ステータス変更（Kanban カード移動）</td>
+          <td><code>node.lineNumber</code> で直接行指定（最も正確）</td>
+        </tr>
+        <tr>
+          <td><code>patchScheduleForNode()</code></td>
+          <td>スケジュール変更（Calendar ドラッグ）</td>
+          <td>タスク本文行を検索 → インデント配下の <code>@schedule</code> 行を更新</td>
+        </tr>
+        <tr>
+          <td><code>patchTaskTitle()</code></td>
+          <td>タスク名変更</td>
+          <td>タスク行パターンマッチ</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== CALENDAR VIEW ===================== -->
+  <section id="view-calendar">
+    <h2>Calendar ビュー</h2>
+    <p>
+      <code>@schedule</code> を持つタスクをカレンダー形式で表示します。
+      UI コンポーネントは <code>svelte-calendar-lib</code>（ローカルライブラリ）を使用します。
+    </p>
+
+    <h3>データ変換（ast-to-calendar.ts）</h3>
+    <pre><code><span class="kw">type</span> <span class="ty">CalendarItem</span> <span class="op">=</span> <span class="pu">{</span>
+  id<span class="op">:</span>          <span class="ty">string</span>
+  title<span class="op">:</span>       <span class="ty">string</span>
+  taskStatus<span class="op">:</span>  <span class="st">'todo'</span> <span class="op">|</span> <span class="st">'doing'</span> <span class="op">|</span> <span class="st">'done'</span>   <span class="cm">// blocked/hold → todo に集約</span>
+  startDate<span class="op">:</span>   <span class="ty">DateTime</span>
+  endDate<span class="op">:</span>     <span class="ty">DateTime</span>
+  parentTitle<span class="op">?:</span> <span class="ty">string</span>
+<span class="pu">}</span></code></pre>
+
+    <ul>
+      <li><code>@schedule</code> を持たないタスクはカレンダーに表示されません</li>
+      <li>ステータスは <code>todo / doing / done</code> の3値に集約されます（<code>blocked</code> / <code>hold</code> → <code>todo</code>）</li>
+      <li>カレンダー上のイベントをクリックするとエディタの対応行にカーソルが移動します</li>
+      <li>ドラッグ＆ドロップで <code>@schedule</code> の値を書き換えます（<code>patchScheduleForNode()</code>）</li>
+    </ul>
+
+    <h3>ビュー実装ファイル</h3>
+    <table>
+      <thead><tr><th>ファイル</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/views/CalendarView.ts</code></td><td>Obsidian ItemView サブクラス（Shadow DOM）</td></tr>
+        <tr><td><code>src/views/CalendarViewMount.svelte</code></td><td>Svelte マウントポイント・FileSync 購読</td></tr>
+        <tr><td><code>src/lib/calendar/CalendarTab.svelte</code></td><td>タブ UI（svelte-calendar-lib をラップ）</td></tr>
+        <tr><td><code>src/lib/calendar/ast-to-calendar.ts</code></td><td>AST → CalendarItem 変換</td></tr>
+        <tr><td><code>src/lib/calendar/markdown-patch.ts</code></td><td>Markdown 行差分パッチ（全ビュー共用）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== GANTT VIEW ===================== -->
+  <section id="view-gantt">
+    <h2>Gantt ビュー</h2>
+    <p>
+      タスクとその階層構造をガントチャートで表示します。
+      UI コンポーネントは <code>svelte-gantt-lib</code>（ローカルライブラリ）を使用します。
+    </p>
+
+    <h3>データ変換（ast-to-gantt.ts）</h3>
+    <ul>
+      <li><code>@schedule</code> を持つタスクのみ対象</li>
+      <li>子孫に <code>@schedule</code> を持つグループノードは自動的に親ノードとして Gantt に追加</li>
+      <li><code>descendantDateRange()</code> で子孫の min/max スケジュールから親の期間を推定</li>
+    </ul>
+
+    <pre><code><span class="kw">type</span> <span class="ty">GanttNodeType</span> <span class="op">=</span> <span class="st">'project'</span> <span class="op">|</span> <span class="st">'section'</span> <span class="op">|</span> <span class="st">'subsection'</span> <span class="op">|</span> <span class="st">'task'</span>
+
+<span class="cm">// 判定ロジック</span>
+<span class="kw">if</span> (hasSchedule && !hasChildSchedule) → type<span class="op">:</span> <span class="st">'task'</span>
+<span class="kw">if</span> (!hasSchedule && hasChildSchedule) → type<span class="op">:</span> <span class="st">'subsection'</span>（子孫範囲から期間計算）</code></pre>
+
+    <h3>ビュー実装ファイル</h3>
+    <table>
+      <thead><tr><th>ファイル</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/views/GanttView.ts</code></td><td>Obsidian ItemView サブクラス</td></tr>
+        <tr><td><code>src/views/GanttViewMount.svelte</code></td><td>Svelte マウントポイント</td></tr>
+        <tr><td><code>src/lib/gantt/GanttTab.svelte</code></td><td>タブ UI（svelte-gantt-lib をラップ）</td></tr>
+        <tr><td><code>src/lib/gantt/ast-to-gantt.ts</code></td><td>AST → GanttNode 変換</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== KANBAN VIEW ===================== -->
+  <section id="view-kanban">
+    <h2>Kanban ビュー</h2>
+    <p>
+      タスクをステータスレーン（Todo / Doing / Blocked / Hold / Done）と
+      セクション階層グループで分類して表示します。
+      UI コンポーネントは <code>svelte-kanban-lib</code>（ローカルライブラリ）を使用します。
+    </p>
+
+    <h3>KanbanCard 型</h3>
+    <pre><code><span class="kw">type</span> <span class="ty">KanbanCard</span> <span class="op">=</span> <span class="ty">CardData</span> <span class="op">&</span> <span class="pu">{</span>
+  id<span class="op">:</span>           <span class="ty">string</span>
+  title<span class="op">:</span>        <span class="ty">string</span>
+  status<span class="op">:</span>       <span class="ty">string</span>     <span class="cm">// 'todo' | 'doing' | 'done' | 'blocked' | 'hold'</span>
+  section<span class="op">:</span>      <span class="ty">string</span><span class="pu">[]</span>   <span class="cm">// セクション階層パス（ライブラリの groupBy で使用）</span>
+  sectionTitle<span class="op">:</span> <span class="ty">string</span>     <span class="cm">// section[0]（後方互換）</span>
+  groupTitle<span class="op">:</span>   <span class="ty">string</span>     <span class="cm">// section の末尾（後方互換）</span>
+  depth<span class="op">:</span>        <span class="ty">number</span>
+  schedule<span class="op">?:</span>   <span class="ty">string</span>
+  due<span class="op">?:</span>         <span class="ty">string</span>
+  priority<span class="op">?:</span>   <span class="ty">number</span>
+  tags<span class="op">?:</span>        <span class="ty">string</span><span class="pu">[]</span>
+<span class="pu">}</span></code></pre>
+
+    <h3>section フィールドとグルーピング</h3>
+    <p>
+      <code>section: string[]</code> は Markdown 構造から自動生成されます。
+      ライブラリの <code>groupBy: 'section'</code> + <code>sectionDepth: 2</code> 設定により、
+      ライブラリが配列を <code>"Heading / List"</code> 形式の groupId に変換してグループヘッダーを自動生成します。
+    </p>
+
+    <pre><code><span class="cm"># Markdown 構造</span>
+<span class="kw">#</span> プロジェクト
+
+- 機能A（ListNode）
+  - [ ] タスク1    <span class="cm">→ section: ["プロジェクト", "機能A"]</span>
+  - [>] タスク2    <span class="cm">→ section: ["プロジェクト", "機能A"]</span>
+
+- 機能B（ListNode）
+  - [ ] タスク3    <span class="cm">→ section: ["プロジェクト", "機能B"]</span>
+
+<span class="cm"># Kanban 表示（グループモード）</span>
+<span class="cm">┌─────────────────────────────────────────┐</span>
+<span class="cm">│ プロジェクト                              │ ← groupPath（小さく表示）</span>
+<span class="cm">│ 機能A                                    │ ← groupLabel（大きく表示）</span>
+<span class="cm">│  [Todo] タスク1  [Doing] タスク2         │ ← レーンが横並び</span>
+<span class="cm">├─────────────────────────────────────────┤</span>
+<span class="cm">│ プロジェクト</span>
+<span class="cm">│ 機能B</span>
+<span class="cm">│  [Todo] タスク3</span>
+<span class="cm">└─────────────────────────────────────────┘</span></code></pre>
+
+    <h3>レーン定義（DEFAULT_KANBAN_CONFIG）</h3>
+    <table>
+      <thead><tr><th>レーン ID</th><th>タイトル</th><th>フィルター条件</th><th>移動時の更新</th></tr></thead>
+      <tbody>
+        <tr><td><code>todo</code></td><td>Todo</td><td>status == 'todo'</td><td>status → 'todo'</td></tr>
+        <tr><td><code>doing</code></td><td>Doing</td><td>status == 'doing'</td><td>status → 'doing'</td></tr>
+        <tr><td><code>blocked</code></td><td>Blocked</td><td>status == 'blocked'</td><td>status → 'blocked'</td></tr>
+        <tr><td><code>hold</code></td><td>Hold</td><td>status == 'hold'</td><td>status → 'hold'</td></tr>
+        <tr><td><code>done</code></td><td>Done</td><td>status == 'done'</td><td>status → 'done'</td></tr>
+      </tbody>
+    </table>
+
+    <h3>グルーピング設定</h3>
+    <p>KanbanTab.svelte の内部状態：</p>
+    <table>
+      <thead><tr><th>状態変数</th><th>デフォルト</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td><code>userGroupBy</code></td><td><code>'section'</code></td><td>グルーピングフィールド（section / sectionTitle / なし）</td></tr>
+        <tr><td><code>userSectionDepth</code></td><td><code>2</code></td><td>配列型フィールドの深さ（1 = 最上位のみ）</td></tr>
+        <tr><td><code>allowCrossGroupMove</code></td><td><code>false</code></td><td>異なるグループ間のカード移動許可</td></tr>
+        <tr><td><code>cardTitleMultiline</code></td><td><code>false</code></td><td>カードタイトル複数行表示</td></tr>
+      </tbody>
+    </table>
+
+    <h3>カード操作</h3>
+    <ul>
+      <li><strong>レーン間ドラッグ</strong>：<code>patchNodeStatus()</code> で Markdown のステータスマーカーを書き換え</li>
+      <li><strong>カードクリック</strong>：<code>onNodeClick</code> コールバック経由でエディタカーソルを対応行に移動</li>
+      <li><strong>グループ設定変更</strong>：<code>handleConfigChange()</code> が全設定を <code>$state</code> に保存し、<code>$derived</code> の config が再計算される</li>
+    </ul>
+
+    <h3>KANBAN_FIELD_DEFINITIONS（フィルタ・ソート用フィールド定義）</h3>
+    <table>
+      <thead><tr><th>key</th><th>type</th><th>label</th></tr></thead>
+      <tbody>
+        <tr><td>status</td><td>string（options付き）</td><td>ステータス</td></tr>
+        <tr><td>section</td><td>array</td><td>セクション</td></tr>
+        <tr><td>sectionTitle</td><td>string</td><td>親セクション</td></tr>
+        <tr><td>priority</td><td>number</td><td>優先度</td></tr>
+        <tr><td>due</td><td>date</td><td>期限</td></tr>
+        <tr><td>schedule</td><td>string</td><td>スケジュール</td></tr>
+        <tr><td>depth</td><td>number</td><td>ネスト深さ</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== AST VIEW ===================== -->
+  <section id="view-ast">
+    <h2>AST ビュー</h2>
+    <p>現在アクティブなファイルの Document AST を JSON 形式でリアルタイム表示するデバッグ用ビューです。
+    パーサーの動作確認や開発時のデバッグに使用します。</p>
+    <ul>
+      <li><code>src/views/AstView.ts</code> — Obsidian ItemView サブクラス</li>
+      <li><code>src/views/AstViewMount.svelte</code> — FileSync 購読、JSON フォーマット表示</li>
+    </ul>
+  </section>
+
+  <!-- ===================== SYNC ===================== -->
+  <section id="sync">
+    <h2>ファイル同期エンジン</h2>
+
+    <h3>FileSync（src/sync/file-sync.ts）</h3>
+    <p>Obsidian のアクティブファイル変更を監視し、AST に変換して全ビューに配信します。</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-title">start()</div>
+        <div class="step-desc">workspace <code>active-leaf-change</code> と vault <code>modify</code> イベントを登録</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">debounce（デフォルト 300ms）</div>
+        <div class="step-desc">短時間の連続変更をまとめて処理</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">parseFile()</div>
+        <div class="step-desc"><code>parseMarkdown()</code> でファイル内容を Document AST に変換</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">内容変化チェック</div>
+        <div class="step-desc">前回と同じ内容なら通知をスキップ（不要な再レンダリング防止）</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-title">notify(doc, file)</div>
+        <div class="step-desc">全登録リスナー（各ビュー）に <code>(doc: Document, file: TFile)</code> を配信</div>
+      </div>
+    </div>
+
+    <h3>EditorEventBus（src/sync/editor-event-bus.ts）</h3>
+    <p>ビュー上でのノードクリック → Obsidian エディタのカーソル移動を仲介します。</p>
+    <pre><code><span class="cm">// ビュー側</span>
+editorEventBus.<span class="fn">requestFocusLine</span>(lineNumber)
+
+<span class="cm">// Plugin 側（plugin.ts）</span>
+editorEventBus.<span class="fn">onFocusLine</span>((line) =&gt; <span class="pu">{</span>
+  mdView.editor.<span class="fn">setCursor</span>(<span class="pu">{</span> line, ch<span class="op">:</span> <span class="nm">0</span> <span class="pu">})</span>
+<span class="pu">})</span></code></pre>
+  </section>
+
+  <!-- ===================== EDITOR ===================== -->
+  <section id="editor">
+    <h2>エディタ実装</h2>
+
+    <h3>EditorLayout.svelte（src/lib/editor/EditorLayout.svelte）</h3>
+    <p>3分割レイアウトで構成されます：</p>
+    <ul>
+      <li><strong>左ペイン</strong>：Monaco Editor（Markdown テキスト編集）</li>
+      <li><strong>右上ペイン</strong>：タブビュー切り替え（AST / Calendar / Gantt / Kanban）</li>
+      <li><strong>右下ペイン</strong>：AST JSON 表示（デバッグ用）</li>
+    </ul>
+
+    <h3>タスクハイライト（src/editor/task-decoration.ts）</h3>
+    <p>Obsidian のネイティブエディタ（CodeMirror 6）に ViewPlugin として登録され、タスク行とメタ行を色分けします。</p>
+    <table>
+      <thead><tr><th>対象</th><th>CSS クラス</th></tr></thead>
+      <tbody>
+        <tr><td>タスク行（ステータス別）</td><td><code>md-ast-task-status-todo / doing / done / blocked / hold</code></td></tr>
+        <tr><td>メタキー行（<code>@schedule:</code> 等）</td><td><code>md-ast-meta-key</code></td></tr>
+      </tbody>
+    </table>
+    <p>パフォーマンス最適化のため、可視範囲の行のみを装飾対象とします。</p>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section id="settings">
+    <h2>プラグイン設定</h2>
+    <p>設定は Obsidian の設定画面から変更でき、<code>plugin.loadData()</code> で永続化されます。</p>
+
+    <table>
+      <thead><tr><th>設定キー</th><th>型</th><th>デフォルト</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td><code>showRibbonIcon</code></td><td>boolean</td><td><code>true</code></td><td>左サイドバーのリボンアイコン表示</td></tr>
+        <tr><td><code>enableTaskHighlight</code></td><td>boolean</td><td><code>true</code></td><td>CodeMirror タスクハイライト有効化</td></tr>
+        <tr><td><code>debounceMs</code></td><td>number</td><td><code>300</code></td><td>ファイル変更検知の debounce 時間（ms）</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== BUILD ===================== -->
+  <section id="build">
+    <h2>ビルド構成</h2>
+
+    <h3>npm スクリプト</h3>
+    <table>
+      <thead><tr><th>スクリプト</th><th>処理</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm run libs:update</code></td><td>ローカルライブラリ（calendar/gantt/kanban）を最新版に更新</td></tr>
+        <tr><td><code>npm run dev</code></td><td>libs:update → Vite 開発サーバー起動（localhost:5173）</td></tr>
+        <tr><td><code>npm run build</code></td><td>libs:update → esbuild で本番バンドル生成（main.js）</td></tr>
+        <tr><td><code>npm run build:dev</code></td><td>libs:update → esbuild で開発バンドル生成（ソースマップ付き・Obsidian 自動コピー）</td></tr>
+        <tr><td><code>npm run build:app</code></td><td>libs:update → Vite アプリビルド</td></tr>
+        <tr><td><code>npm run test:unit</code></td><td>libs:update → Vitest ユニットテスト実行</td></tr>
+        <tr><td><code>npm run test:e2e</code></td><td>libs:update → Playwright ブラウザ E2E テスト</td></tr>
+        <tr><td><code>npm run test:obs:e2e</code></td><td>libs:update → WebdriverIO Obsidian E2E テスト</td></tr>
+        <tr><td><code>npm run test</code></td><td>libs:update → test:unit → build → test:obs:e2e（フルテスト）</td></tr>
+        <tr><td><code>npm run obs:update:manifest</code></td><td>main.js と manifest.json を Obsidian プラグインフォルダにコピー</td></tr>
+        <tr><td><code>npm run check</code></td><td>svelte-check による TypeScript 型チェック</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <p><strong>注意</strong>：テスト・ビルドの前に必ず <code>libs:update</code> が自動実行されます。
+      ローカルライブラリは頻繁に更新されるため、<code>npm run test:unit</code> のみを直接呼ぶと古いバージョンで動作する場合があります。</p>
+    </div>
+
+    <h3>esbuild 設定（esbuild.config.mjs）</h3>
+    <p>Obsidian プラグイン用の CJS バンドルを生成します。</p>
+    <table>
+      <thead><tr><th>設定項目</th><th>値</th></tr></thead>
+      <tbody>
+        <tr><td>出力形式</td><td>CJS（CommonJS）</td></tr>
+        <tr><td>ターゲット</td><td>ES2018</td></tr>
+        <tr><td>本番ビルド</td><td>minify + ソースマップなし</td></tr>
+        <tr><td>開発ビルド</td><td>インラインソースマップ + Obsidian フォルダに自動コピー</td></tr>
+        <tr><td>外部依存</td><td>obsidian, electron, @codemirror/*, @lezer/*, builtin-modules</td></tr>
+      </tbody>
+    </table>
+
+    <h4>カスタムプラグイン（esbuild）</h4>
+    <ul>
+      <li><code>svelteModuleTypeStripPlugin</code>：<code>.svelte.ts</code> の TypeScript 型を削除（Svelte 5 互換性）</li>
+      <li><code>svelteLibSourcePlugin</code>：ローカルライブラリの symlink を realpath に解決（重複モジュール防止）</li>
+      <li><code>esbuildSvelte</code>：Svelte コンポーネントを処理（CSS インライン）</li>
+      <li><code>obsidianCopyPlugin</code>：ビルド後に Obsidian インストールパスに自動コピー</li>
+    </ul>
+
+    <h3>ピア依存の解決</h3>
+    <p>
+      <code>obsidian@1.12.3</code> が要求する <code>@codemirror/state@6.5.0</code>（exact）と
+      <code>@codemirror/view@6.40.0</code> が要求する <code>^6.6.0</code> の競合を
+      <code>.npmrc</code> の <code>legacy-peer-deps=true</code> で回避しています。
+    </p>
+  </section>
+
+  <!-- ===================== TEST ===================== -->
+  <section id="test">
+    <h2>テスト構成</h2>
+
+    <h3>ユニットテスト（Vitest）</h3>
+    <p>ファイルパターン: <code>src/**/*.test.ts</code>（vitest.config.ts 参照）</p>
+    <table>
+      <thead><tr><th>テストファイル</th><th>対象</th></tr></thead>
+      <tbody>
+        <tr><td><code>parse-markdown.test.ts</code></td><td>パーサーメイン（ステータス/グループ/メタ等）</td></tr>
+        <tr><td><code>ast-to-md.test.ts</code></td><td>AST → Markdown 逆シリアル化ラウンドトリップ</td></tr>
+        <tr><td><code>indent-patterns.test.ts</code></td><td>タブ/スペース混在インデント正規化</td></tr>
+        <tr><td><code>schedule-normalize.test.ts</code></td><td>スケジュール省略形の展開</td></tr>
+        <tr><td><code>ast-to-calendar.test.ts</code></td><td>Calendar 変換（日付パース・ステータスマップ）</td></tr>
+        <tr><td><code>ast-to-gantt.test.ts</code></td><td>Gantt 変換（日時範囲計算）</td></tr>
+        <tr><td><code>ast-to-kanban.test.ts</code></td><td>Kanban 変換（KanbanCard・section フィールド・config 生成）</td></tr>
+        <tr><td><code>markdown-patch.test.ts</code></td><td>Markdown 行差分パッチ</td></tr>
+      </tbody>
+    </table>
+
+    <h3>統合テスト（Vitest）</h3>
+    <p>ファイルパターン: <code>tests/integration/*.test.ts</code></p>
+    <table>
+      <thead><tr><th>テストファイル</th><th>対象</th></tr></thead>
+      <tbody>
+        <tr><td><code>file-sync.test.ts</code></td><td>FileSync のファイル監視・配信ロジック</td></tr>
+        <tr><td><code>editor-event-bus.test.ts</code></td><td>EditorEventBus のカーソル移動通知</td></tr>
+        <tr><td><code>plugin.test.ts</code></td><td>MdAstEditorPlugin の onload 等</td></tr>
+      </tbody>
+    </table>
+
+    <h3>ブラウザ E2E テスト（Playwright）</h3>
+    <p>Vite 開発サーバー（localhost:5173）上でブラウザ操作をシミュレートします。</p>
+    <table>
+      <thead><tr><th>テストファイル</th><th>対象</th></tr></thead>
+      <tbody>
+        <tr><td><code>tests/e2e/calendar-tab.spec.ts</code></td><td>Calendar タブ UI・インタラクション</td></tr>
+        <tr><td><code>tests/e2e/gantt-tab.spec.ts</code></td><td>Gantt タブ UI</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Obsidian E2E テスト（WebdriverIO）</h3>
+    <p>実際の Obsidian インスタンス上でテストを実行します（<code>wdio-obsidian-service</code> 使用）。</p>
+    <table>
+      <thead><tr><th>テストファイル</th><th>対象</th></tr></thead>
+      <tbody>
+        <tr><td><code>tests/obs-e2e/ast-view.e2e.ts</code></td><td>AST ビュー</td></tr>
+        <tr><td><code>tests/obs-e2e/calendar-view.e2e.ts</code></td><td>Calendar ビュー</td></tr>
+        <tr><td><code>tests/obs-e2e/gantt-view.e2e.ts</code></td><td>Gantt ビュー</td></tr>
+        <tr><td><code>tests/obs-e2e/task-decoration.e2e.ts</code></td><td>CodeMirror タスク装飾</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>テスト総数（2026-06-26 時点）</strong>：ユニット + 統合テスト計 183 テスト、全パス。</p>
+    </div>
+
+    <h3>Obsidian API モック</h3>
+    <p><code>tests/mocks/obsidian.ts</code> が Obsidian API のスタブを提供します。
+    ユニットテストは Obsidian なしで実行できます（<code>vitest.config.ts</code> の <code>alias</code> でモックに置換）。</p>
+  </section>
+
+  <!-- ===================== DEV WORKFLOW ===================== -->
+  <section id="dev-workflow">
+    <h2>開発ワークフロー</h2>
+
+    <h3>新機能開発の手順</h3>
+    <ol>
+      <li>
+        <strong>Issue 作成</strong>：<code>project/issues/obs/obs-XXXX-feature-name.md</code> を作成。
+        実装は必ず Issue 番号に紐づける（Issue なし実装は禁止）。
+      </li>
+      <li>
+        <strong>ローカルライブラリ更新</strong>（必要な場合）：<code>npm run libs:update</code>
+      </li>
+      <li>
+        <strong>実装</strong>：TypeScript / Svelte 5 でコーディング
+      </li>
+      <li>
+        <strong>テスト実行</strong>：<code>npm run test:unit</code>（全 183 テストパスを維持）
+      </li>
+      <li>
+        <strong>ビルド確認</strong>：<code>npm run build:dev</code>（Obsidian に自動コピー）
+      </li>
+      <li>
+        <strong>Obsidian 動作確認</strong>：実際の Obsidian でビューを確認
+      </li>
+      <li>
+        <strong>Issue クローズ承認</strong>：ユーザーの明示的な承認を得てから Issue をクローズ
+      </li>
+      <li>
+        <strong>コミット</strong>：Issue クローズ後にコミット
+      </li>
+    </ol>
+
+    <div class="callout warn">
+      <p><strong>ガバナンスルール</strong>：
+      <code>project/__private/</code> および <code>*.__private.md</code> ファイルは AI からアクセス禁止。
+      Issue クローズはユーザーの明示的承認が必要。コミットは Issue クローズ後のみ。</p>
+    </div>
+
+    <h3>Obsidian プラグインのデプロイ</h3>
+    <pre><code><span class="cm"># 開発ビルド（ソースマップ付き）+ Obsidian 自動コピー</span>
+npm run build:dev
+
+<span class="cm"># または手動コピー</span>
+npm run obs:update:manifest</code></pre>
+
+    <h3>ローカルライブラリの更新サイクル</h3>
+    <pre><code><span class="cm"># 1. 各ライブラリのリポジトリで変更・ビルド</span>
+<span class="cm"># 2. このプロジェクトで最新版を取り込む</span>
+npm run libs:update   <span class="cm"># = npm install svelte-calendar-lib svelte-gantt-lib svelte-kanban-lib</span>
+
+<span class="cm"># 3. テストを走らせて互換性確認</span>
+npm run test:unit</code></pre>
+
+    <h3>Shadow DOM とスタイリング</h3>
+    <p>すべての Obsidian ビューは <code>ShadowItemView</code> が生成する Shadow DOM ホスト内でレンダリングされます。
+    これにより Obsidian の CSS との衝突を防いでいます。</p>
+    <p>Kanban ビューは CSS カスタムプロパティで Obsidian のデザイントークンを参照します：</p>
+    <pre><code>--kanban-bg: <span class="fn">var</span>(--background-primary, <span class="nm">#1e1e1e</span>);
+--kanban-accent: <span class="fn">var</span>(--interactive-accent, <span class="nm">#4ec9b0</span>);</code></pre>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

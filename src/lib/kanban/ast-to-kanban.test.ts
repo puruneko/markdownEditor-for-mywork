@@ -80,6 +80,37 @@ describe('extractKanbanCards', () => {
     const depths = cards.map(c => c.depth)
     expect(depths[0]).toBeLessThan(depths[1])
   })
+
+  it('直接セクション配下のタスクは section=[sectionTitle]', () => {
+    const md = '# Heading\n\n- [ ] Task'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards[0].section).toEqual(['Heading'])
+    expect(cards[0].sectionTitle).toBe('Heading')
+    expect(cards[0].groupTitle).toBe('Heading')
+  })
+
+  it('ListNode配下のタスクは section=[sectionTitle, listText]', () => {
+    const md = '# Heading\n\n- List Group\n  - [ ] Task'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards[0].section).toEqual(['Heading', 'List Group'])
+    expect(cards[0].sectionTitle).toBe('Heading')
+    expect(cards[0].groupTitle).toBe('List Group')
+  })
+
+  it('複数のListNodeが並ぶ場合はそれぞれ section に反映される', () => {
+    const md = '# S\n\n- グループA\n  - [ ] T1\n  - [ ] T2\n- グループB\n  - [ ] T3'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards.find(c => c.title === 'T1')?.section).toEqual(['S', 'グループA'])
+    expect(cards.find(c => c.title === 'T2')?.section).toEqual(['S', 'グループA'])
+    expect(cards.find(c => c.title === 'T3')?.section).toEqual(['S', 'グループB'])
+  })
+
+  it('複数セクションのタスクは各セクションの section を持つ', () => {
+    const md = '# セクションA\n\n- [ ] T1\n\n# セクションB\n\n- [ ] T2'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards.find(c => c.title === 'T1')?.section).toEqual(['セクションA'])
+    expect(cards.find(c => c.title === 'T2')?.section).toEqual(['セクションB'])
+  })
 })
 
 describe('DEFAULT_KANBAN_CONFIG', () => {
@@ -116,59 +147,34 @@ describe('DEFAULT_KANBAN_CONFIG', () => {
 })
 
 describe('createKanbanConfig', () => {
-  it('groupBy: groupTitle を設定する', () => {
+  it('デフォルトで groupBy: section を設定する', () => {
     const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
     const config = createKanbanConfig(cards)
-    expect(config.groupBy).toBe('groupTitle')
+    expect(config.groupBy).toBe('section')
   })
 
-  it('直接セクション配下のタスクはsectionTitleをgroupTitleとして使用する', () => {
-    const md = '# セクションA\n\n- [ ] タスク1\n\n# セクションB\n\n- [x] タスク2'
-    const cards = extractKanbanCards(parseMarkdown(md))
+  it('デフォルトで sectionDepth: 2 を設定する', () => {
+    const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
     const config = createKanbanConfig(cards)
-    const groupIds = (config.groups ?? []).map(g => g.id)
-    expect(groupIds).toContain('セクションA')
-    expect(groupIds).toContain('セクションB')
+    expect(config.sectionDepth).toBe(2)
   })
 
-  it('ListNode配下のタスクはListNodeのテキストをgroupTitleとして使用する', () => {
-    const md = '# S\n\n- グループA\n  - [ ] T1\n  - [ ] T2\n- グループB\n  - [ ] T3'
-    const cards = extractKanbanCards(parseMarkdown(md))
-    expect(cards.find(c => c.title === 'T1')?.groupTitle).toBe('グループA')
-    expect(cards.find(c => c.title === 'T2')?.groupTitle).toBe('グループA')
-    expect(cards.find(c => c.title === 'T3')?.groupTitle).toBe('グループB')
+  it('groups は生成しない（ライブラリがカードから自動収集）', () => {
+    const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
     const config = createKanbanConfig(cards)
-    const groupIds = (config.groups ?? []).map(g => g.id)
-    expect(groupIds).toContain('グループA')
-    expect(groupIds).toContain('グループB')
+    expect(config.groups).toBeUndefined()
   })
 
-  it('グループはカード出現順に並ぶ', () => {
-    const md = '# A\n\n- [ ] a\n\n# B\n\n- [ ] b\n\n# C\n\n- [ ] c'
-    const cards = extractKanbanCards(parseMarkdown(md))
-    const config = createKanbanConfig(cards)
-    const ids = (config.groups ?? []).map(g => g.id)
-    expect(ids).toEqual(['A', 'B', 'C'])
+  it('groupByField 引数でグループフィールドを変更できる', () => {
+    const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
+    const config = createKanbanConfig(cards, 'sectionTitle')
+    expect(config.groupBy).toBe('sectionTitle')
   })
 
-  it('同じgroupTitleのタスクは1グループにまとまる', () => {
-    const md = '# S\n\n- [ ] a\n- [ ] b'
-    const cards = extractKanbanCards(parseMarkdown(md))
-    const config = createKanbanConfig(cards)
-    expect(config.groups?.filter(g => g.id === 'S')).toHaveLength(1)
-  })
-
-  it('カードなしのときgroups=[]になる', () => {
-    const config = createKanbanConfig([])
-    expect(config.groups).toEqual([])
-  })
-
-  it('空タイトルのsectionは（未分類）ラベルを持つ', () => {
-    const md = '- [ ] タスク'
-    const cards = extractKanbanCards(parseMarkdown(md))
-    const config = createKanbanConfig(cards)
-    const unclassified = (config.groups ?? []).find(g => g.id === '')
-    expect(unclassified?.label).toBe('（未分類）')
+  it('sectionDepth 引数で深さを変更できる', () => {
+    const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
+    const config = createKanbanConfig(cards, 'section', 1)
+    expect(config.sectionDepth).toBe(1)
   })
 
   it('DEFAULT_KANBAN_CONFIGのlanesを引き継ぐ', () => {

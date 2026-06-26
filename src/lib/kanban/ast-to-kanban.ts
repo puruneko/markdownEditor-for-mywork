@@ -9,8 +9,13 @@ export type KanbanCard = CardData & {
   id: string
   title: string
   status: string        // 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
+  /** セクション階層パス。ライブラリの groupBy: 'section' + sectionDepth で使用する。
+   *  例: ["Heading A", "List B"] */
+  section: string[]
+  /** 後方互換・フィルタ用。section[0] と等価 */
   sectionTitle: string
-  groupTitle: string    // parent list node text, or sectionTitle if directly in section
+  /** 後方互換・フィルタ用。section の末尾要素と等価 */
+  groupTitle: string
   depth: number
   schedule?: string
   due?: string
@@ -69,8 +74,8 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
     type: 'string',
     options: ['todo', 'doing', 'done', 'blocked', 'hold'],
   },
-  { key: 'sectionTitle', label: 'セクション', type: 'string' },
-  { key: 'groupTitle', label: 'グループ', type: 'string' },
+  { key: 'section', label: 'セクション', type: 'array' },
+  { key: 'sectionTitle', label: '親セクション', type: 'string' },
   { key: 'priority', label: '優先度', type: 'number' },
   { key: 'due', label: '期限', type: 'date' },
   { key: 'schedule', label: 'スケジュール', type: 'string' },
@@ -81,11 +86,14 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
 // Node traversal — builds flat KanbanCard[] from Document AST
 // ----------------------------------------------------------------
 
-function taskToCard(node: TaskNode, sectionTitle: string, groupTitle: string): KanbanCard {
+function taskToCard(node: TaskNode, sectionPath: string[]): KanbanCard {
+  const sectionTitle = sectionPath[0] ?? ''
+  const groupTitle = sectionPath[sectionPath.length - 1] ?? ''
   const card: KanbanCard = {
     id: node.id,
     title: node.text,
     status: node.status,
+    section: [...sectionPath],
     sectionTitle,
     groupTitle,
     depth: node.depth,
@@ -97,26 +105,24 @@ function taskToCard(node: TaskNode, sectionTitle: string, groupTitle: string): K
   return card
 }
 
-function extractFromNodes(nodes: Node[], sectionTitle: string, groupTitle: string, result: KanbanCard[]): void {
+function extractFromNodes(nodes: Node[], sectionPath: string[], result: KanbanCard[]): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
     if (node.type === 'task') {
-      result.push(taskToCard(node, sectionTitle, groupTitle))
+      result.push(taskToCard(node, sectionPath))
       if (node.children.length > 0) {
-        extractFromNodes(node.children, sectionTitle, groupTitle, result)
+        extractFromNodes(node.children, sectionPath, result)
       }
     } else if (node.type === 'list') {
       if (node.children.length > 0) {
-        // Use the list node's text as the group for its children,
-        // so adjacent tasks under different list nodes appear as separate blocks.
-        extractFromNodes(node.children, sectionTitle, node.text, result)
+        extractFromNodes(node.children, [...sectionPath, node.text], result)
       }
     }
   }
 }
 
 function extractFromSection(section: Section, result: KanbanCard[]): void {
-  extractFromNodes(section.children, section.title, section.title, result)
+  extractFromNodes(section.children, [section.title], result)
   for (const sub of section.subSections) {
     extractFromSection(sub, result)
   }
@@ -135,27 +141,17 @@ export function extractKanbanCards(doc: Document): KanbanCard[] {
 }
 
 /**
- * カードに含まれるセクションタイトルの出現順で GroupDefinition[] を生成する。
- * groupBy: 'sectionTitle' と組み合わせてカードをセクション別にグルーピングする。
+ * ライブラリの section 配列フィールドと sectionDepth を使った階層グルーピング設定を生成する。
+ * groups 定義は渡さない（ライブラリがカードから自動収集し、カードのあるグループだけ表示する）。
  */
-export function createKanbanConfig(cards: KanbanCard[]): KanbanBoardConfig {
-  const seen = new Set<string>()
-  const groups: GroupDefinition[] = []
-
-  for (const card of cards) {
-    if (!seen.has(card.groupTitle)) {
-      seen.add(card.groupTitle)
-      groups.push({
-        id: card.groupTitle,
-        label: card.groupTitle || '（未分類）',
-        order: groups.length,
-      })
-    }
-  }
-
+export function createKanbanConfig(
+  _cards: KanbanCard[],
+  groupByField: string = 'section',
+  sectionDepth: number = 2,
+): KanbanBoardConfig {
   return {
     ...DEFAULT_KANBAN_CONFIG,
-    groupBy: 'groupTitle',
-    groups,
+    groupBy: groupByField,
+    sectionDepth,
   }
 }
