@@ -1,4 +1,5 @@
 import type { CardData, LaneDefinition, KanbanBoardConfig, FieldDefinition, GroupDefinition } from 'svelte-kanban-lib'
+import { resolveGroupId } from 'svelte-kanban-lib'
 import type { Document, Section, Node, TaskNode } from '../parser/types'
 
 // ----------------------------------------------------------------
@@ -121,10 +122,12 @@ function extractFromNodes(nodes: Node[], sectionPath: string[], result: KanbanCa
   }
 }
 
-function extractFromSection(section: Section, result: KanbanCard[]): void {
-  extractFromNodes(section.children, [section.title], result)
+function extractFromSection(section: Section, parentPath: string[], result: KanbanCard[]): void {
+  // 無名セクション（lineNumber=-1, title=""）はパスに追加しない
+  const sectionPath = section.title ? [...parentPath, section.title] : [...parentPath]
+  extractFromNodes(section.children, sectionPath, result)
   for (const sub of section.subSections) {
-    extractFromSection(sub, result)
+    extractFromSection(sub, sectionPath, result)
   }
 }
 
@@ -135,23 +138,35 @@ function extractFromSection(section: Section, result: KanbanCard[]): void {
 export function extractKanbanCards(doc: Document): KanbanCard[] {
   const result: KanbanCard[] = []
   for (const section of doc.sections) {
-    extractFromSection(section, result)
+    extractFromSection(section, [], result)
   }
   return result
 }
 
 /**
  * ライブラリの section 配列フィールドと sectionDepth を使った階層グルーピング設定を生成する。
- * groups 定義は渡さない（ライブラリがカードから自動収集し、カードのあるグループだけ表示する）。
+ * groups にカードの Markdown 出現順の order を付与することで、表示順を Markdown 記述順に固定する。
  */
 export function createKanbanConfig(
-  _cards: KanbanCard[],
+  cards: KanbanCard[],
   groupByField: string = 'section',
   sectionDepth: number = 2,
 ): KanbanBoardConfig {
+  const groupOrderMap = new Map<string, number>()
+  for (const card of cards) {
+    const val = card[groupByField as keyof KanbanCard]
+    const gid = resolveGroupId(val, sectionDepth)
+    if (!groupOrderMap.has(gid)) groupOrderMap.set(gid, groupOrderMap.size)
+  }
+  const groups: GroupDefinition[] = [...groupOrderMap.entries()].map(([id, order]) => {
+    const parts = id.split(' / ')
+    return { id, order, label: parts[parts.length - 1] }
+  })
+
   return {
     ...DEFAULT_KANBAN_CONFIG,
     groupBy: groupByField,
     sectionDepth,
+    groups,
   }
 }

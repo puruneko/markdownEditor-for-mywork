@@ -51,7 +51,7 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       AST_VIEW_TYPE,
-      (leaf) => new AstView(leaf, this.fileSync),
+      (leaf) => new AstView(leaf, this.fileSync, this.editorEventBus),
     )
 
     this.registerView(

@@ -111,6 +111,22 @@ describe('extractKanbanCards', () => {
     expect(cards.find(c => c.title === 'T1')?.section).toEqual(['セクションA'])
     expect(cards.find(c => c.title === 'T2')?.section).toEqual(['セクションB'])
   })
+
+  it('H1 > H2 の階層はサブセクションの親 H1 タイトルを section に含む', () => {
+    const md = '# H1\n\n## H2\n\n- [ ] タスク'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards[0].section).toEqual(['H1', 'H2'])
+    expect(cards[0].sectionTitle).toBe('H1')
+    expect(cards[0].groupTitle).toBe('H2')
+  })
+
+  it('H1 > H2 > ListNode の3階層は全てを section に含む', () => {
+    const md = '# H1\n\n## H2\n\n- グループ\n  - [ ] タスク'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    expect(cards[0].section).toEqual(['H1', 'H2', 'グループ'])
+    expect(cards[0].sectionTitle).toBe('H1')
+    expect(cards[0].groupTitle).toBe('グループ')
+  })
 })
 
 describe('DEFAULT_KANBAN_CONFIG', () => {
@@ -159,10 +175,21 @@ describe('createKanbanConfig', () => {
     expect(config.sectionDepth).toBe(2)
   })
 
-  it('groups は生成しない（ライブラリがカードから自動収集）', () => {
-    const cards = extractKanbanCards(parseMarkdown('# S\n\n- [ ] タスク'))
+  it('groups は Markdown 出現順の order を持つ GroupDefinition[] を返す', () => {
+    const md = '# S\n\n- グループA\n  - [ ] T1\n- グループB\n  - [ ] T2'
+    const cards = extractKanbanCards(parseMarkdown(md))
     const config = createKanbanConfig(cards)
-    expect(config.groups).toBeUndefined()
+    expect(config.groups).toBeDefined()
+    const ids = config.groups!.map(g => g.id)
+    expect(ids.indexOf('S / グループA')).toBeLessThan(ids.indexOf('S / グループB'))
+  })
+
+  it('グループ順序が Markdown 記述順と一致する（逆順テスト）', () => {
+    const md = '# S\n\n- グループB\n  - [ ] T1\n- グループA\n  - [ ] T2'
+    const cards = extractKanbanCards(parseMarkdown(md))
+    const config = createKanbanConfig(cards)
+    const ids = config.groups!.map(g => g.id)
+    expect(ids.indexOf('S / グループB')).toBeLessThan(ids.indexOf('S / グループA'))
   })
 
   it('groupByField 引数でグループフィールドを変更できる', () => {
