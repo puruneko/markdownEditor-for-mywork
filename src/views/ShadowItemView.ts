@@ -83,7 +83,11 @@ export abstract class ShadowItemView extends ItemView {
     container.addClass(this.getViewClass())
 
     // ── Shadow DOM で CSS を完全分離 ──────────────────────────────
+    // flex: 1 1 0 + min-height: 0 で Obsidian の flex コンテナ内で残り高さを占有する。
+    // shadowHost に高さが無いと Shadow DOM 内の height: 100% が無効になり、
+    // overflow: auto なスクロールコンテナが bounded height を持てず sticky が機能しない。
     const shadowHost = container.createEl('div', { cls: 'view-shadow-host' })
+    shadowHost.style.cssText = 'flex: 1 1 0; min-height: 0; width: 100%; overflow: hidden;'
     const shadow = shadowHost.attachShadow({ mode: 'open' })
 
     const resetStyle = document.createElement('style')

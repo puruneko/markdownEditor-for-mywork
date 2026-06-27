@@ -1,0 +1,6 @@
+{
+  "showRibbonIcon": true,
+  "enableTaskHighlight": true,
+  "debounceMs": 300,
+  "scrollOffsetLines": 4
+}
