@@ -46,6 +46,24 @@ export class MdAstEditorPlugin extends Plugin {
         const mdView = (targetLeaf as WorkspaceLeaf).view as MarkdownView
         mdView.editor.setCursor({ line: lineNumber, ch: 0 })
         mdView.editor.focus()
+
+        const scrollOffsetLines = this.settings.scrollOffsetLines
+        if (scrollOffsetLines > 0) {
+          requestAnimationFrame(() => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cm = (mdView.editor as any).cm
+              if (!cm) return
+              // CodeMirror 6 は行番号が 1-based
+              const line = cm.state.doc.line(lineNumber + 1)
+              const block = cm.lineBlockAt(line.from)
+              const lineHeight: number = cm.defaultLineHeight
+              cm.scrollDOM.scrollTop = Math.max(0, block.top - (scrollOffsetLines - 1) * lineHeight)
+            } catch {
+              // CM6 API 取得失敗時はフォールバック（デフォルトスクロールのまま）
+            }
+          })
+        }
       })()
     })
 

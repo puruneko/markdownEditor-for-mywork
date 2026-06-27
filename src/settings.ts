@@ -6,12 +6,14 @@ export interface MdAstEditorSettings {
   showRibbonIcon: boolean
   enableTaskHighlight: boolean
   debounceMs: number
+  scrollOffsetLines: number
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   showRibbonIcon: true,
   enableTaskHighlight: true,
   debounceMs: 300,
+  scrollOffsetLines: 4,
 }
 
 export class MdAstEditorSettingTab extends PluginSettingTab {
@@ -63,6 +65,22 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
             if (!isNaN(num) && num >= 0) {
               this.plugin.settings.debounceMs = num
               this.plugin.fileSync.setDebounceMs(num)
+              await this.plugin.saveSettings()
+            }
+          }),
+      )
+
+    new Setting(containerEl)
+      .setName('スクロールオフセット行数')
+      .setDesc('カード等をクリックしてカーソル移動する際、対象行を画面上から何行目に表示するか（0 = 自動）')
+      .addText(text =>
+        text
+          .setPlaceholder('4')
+          .setValue(String(this.plugin.settings.scrollOffsetLines))
+          .onChange(async (value) => {
+            const num = parseInt(value, 10)
+            if (!isNaN(num) && num >= 0) {
+              this.plugin.settings.scrollOffsetLines = num
               await this.plugin.saveSettings()
             }
           }),
