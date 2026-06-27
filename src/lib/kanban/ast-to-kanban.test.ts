@@ -73,6 +73,57 @@ describe('extractKanbanCards', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
+  it('子QuoteNodeのrawをdescriptionとして設定する', () => {
+    const md = [
+      '# セクション',
+      '',
+      '- [ ] タスクA',
+      '  > 説明テキスト',
+    ].join('\n')
+    const doc = parseMarkdown(md)
+    const cards = extractKanbanCards(doc)
+    const card = cards.find(c => c.title === 'タスクA')
+    expect(card).toBeDefined()
+    expect(card!.description).toBe('説明テキスト')
+  })
+
+  it('isMemo: trueのListNodeのtextをdescriptionとして設定する', () => {
+    const md = [
+      '# セクション',
+      '',
+      '- [ ] タスクA',
+      '  - メモ説明',
+    ].join('\n')
+    const doc = parseMarkdown(md)
+    const cards = extractKanbanCards(doc)
+    const card = cards.find(c => c.title === 'タスクA')
+    expect(card).toBeDefined()
+    expect(card!.description).toBe('メモ説明')
+  })
+
+  it('説明情報がない場合はdescriptionをundefinedにする', () => {
+    const md = '# セクション\n\n- [ ] タスクA'
+    const doc = parseMarkdown(md)
+    const cards = extractKanbanCards(doc)
+    expect(cards[0].description).toBeUndefined()
+  })
+
+  it('複数の説明ノードは改行で結合する', () => {
+    const md = [
+      '# セクション',
+      '',
+      '- [ ] タスクA',
+      '  > 説明1',
+      '  - メモ説明2',
+    ].join('\n')
+    const doc = parseMarkdown(md)
+    const cards = extractKanbanCards(doc)
+    const card = cards.find(c => c.title === 'タスクA')
+    expect(card).toBeDefined()
+    expect(card!.description).toContain('説明1')
+    expect(card!.description).toContain('メモ説明2')
+  })
+
   it('depthフィールドが正しく設定される', () => {
     const md = `# S\n\n- [ ] 深さ1\n  - [ ] 深さ2`
     const doc = parseMarkdown(md)

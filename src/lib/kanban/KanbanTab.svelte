@@ -27,6 +27,15 @@
   // カード抽出（doc 変化のたびに再計算）
   const cards: KanbanCard[] = $derived(extractKanbanCards(doc))
 
+  $effect(() => {
+    const withDesc = cards.filter(c => c.description)
+    console.debug('[KanbanTab] cards derived', {
+      total: cards.length,
+      withDescription: withDesc.length,
+      sample: withDesc.slice(0, 3).map(c => ({ id: c.id, title: c.title, description: c.description })),
+    })
+  })
+
   // ユーザーがカスタマイズできるレーン定義と board 設定
   let userLanes: LaneDefinition[] = $state([...DEFAULT_KANBAN_CONFIG.lanes])
   let userGroupBy = $state<string>('section')
@@ -154,13 +163,22 @@
     --kanban-card-id-color:    var(--text-faint,             #4ec9b0);
 
     /* Groups */
-    --kanban-group-border:          var(--background-modifier-border, #404040);
-    --kanban-group-header-bg:       var(--background-secondary-alt,   #2d2d30);
-    --kanban-group-header-hover-bg: var(--background-modifier-hover,  #3e3e42);
-    --kanban-group-label-color:     var(--text-normal,                #cccccc);
-    --kanban-group-count-bg:        var(--background-modifier-border,  #3e3e42);
-    --kanban-group-count-color:     var(--text-muted,                  #858585);
-    --kanban-group-accent:          var(--interactive-accent,          #4ec9b0);
+    --kanban-group-border:              var(--background-modifier-border, #404040);
+    --kanban-group-header-bg:           var(--background-secondary-alt,   #2d2d30);
+    --kanban-group-header-hover-bg:     var(--background-modifier-hover,  #3e3e42);
+    --kanban-group-label-color:         var(--text-normal,                #cccccc);
+    --kanban-group-count-bg:            var(--background-modifier-border,  #3e3e42);
+    --kanban-group-count-color:         var(--text-muted,                  #858585);
+    --kanban-group-accent:              var(--interactive-accent,          #4ec9b0);
+    /* sticky lane-headers-bar の top 位置。kanban-group-header の実際の高さに合わせる */
+    --kanban-group-header-height:       43px;
+    /* Section header（仮想親グループ）の背景色 */
+    --kanban-section-header-bg:         var(--background-primary-alt,     #252526);
+    --kanban-section-header-hover-bg:   var(--background-modifier-hover,  #2d2d30);
+    /* 子グループのインデント border 色 */
+    --kanban-group-children-border:     var(--interactive-accent,         #4ec9b0);
+    --kanban-group-children-border-l2:  var(--background-modifier-border, #404040);
+    --kanban-group-children-border-l3:  var(--background-modifier-border, #3a3a3a);
 
     /* Accent / Filter */
     --kanban-accent:               var(--interactive-accent,      #4ec9b0);

@@ -18,6 +18,7 @@ export type KanbanCard = CardData & {
   /** 後方互換・フィルタ用。section の末尾要素と等価 */
   groupTitle: string
   depth: number
+  description?: string
   schedule?: string
   due?: string
   priority?: number
@@ -77,6 +78,7 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
   },
   { key: 'section', label: 'セクション', type: 'array' },
   { key: 'sectionTitle', label: '親セクション', type: 'string' },
+  { key: 'description', label: '説明', type: 'string' },
   { key: 'priority', label: '優先度', type: 'number' },
   { key: 'due', label: '期限', type: 'date' },
   { key: 'schedule', label: 'スケジュール', type: 'string' },
@@ -86,6 +88,18 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
 // ----------------------------------------------------------------
 // Node traversal — builds flat KanbanCard[] from Document AST
 // ----------------------------------------------------------------
+
+function extractDescription(children: Node[]): string | undefined {
+  const parts: string[] = []
+  for (const child of children) {
+    if (child.type === 'quote') {
+      parts.push(child.raw)
+    } else if (child.type === 'list' && child.isMemo) {
+      parts.push(child.text)
+    }
+  }
+  return parts.length > 0 ? parts.join('\n') : undefined
+}
 
 function taskToCard(node: TaskNode, sectionPath: string[]): KanbanCard {
   const sectionTitle = sectionPath[0] ?? ''
@@ -99,6 +113,8 @@ function taskToCard(node: TaskNode, sectionPath: string[]): KanbanCard {
     groupTitle,
     depth: node.depth,
   }
+  const description = extractDescription(node.children)
+  if (description !== undefined) card.description = description
   if (node.meta?.schedule !== undefined) card.schedule = node.meta.schedule
   if (node.meta?.due !== undefined) card.due = node.meta.due
   if (node.meta?.priority !== undefined) card.priority = node.meta.priority
