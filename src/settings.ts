@@ -1,12 +1,17 @@
 import { PluginSettingTab, Setting } from 'obsidian'
 import type { App } from 'obsidian'
 import type { MdAstEditorPlugin } from './plugin'
+import type { IndexScope } from './sync/ast-index'
 
 export interface MdAstEditorSettings {
   showRibbonIcon: boolean
   enableTaskHighlight: boolean
   debounceMs: number
   scrollOffsetLines: number
+  /** AstIndex が索引化するスコープ。既定は Vault 全体。 */
+  indexScope: IndexScope
+  /** indexScope が 'folder' の場合に対象フォルダのパスを指定する（末尾スラッシュ不要）。 */
+  indexScopeFolder: string
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -14,6 +19,8 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   enableTaskHighlight: true,
   debounceMs: 300,
   scrollOffsetLines: 4,
+  indexScope: 'vault',
+  indexScopeFolder: '',
 }
 
 export class MdAstEditorSettingTab extends PluginSettingTab {
@@ -83,6 +90,36 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
               this.plugin.settings.scrollOffsetLines = num
               await this.plugin.saveSettings()
             }
+          }),
+      )
+
+    containerEl.createEl('h3', { text: 'AST インデックス' })
+
+    new Setting(containerEl)
+      .setName('索引スコープ')
+      .setDesc('AstIndex が索引化する範囲を選択します。')
+      .addDropdown(drop =>
+        drop
+          .addOption('vault', 'Vault 全体')
+          .addOption('folder', '指定フォルダ')
+          .addOption('current-file', '現在のファイルのみ')
+          .setValue(this.plugin.settings.indexScope)
+          .onChange(async (value) => {
+            this.plugin.settings.indexScope = value as IndexScope
+            await this.plugin.saveSettings()
+          }),
+      )
+
+    new Setting(containerEl)
+      .setName('対象フォルダ')
+      .setDesc('索引スコープが「指定フォルダ」の場合の対象フォルダパス（例: notes/tasks）。')
+      .addText(text =>
+        text
+          .setPlaceholder('notes/tasks')
+          .setValue(this.plugin.settings.indexScopeFolder)
+          .onChange(async (value) => {
+            this.plugin.settings.indexScopeFolder = value.trim()
+            await this.plugin.saveSettings()
           }),
       )
   }

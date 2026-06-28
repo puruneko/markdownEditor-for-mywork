@@ -88,6 +88,7 @@ export interface MockVault {
   on: ReturnType<typeof vi.fn>
   off: ReturnType<typeof vi.fn>
   getAbstractFileByPath: ReturnType<typeof vi.fn>
+  getMarkdownFiles: ReturnType<typeof vi.fn>
 }
 
 export interface MockWorkspace {
@@ -115,6 +116,7 @@ export function createMockApp(): MockApp {
       on: vi.fn(),
       off: vi.fn(),
       getAbstractFileByPath: vi.fn(),
+      getMarkdownFiles: vi.fn(() => []),
     },
     workspace: {
       getActiveViewOfType: vi.fn(),

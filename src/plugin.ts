@@ -5,6 +5,7 @@ import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
 import { FileSync } from './sync/file-sync'
+import { AstIndex } from './sync/ast-index'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { createNotationLintExtension } from './editor/notation-lint'
@@ -13,6 +14,7 @@ import type { MdAstEditorSettings } from './settings'
 
 export class MdAstEditorPlugin extends Plugin {
   fileSync!: FileSync
+  astIndex!: AstIndex
   editorEventBus!: EditorEventBus
   settings!: MdAstEditorSettings
 
@@ -20,6 +22,11 @@ export class MdAstEditorPlugin extends Plugin {
     await this.loadSettings()
 
     this.fileSync = new FileSync(this.app, this.settings.debounceMs)
+    this.astIndex = new AstIndex(this.app, {
+      debounceMs: this.settings.debounceMs,
+      scope: this.settings.indexScope,
+      scopeFolder: this.settings.indexScopeFolder,
+    })
     this.editorEventBus = new EditorEventBus()
 
     // カレンダー/ガントからのカーソル移動要求をエディタに反映する。
@@ -134,11 +141,18 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.addSettingTab(new MdAstEditorSettingTab(this.app, this))
 
+    // FileSync のアクティブファイル変更を AstIndex に反映する（current-file スコープ用）。
+    this.fileSync.subscribe((_, file) => {
+      this.astIndex.setCurrentFilePath(file.path)
+    })
+
     this.fileSync.start()
+    void this.astIndex.start()
   }
 
   async onunload(): Promise<void> {
     this.fileSync.stop()
+    this.astIndex.stop()
     this.app.workspace.detachLeavesOfType(AST_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(GANTT_VIEW_TYPE)

@@ -40,11 +40,11 @@
 - スコープ「指定フォルダ」は path 前方一致で判定。
 
 ### TODO
-- [ ] `AstIndex`（上記 API）を実装。
-- [ ] vault イベント購読＋変更ファイルのみ差分更新＋`onChange` 発火。
-- [ ] スコープ設定を `settings.ts` に追加し列挙へ反映。
-- [ ] `plugin.ts` で生成・破棄を配線。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] `AstIndex`（上記 API）を実装。
+- [x] vault イベント購読＋変更ファイルのみ差分更新＋`onChange` 発火。
+- [x] スコープ設定を `settings.ts` に追加し列挙へ反映。
+- [x] `plugin.ts` で生成・破棄を配線。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - 起動後、スコープ内全 Markdown が索引化され `getAllTaskNodes` が全ファイルのタスクを返す。
@@ -61,12 +61,13 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（既存資産・確定仕様を内包）。
+- 2026-06-28 — 実装完了。`src/sync/ast-index.ts` 新規作成。`AstIndex` クラスで vault 全件初期走査・差分更新・スコープ別列挙・onChange 購読を実装。`settings.ts` に `indexScope`/`indexScopeFolder` 追加（設定 UI も追加）。`tests/mocks/obsidian.ts` に `getMarkdownFiles` を追加。`tests/integration/ast-index.test.ts` で 17 テスト全通過（全 242 テスト通過）。
 
 ---
 
 ## 3. メタデータ
 - id: issue-phase001-001__multi-source-ast-index
-- status: open
+- status: closed
 - phase: 001
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
