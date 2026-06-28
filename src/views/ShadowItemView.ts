@@ -42,10 +42,7 @@ export interface ViewMountProps {
   onNodeClick: (nodeId: string) => void
 }
 
-/**
- * nodeId → {path, line} のクロスファイルナビゲーション用マップを保持する型。
- * AstIndex 使用時に buildMergedDoc() が生成する。
- */
+/** nodeId → {filePath, lineNumber} のクロスファイルナビゲーション用マップ。 */
 type NodeToFile = Map<string, { path: string; line: number }>
 
 function buildMergedDoc(astIndex: AstIndex): { doc: Document; nodeToFile: NodeToFile } {
@@ -75,8 +72,8 @@ export abstract class ShadowItemView extends ItemView {
   private component: Record<string, unknown> | null = null
   private updater: ((md: string, doc: Document) => void) | null = null
   private nodeToFile: NodeToFile = new Map()
-  private fileSyncHandler: (doc: Document, file: TFile) => void
   private astIndexUnsubscribe: (() => void) | null = null
+  private readonly fileSyncHandler: (doc: Document, file: TFile) => void
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -89,14 +86,18 @@ export abstract class ShadowItemView extends ItemView {
     this.astIndex = astIndex ?? null
     this.editorEventBus = editorEventBus
 
-    this.fileSyncHandler = (doc) => {
+    // fileSync ハンドラ: AstIndex がある場合も fileSync の変更を受け取り、
+    // currentFile の markdown を md 編集バッファとして保持しつつ merged doc で表示する。
+    this.fileSyncHandler = (_doc) => {
+      if (!this.updater) return
+      const currentMd = this.fileSync.getCurrentMarkdown() ?? ''
       if (this.astIndex) {
-        // AstIndex 使用時: そのファイルの更新はAstIndex経由で反映される。
-        // fileSync のハンドラは無視（AstIndex.onChange が全ファイルをカバーする）。
-        return
+        const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
+        this.nodeToFile = nodeToFile
+        this.updater(currentMd, doc)
+      } else {
+        this.updater(currentMd, _doc)
       }
-      const md = this.fileSync.getCurrentMarkdown() ?? ''
-      if (this.updater) this.updater(md, doc)
     }
   }
 
@@ -121,18 +122,9 @@ export abstract class ShadowItemView extends ItemView {
     mountTarget.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;'
     shadow.appendChild(mountTarget)
 
-    let initialDoc: Document
-    let initialMd: string
-
-    if (this.astIndex) {
-      const merged = buildMergedDoc(this.astIndex)
-      initialDoc = merged.doc
-      this.nodeToFile = merged.nodeToFile
-      initialMd = ''
-    } else {
-      initialDoc = this.fileSync.getCurrentDocument() ?? EMPTY_DOC
-      initialMd = this.fileSync.getCurrentMarkdown() ?? ''
-    }
+    // 初期マウントは常に fileSync データを使用（実証済みの動作）
+    const initialMd = this.fileSync.getCurrentMarkdown() ?? ''
+    const initialDoc = this.fileSync.getCurrentDocument() ?? EMPTY_DOC
 
     const onNodeClick = (nodeId: string): void => {
       void this.navigateToNode(nodeId)
@@ -151,25 +143,33 @@ export abstract class ShadowItemView extends ItemView {
       },
     })
 
+    // fileSync を常に購読（現在ファイルの更新を受け取る）
+    this.fileSync.subscribe(this.fileSyncHandler)
+
+    // AstIndex がある場合は追加で購読し、マルチファイル更新をビューに反映する。
     if (this.astIndex) {
       this.astIndexUnsubscribe = this.astIndex.onChange(() => {
         if (!this.updater || !this.astIndex) return
-        const merged = buildMergedDoc(this.astIndex)
-        this.nodeToFile = merged.nodeToFile
-        this.updater('', merged.doc)
+        const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
+        this.nodeToFile = nodeToFile
+        const currentMd = this.fileSync.getCurrentMarkdown() ?? ''
+        this.updater(currentMd, doc)
       })
-    } else {
-      this.fileSync.subscribe(this.fileSyncHandler)
+
+      // 既にインデックスにデータがあれば即座に反映する。
+      // mount() が registerUpdater を同期実行するので this.updater はここで有効。
+      const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
+      if (doc.sections.length > 0 && this.updater) {
+        this.nodeToFile = nodeToFile
+        this.updater(initialMd, doc)
+      }
     }
   }
 
   async onClose(): Promise<void> {
-    if (this.astIndex) {
-      this.astIndexUnsubscribe?.()
-      this.astIndexUnsubscribe = null
-    } else {
-      this.fileSync.unsubscribe(this.fileSyncHandler)
-    }
+    this.fileSync.unsubscribe(this.fileSyncHandler)
+    this.astIndexUnsubscribe?.()
+    this.astIndexUnsubscribe = null
     if (this.component) {
       unmount(this.component)
       this.component = null
@@ -192,19 +192,16 @@ export abstract class ShadowItemView extends ItemView {
     const currentFile = this.fileSync.getCurrentFile()
 
     if (currentFile?.path === path) {
-      // 同一ファイルなら既存の EditorEventBus 経由で移動
+      // 同一ファイルなら EditorEventBus 経由で移動
       this.editorEventBus.requestFocusLine(line)
       return
     }
 
-    // 別ファイル: Obsidian のリーフで開いてカーソル移動
+    // 別ファイル: Obsidian workspace API でファイルを開いてカーソル移動
     const abstractFile = this.app.vault.getAbstractFileByPath(path)
-    if (!abstractFile) return
-    // TFile かどうか確認（型ガード）
-    if (!('extension' in abstractFile)) return
+    if (!abstractFile || !('extension' in abstractFile)) return
 
     const tfile = abstractFile as TFile
-    // 既存のマークダウンリーフを探す、なければ新規
     let targetLeaf = this.app.workspace.getMostRecentLeaf()
     if (!targetLeaf) targetLeaf = this.app.workspace.getLeaf(false)
     if (!targetLeaf) return
