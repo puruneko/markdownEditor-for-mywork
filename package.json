@@ -17,6 +17,7 @@
     "obs:update:manifest": "cp ./main.js ./manifest.json /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
   },
   "devDependencies": {
+    "@codemirror/lint": "^6.9.7",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
     "@playwright/test": "^1.58.2",

@@ -7,6 +7,7 @@ import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
 import { FileSync } from './sync/file-sync'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
+import { createNotationLintExtension } from './editor/notation-lint'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
 
@@ -128,6 +129,7 @@ export class MdAstEditorPlugin extends Plugin {
 
     if (this.settings.enableTaskHighlight) {
       this.registerEditorExtension(taskDecorationPlugin)
+      this.registerEditorExtension(createNotationLintExtension())
     }
 
     this.addSettingTab(new MdAstEditorSettingTab(this.app, this))

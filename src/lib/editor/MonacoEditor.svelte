@@ -75,6 +75,14 @@
   $effect(() => {
     editor?.updateOptions({ readOnly: readonly })
   })
+
+  // Sync language changes (e.g. task-highlight toggle)
+  $effect(() => {
+    const model = editor?.getModel()
+    if (model && monaco.editor.getModel(model.uri)) {
+      monaco.editor.setModelLanguage(model, language)
+    }
+  })
 </script>
 
 <div bind:this={container} class="monaco-container"></div>

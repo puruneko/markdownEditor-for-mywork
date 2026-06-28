@@ -40,11 +40,11 @@
 - 検出ロジックは**純関数**（行文字列→診断配列）に切り出し、CM6 配線と分離する。これによりテストが容易になり、CM6 部分の実装は薄くなる。
 
 ### TODO
-- [ ] 行単位の検出を純関数として実装（入力: 行テキストと行番号、出力: 診断の配列）。
-- [ ] `@codemirror/lint` を導入し、純関数の結果を `Diagnostic` 化。一意修正には `actions` を付与。
-- [ ] 行頭 `>`・コードブロック内の除外を実装。
-- [ ] `enableTaskHighlight` OFF 時はリント無効。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] 行単位の検出を純関数として実装（入力: 行テキストと行番号、出力: 診断の配列）。
+- [x] `@codemirror/lint` を導入し、純関数の結果を `Diagnostic` 化。一意修正には `actions` を付与。
+- [x] 行頭 `>`・コードブロック内の除外を実装。
+- [x] `enableTaskHighlight` OFF 時はリント無効。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - 終了欠落 `@schedule: 2026-06-01T10:00` に警告が出る（修正アクションは無し）。
@@ -60,15 +60,16 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（仕様内包・既存資産明記・コード詳細は実装者に委譲）。
+- 2026-06-28 — 実装完了。`src/editor/notation-lint.ts` を新規作成。純関数 `lintLine` と CM6 拡張 `createNotationLintExtension` を同一ファイルで実装。`@codemirror/lint` を devDependency に追加。`plugin.ts` に `enableTaskHighlight` に追従する形でリント拡張を登録。`notation-lint.test.ts` にて 35 テスト全通過（全 225 テスト通過）。
 
 ---
 
 ## 3. メタデータ
 - id: issue-phase000-001__notation-lint-quickfix
-- status: open
+- status: closed
 - phase: 000
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
 - target_files: src/editor/notation-lint.ts, src/editor/task-decoration.ts（参照）, package.json（@codemirror/lint）
 - created: 2026-06-28
-- updated: 2026-06-28
+- updated: 2026-06-28 (実装完了、ユーザー承認待ち)

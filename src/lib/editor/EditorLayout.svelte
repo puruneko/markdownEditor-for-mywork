@@ -7,6 +7,36 @@
   import { serializeAst } from '../parser/ast-to-md'
   import type { Document } from '../parser/types'
 
+  // ── App-wide settings (persisted in localStorage) ──────────────
+  const SETTINGS_KEY = 'md-ast-editor-settings'
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY)
+      if (raw) return JSON.parse(raw) as Record<string, unknown>
+    } catch { /* ignore */ }
+    return {}
+  }
+
+  function saveSettings(patch: Record<string, unknown>) {
+    try {
+      const current = loadSettings()
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, ...patch }))
+    } catch { /* ignore */ }
+  }
+
+  const _saved = loadSettings()
+
+  let settingsOpen: boolean = $state(false)
+  let enableTaskHighlight: boolean = $state((_saved.enableTaskHighlight ?? true) as boolean)
+  let debounceMs: number = $state((_saved.debounceMs ?? 300) as number)
+
+  $effect(() => { saveSettings({ enableTaskHighlight }) })
+  $effect(() => { saveSettings({ debounceMs }) })
+
+  // computed Monaco language
+  const editorLanguage = $derived(enableTaskHighlight ? 'md-task' : 'plaintext')
+
   // Sync direction state
   type Direction = 'idle' | 'md-to-ast' | 'ast-to-md'
   let direction: Direction = $state('idle')
@@ -643,7 +673,7 @@
         syncing = false
         direction = 'idle'
       }
-    }, 300)
+    }, debounceMs)
   }
 
   function onAstChange(value: string) {
@@ -690,11 +720,46 @@
 <div class="layout">
   <!-- Left: Markdown editor -->
   <div class="pane">
-    <div class="pane-header">Markdown</div>
+    <div class="pane-header">
+      <span class="pane-title">Markdown</span>
+      <button
+        class="settings-btn {settingsOpen ? 'active' : ''}"
+        onclick={() => settingsOpen = !settingsOpen}
+        title="設定"
+        aria-label="アプリ設定を開く"
+      >⚙</button>
+    </div>
+
+    {#if settingsOpen}
+      <div class="settings-panel">
+        <div class="settings-row">
+          <label class="settings-label" for="setting-task-highlight">タスクハイライト</label>
+          <input
+            id="setting-task-highlight"
+            type="checkbox"
+            bind:checked={enableTaskHighlight}
+            class="settings-check"
+          />
+        </div>
+        <div class="settings-row">
+          <label class="settings-label" for="setting-debounce">同期デバウンス (ms)</label>
+          <input
+            id="setting-debounce"
+            type="number"
+            min="0"
+            max="5000"
+            step="50"
+            bind:value={debounceMs}
+            class="settings-input"
+          />
+        </div>
+      </div>
+    {/if}
+
     <div class="pane-body">
       <MonacoEditor
         bind:value={mdValue}
-        language="md-task"
+        language={editorLanguage}
         onchange={onMdChange}
         registerReveal={(fn) => { revealInEditor = fn }}
       />
@@ -787,7 +852,7 @@
   .pane-header {
     height: 32px;
     line-height: 32px;
-    padding: 0 12px;
+    padding: 0 8px 0 12px;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.05em;
@@ -796,6 +861,85 @@
     color: #858585;
     border-bottom: 1px solid #333;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .pane-title {
+    flex: 1;
+  }
+
+  .settings-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #858585;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .settings-btn:hover {
+    color: #cccccc;
+    background: #3a3a3a;
+  }
+
+  .settings-btn.active {
+    color: #4ec9b0;
+    background: #2a3a38;
+  }
+
+  .settings-panel {
+    background: #1e1e1e;
+    border-bottom: 1px solid #444;
+    padding: 8px 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .settings-label {
+    color: #cccccc;
+    flex: 1;
+    user-select: none;
+  }
+
+  .settings-check {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #4ec9b0;
+  }
+
+  .settings-input {
+    width: 70px;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    border-radius: 3px;
+    color: #cccccc;
+    font-size: 12px;
+    padding: 2px 6px;
+    text-align: right;
+  }
+
+  .settings-input:focus {
+    outline: 1px solid #4ec9b0;
+    border-color: #4ec9b0;
   }
 
   .tab-header {

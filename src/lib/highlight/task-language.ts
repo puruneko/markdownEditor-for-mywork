@@ -25,42 +25,35 @@ const tokenProvider: monaco.languages.TokensProvider = {
   tokenize(line: string, state: monaco.languages.IState) {
     const tokens: monaco.languages.IToken[] = []
 
-    // @meta line: indented @key: value
-    const metaMatch = line.match(/^(\s*)(@\w+)(:\s*)(.*)$/)
+    // @meta child-list line: "  - @key: value" (must have "- " prefix before @)
+    const metaMatch = line.match(/^(\s*- )(@\w+)(:\s*)(.*)$/)
     if (metaMatch) {
-      const [, indent, key, colon, value] = metaMatch
-      let offset = 0
-      if (indent.length > 0) {
-        tokens.push({ startIndex: 0, scopes: '' })
-        offset = indent.length
-      }
-      tokens.push({ startIndex: offset, scopes: 'meta.key.md-task' })
-      offset += key.length
-      tokens.push({ startIndex: offset, scopes: 'meta.sep.md-task' })
-      offset += colon.length
+      const [, prefix, key, colon, value] = metaMatch
+      tokens.push({ startIndex: 0, scopes: '' })                         // "  - " unstyled
+      tokens.push({ startIndex: prefix.length, scopes: 'meta.key.md-task' })
+      const keyEnd = prefix.length + key.length
+      tokens.push({ startIndex: keyEnd, scopes: 'meta.sep.md-task' })
+      const valStart = keyEnd + colon.length
       if (value.length > 0) {
-        tokens.push({ startIndex: offset, scopes: 'meta.value.md-task' })
+        tokens.push({ startIndex: valStart, scopes: 'meta.value.md-task' })
       }
       return { tokens, endState: state }
     }
 
-    // Task checkbox line: (indent)- [?] text
-    const taskMatch = line.match(/^(\s*-\s)(\[[xX>!\- ]\])(.*)$/)
+    // Task checkbox line: (indent)- [?] text — colorize from "[" to end of line
+    const taskMatch = line.match(/^(\s*- )(\[[xX>!\- ]\])(.*)$/)
     if (taskMatch) {
-      const [, prefix, checkbox, rest] = taskMatch
+      const [, prefix, checkbox] = taskMatch
       const marker = checkbox[1]
       const scope =
-        marker === ' '                      ? 'task.todo.md-task'    :
-        marker === 'x' || marker === 'X'   ? 'task.done.md-task'    :
-        marker === '>'                      ? 'task.doing.md-task'   :
-        marker === '!'                      ? 'task.blocked.md-task' :
-                                              'task.hold.md-task'
+        marker === ' '                    ? 'task.todo.md-task'    :
+        marker === 'x' || marker === 'X' ? 'task.done.md-task'    :
+        marker === '>'                    ? 'task.doing.md-task'   :
+        marker === '!'                    ? 'task.blocked.md-task' :
+                                            'task.hold.md-task'
 
-      if (prefix.length > 0) tokens.push({ startIndex: 0, scopes: '' })
-      tokens.push({ startIndex: prefix.length, scopes: scope })
-      if (rest.length > 0) {
-        tokens.push({ startIndex: prefix.length + checkbox.length, scopes: '' })
-      }
+      tokens.push({ startIndex: 0, scopes: '' })                // indent + "- " unstyled
+      tokens.push({ startIndex: prefix.length, scopes: scope }) // "[x] text..." colored to EOL
       return { tokens, endState: state }
     }
 
