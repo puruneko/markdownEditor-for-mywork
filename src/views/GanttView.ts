@@ -2,6 +2,7 @@ import { WorkspaceLeaf } from 'obsidian'
 import type { Component } from 'svelte'
 import GanttViewMount from './GanttViewMount.svelte'
 import type { FileSync } from '../sync/file-sync'
+import type { AstIndex } from '../sync/ast-index'
 import type { EditorEventBus } from '../sync/editor-event-bus'
 import { ShadowItemView } from './ShadowItemView'
 import type { ViewMountProps } from './ShadowItemView'
@@ -9,8 +10,8 @@ import type { ViewMountProps } from './ShadowItemView'
 export const GANTT_VIEW_TYPE = 'md-ast-editor-gantt-view'
 
 export class GanttView extends ShadowItemView {
-  constructor(leaf: WorkspaceLeaf, fileSync: FileSync, editorEventBus: EditorEventBus) {
-    super(leaf, fileSync, editorEventBus)
+  constructor(leaf: WorkspaceLeaf, fileSync: FileSync, editorEventBus: EditorEventBus, astIndex?: AstIndex) {
+    super(leaf, fileSync, editorEventBus, astIndex)
   }
 
   getViewType(): string { return GANTT_VIEW_TYPE }

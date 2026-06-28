@@ -82,17 +82,17 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       CALENDAR_VIEW_TYPE,
-      (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus),
+      (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.registerView(
       GANTT_VIEW_TYPE,
-      (leaf) => new GanttView(leaf, this.fileSync, this.editorEventBus),
+      (leaf) => new GanttView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.registerView(
       KANBAN_VIEW_TYPE,
-      (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus),
+      (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.addCommand({
