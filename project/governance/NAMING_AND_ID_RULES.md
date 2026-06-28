@@ -9,20 +9,40 @@ No creativity allowed.
 
 ## 1. ISSUE ID ASSIGNMENT
 
-When creating a new Issue:
+### Format
 
-1. Scan `project/issues/`
-2. Find the highest existing ID
-3. Increment by +1
-4. Zero-pad to 4 digits
+```text
+issue-phase<PPP>-<NNN>__<kebab-title>
+```
+
+- `phase<PPP>` — the roadmap phase the Issue belongs to. 3-digit, zero-padded.
+  Phase 0 → `phase000`, Phase 1 → `phase001`, etc.
+  If the Issue belongs to no roadmap phase, use `phase000`.
+- `<NNN>` — sequence number WITHIN that phase. 3-digit, zero-padded.
+  Reset per phase. The first Issue of a phase is `001`.
+- `<kebab-title>` — short English kebab-case slug.
+
+The `id` field inside the Issue MUST equal the filename stem.
 
 Example:
 
 ```text
-0007 → next is 0008
+issue-phase001-012__assemble-task-filter
 ```
 
-AI must never reuse or skip IDs.
+### Assignment steps (new Issue)
+
+1. Determine the phase → `PPP`.
+2. Scan `project/issues/` for files matching `issue-phase<PPP>-*`.
+3. Take the highest `<NNN>` in that phase, then +1. If none exists, start at `001`.
+4. Zero-pad both numbers to 3 digits.
+
+### Rules
+
+- Never reuse or skip a number within a phase.
+- Sequences are independent per phase.
+- Legacy IDs (`NNNN`, `obs-*`) are NOT renamed (see §5).
+  This format applies to Issues created from now on.
 
 ---
 

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機能ギャップ分析と開発ロードマップ — md-ast-editor</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1d212b; --ink:#e7ebf0; --muted:#9aa4b2;
+    --line:#2a2f3a; --accent:#6ea8fe; --green:#4ade80; --amber:#fbbf24; --red:#f87171;
+    --purple:#c084fc; --cyan:#5eead4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    line-height:1.75;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 96px}
+  header.cover{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:40px}
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.12em;font-size:12px;text-transform:uppercase}
+  h1{font-size:30px;margin:.3em 0 .2em;line-height:1.3}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:22px;margin:56px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:inline-block}
+  h3{font-size:17px;margin:32px 0 10px;color:#fff}
+  h4{font-size:15px;margin:20px 0 6px;color:var(--cyan)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:#0b0d11;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px;
+    font-family:"SF Mono",Consolas,"Roboto Mono",monospace;color:var(--cyan)}
+  .muted{color:var(--muted)}
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .cols-3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:760px){.cols-2,.cols-3{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card.tight{padding:14px 16px}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 26px}
+  .toc ol{margin:8px 0;padding-left:22px}
+  .toc a{text-decoration:none}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#fff;font-weight:600}
+  tr:nth-child(even) td{background:#13161d}
+  .pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .p-must{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.4)}
+  .p-should{background:rgba(251,191,36,.15);color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+  .p-could{background:rgba(94,234,212,.13);color:var(--cyan);border:1px solid rgba(94,234,212,.35)}
+  .p-adopt{background:rgba(192,132,252,.16);color:var(--purple);border:1px solid rgba(192,132,252,.45)}
+  .vs{border:1px solid var(--line);border-radius:12px;padding:0;margin:16px 0;overflow:hidden}
+  .vs .hd{display:flex;align-items:baseline;gap:10px;background:var(--panel2);padding:11px 18px;border-bottom:1px solid var(--line)}
+  .vs .hd .name{font-weight:700;color:#fff;font-size:15.5px}
+  .vs .hd .meta{color:var(--muted);font-size:12px}
+  .vs .bd{padding:14px 18px;background:var(--panel)}
+  .vs .lose{color:var(--ink);font-size:14px;margin:0 0 10px}
+  .vs .lose b{color:var(--red)}
+  .vs .adopt{background:#0b0d11;border:1px solid rgba(192,132,252,.3);border-radius:8px;padding:10px 13px;font-size:13.5px}
+  .vs .adopt b{color:var(--purple)}
+  .pillar{border-top:4px solid var(--accent);background:var(--panel);border-radius:10px;padding:4px 18px 18px}
+  .pillar.a{border-color:var(--cyan)} .pillar.b{border-color:var(--amber)} .pillar.c{border-color:var(--red)}
+  .pillar h3{font-size:16px}
+  .goal{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 9px;margin-right:6px}
+  .goal.a{background:rgba(94,234,212,.13);color:var(--cyan)} .goal.b{background:rgba(251,191,36,.13);color:var(--amber)} .goal.c{background:rgba(248,113,113,.13);color:var(--red)}
+  .core{border:1px solid rgba(192,132,252,.5);background:linear-gradient(180deg,rgba(192,132,252,.08),rgba(192,132,252,0));
+    border-radius:12px;padding:18px 22px;margin:16px 0}
+  .core h3{margin-top:4px;color:#fff}
+  .flow{background:#0b0d11;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;
+    font-family:"SF Mono",Consolas,"Roboto Mono",monospace;font-size:12.5px;color:#cdd6e2;
+    white-space:pre;overflow-x:auto;line-height:1.5}
+  .flow .hi{color:var(--purple)} .flow .g{color:var(--green)} .flow .y{color:var(--amber)} .flow .c{color:var(--cyan)}
+  .must-badge{display:inline-block;background:rgba(248,113,113,.18);color:var(--red);
+    border:1px solid rgba(248,113,113,.5);border-radius:6px;font-size:11.5px;font-weight:700;padding:1px 9px;margin-left:8px}
+  .ok{color:var(--green)}.no{color:var(--red)}.part{color:var(--amber)}
+  .feat{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 10px 10px 0;
+    padding:14px 18px;margin:14px 0}
+  .feat h4{margin-top:0;color:#fff}
+  .feat .why{color:var(--muted);font-size:13.5px}
+  .feat .how{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin-top:10px;font-size:13.5px}
+  .tag{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--line);
+    border-radius:5px;padding:0 7px;margin-right:6px}
+  .legend{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  .phase{display:flex;gap:14px;align-items:flex-start;margin:0 0 6px}
+  .phase .dot{flex:0 0 auto;width:14px;height:14px;border-radius:50%;margin-top:6px}
+  .timeline{border-left:2px solid var(--line);margin-left:7px;padding-left:24px}
+  .timeline .item{position:relative;margin:0 0 26px}
+  .timeline .item::before{content:"";position:absolute;left:-31px;top:5px;width:12px;height:12px;
+    border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--bg)}
+  blockquote{margin:14px 0;padding:10px 16px;border-left:3px solid var(--purple);
+    background:var(--panel);border-radius:0 8px 8px 0;color:var(--muted)}
+  .footnote{color:var(--muted);font-size:12.5px;margin-top:60px;border-top:1px solid var(--line);padding-top:16px}
+  ul.clean{margin:8px 0;padding-left:20px}
+  ul.clean li{margin:4px 0}
+  .kbd{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">Roadmap Input · Feature Gap Analysis</div>
+  <h1>md-ast-editor 機能ギャップ分析と開発ロードマップ</h1>
+  <p class="sub">Markdown ベース・タスク／スケジュール管理 Obsidian プラグイン</p>
+  <p class="sub">作成日：2026-06-28 ・ 対象リビジョン：<code>main @ c12ff81</code> ・ 位置づけ：今後の開発ロードマップ検討のインプット資料</p>
+</header>
+
+<div class="toc">
+  <strong>目次</strong>
+  <ol>
+    <li><a href="#summary">エグゼクティブサマリー</a></li>
+    <li><a href="#current">現状の機能棚卸し</a></li>
+    <li><a href="#strength">本プロダクトの強み（競合優位）</a></li>
+    <li><a href="#gaps">不足機能・改善候補（実装方針つき）</a></li>
+    <li><a href="#compare">競合比較分析 ― 本アプリが「劣る」点と取り入れるべきもの</a></li>
+    <li><a href="#ux">ユーザー体験向上の提案（プロダクト哲学に紐づけて）</a></li>
+    <li><a href="#direct">ダイレクト操作 ― 「md に書いてから、ドラッグで割り付ける」（MUST 含む）</a></li>
+    <li><a href="#filter">フィルタ機構の設計指針（ホスト層・常設・パネル非依存）</a></li>
+    <li><a href="#roadmap">ロードマップ提案</a></li>
+    <li><a href="#issues">付録：Issue 化候補リスト</a></li>
+  </ol>
+  <p class="legend">※ 本レポートは現状コードの読解に基づく評価であり、未実装機能は推測ではなくコード上の事実（存在しないこと）を根拠としています。実装着手時は本プロジェクトの Issue 駆動ルールに従い、各項目を Issue 化してください。</p>
+</div>
+
+<!-- ============ 1. SUMMARY ============ -->
+<h2 id="summary">1. エグゼクティブサマリー</h2>
+<div class="card">
+<p>本プロダクトは <strong>「素の Markdown を唯一の正（single source of truth）とし、そこから AST を介してカレンダー・ガント・カンバンへ双方向同期する」</strong> という設計思想を持つ Obsidian プラグインである。unified/remark ベースの堅牢なパーサーと、ドラッグ操作を Markdown 本文へ書き戻す双方向同期は、既存の Obsidian 系タスクプラグイン群と比べても明確な独自性・優位性がある。</p>
+<p>一方で、現状は <strong>「単一ファイルを 4 つのビューで見る」段階</strong> に留まっており、実用的なタスク管理ツールとして広く使われている機能群 ―― <strong>① 複数ファイル横断の集約・クエリ、② 繰り返しタスク、③ 今日／期限のアジェンダ、④ リマインド通知、⑤ フィルタ・検索</strong> ―― が未実装である。これらは競合（Obsidian Tasks / Dataview / Projects、org-agenda 等）が標準で備える領域であり、ロードマップの中核に据えるべきギャップである。</p>
+<p><strong>結論：</strong> 「記法・パーサー・双方向ビュー」という土台は完成度が高い。次フェーズは <em>土台の上に載る “使うための機能”（集約・繰り返し・アジェンダ・通知）</em> へ投資するのが費用対効果が高い。</p>
+</div>
+
+<!-- ============ 2. CURRENT ============ -->
+<h2 id="current">2. 現状の機能棚卸し</h2>
+<p>コードベースから確認できる実装済み機能を層別に整理する。</p>
+
+<div class="grid cols-2">
+  <div class="card tight">
+    <h4>コア：記法 &amp; パーサー</h4>
+    <ul class="clean">
+      <li>unified/remark + GFM ベースのパーサー（<code>parse-markdown.ts</code>）</li>
+      <li>独自 remark プラグイン：<code>remark-task-status</code> / <code>remark-meta-fields</code></li>
+      <li>AST：<code>Section / TaskNode / ListNode / QuoteNode / Document</code></li>
+      <li>派生プロパティ：<code>isGroup / isMemo / hasTaskDescendant / depth / path</code></li>
+      <li>ステータス 5 種：<code>[ ] [x] [&gt;] [!] [-]</code>（todo/done/doing/blocked/hold）</li>
+      <li>メタ（子リスト記法）：<code>@schedule @due @priority @dependsOn @tags</code></li>
+      <li>日付省略記法・タブ/2スペースインデント吸収・<code>nodeLineMap</code>（行番号対応）</li>
+    </ul>
+  </div>
+  <div class="card tight">
+    <h4>ビュー（4種・自作 svelte ライブラリ）</h4>
+    <ul class="clean">
+      <li><strong>AST View</strong> — 構造ツリー表示</li>
+      <li><strong>Calendar View</strong> — <code>@schedule</code> を月/週で表示</li>
+      <li><strong>Gantt View</strong> — スケジュール範囲をバー表示</li>
+      <li><strong>Kanban View</strong> — セクション単位でグルーピング、記述順を保持</li>
+      <li class="muted">いずれも <code>../calendar-for-mywork</code> 等の自作ライブラリを <code>file:</code> 参照</li>
+    </ul>
+  </div>
+  <div class="card tight">
+    <h4>同期・連携</h4>
+    <ul class="clean">
+      <li>MD ↔ AST リアルタイム同期（デバウンス制御）</li>
+      <li>カレンダー/ガントの <strong>ドラッグ→Markdown 本文へ書き戻し</strong>（<code>markdown-patch.ts</code>）</li>
+      <li>編集ダイアログ→Markdown 反映</li>
+      <li>カード/イベントのクリック→エディタカーソルへジャンプ（スクロールオフセット設定可）</li>
+      <li><code>EditorEventBus</code> による疎結合なビュー間連携</li>
+    </ul>
+  </div>
+  <div class="card tight">
+    <h4>エディタ / 設定 / 品質</h4>
+    <ul class="clean">
+      <li>CodeMirror6 装飾：ステータス・メタのハイライト（<code>task-decoration.ts</code>）</li>
+      <li>設定：リボン表示 / ハイライト ON-OFF / デバウンス ms / スクロール行数</li>
+      <li>テスト：vitest（単体）/ playwright（E2E）/ wdio-obsidian（Obsidian E2E）</li>
+      <li>厳格なガバナンス（Issue 駆動・トレーサビリティ・言語ポリシー）</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 3. STRENGTH ============ -->
+<h2 id="strength">3. 本プロダクトの強み（競合優位）</h2>
+<div class="grid cols-2">
+  <div class="card tight"><h4>① 素の Markdown が唯一の正</h4><p class="muted">専用 DB やフロントマター・別ファイル形式に閉じ込めず、人が読めて Git 差分も取れる平文をそのまま編集対象にする。可搬性・耐ロックイン性が高い。</p></div>
+  <div class="card tight"><h4>② 双方向・ドラッグ書き戻し</h4><p class="muted">カレンダー/ガントでのドラッグ結果を <em>Markdown 本文へ書き戻す</em>。多くの Obsidian カレンダー系プラグインは「表示専用」または frontmatter 限定で、本文インラインタスクへの書き戻しは希少。</p></div>
+  <div class="card tight"><h4>③ remark ベースの正統な AST</h4><p class="muted">正規表現の場当たりではなく unified パイプライン上の AST。記法拡張やビュー追加に強く、テストで仕様を固定できている。</p></div>
+  <div class="card tight"><h4>④ 開始/終了レンジの <code>@schedule</code></h4><p class="muted">単なる due 日付ではなく開始〜終了の時間幅を一級で扱う。ガント/時間ブロッキングに直結する。同一タスク複数 schedule も可。</p></div>
+  <div class="card tight"><h4>⑤ 1 ソース → 4 ビュー</h4><p class="muted">同じ Markdown を AST/カレンダー/ガント/カンバンで同時に見られる。Projects プラグインに近いが、こちらは<strong>インラインタスク</strong>が対象。</p></div>
+  <div class="card tight"><h4>⑥ メモ・引用の一級扱い＆カーソル同期</h4><p class="muted"><code>QuoteNode</code>（経緯メモ）やグループ/メモを構造として保持。ビュー→エディタのカーソルジャンプで「見て→直す」が速い。</p></div>
+</div>
+
+<!-- ============ 4. GAPS ============ -->
+<h2 id="gaps">4. 不足機能・改善候補（実装方針つき）</h2>
+<p class="legend">
+  <span class="pill p-must">MUST</span> 実用に不可欠／競合が標準装備
+  <span class="pill p-should">SHOULD</span> 体験を大きく底上げ
+  <span class="pill p-could">COULD</span> 差別化・将来投資
+</p>
+
+<h3>4.1 データ集約・スコープ <span class="muted" style="font-size:13px">— 最重要カテゴリ</span></h3>
+
+<div class="feat">
+  <h4><span class="pill p-must">MUST</span>&nbsp; 複数ファイル／Vault 横断の集約</h4>
+  <p class="why"><span class="tag">課題</span> <code>FileSync</code> が「現在開いているファイル」1 枚しか追跡しない。実運用ではタスクは複数ノートに散らばるため、横断ビューが作れないのが最大の制約。Obsidian Tasks / Dataview が最も評価される機能がこれ。</p>
+  <div class="how"><strong>実装方針：</strong> <code>FileSync</code> を「単一ファイル追跡」から「ソース集合」へ拡張。① <code>app.vault.getMarkdownFiles()</code> を起動時に走査し各ファイルを parse → AST をメモリ index 化、② <code>metadataCache</code>／<code>vault.on('modify')</code> で差分更新、③ 各ノードに <code>sourcePath</code> を付与（書き戻し先の特定に必須）。スコープは「現在ファイル / 指定フォルダ / タグ / Vault 全体」を設定で選択。<code>nodeLineMap</code> を <code>(path,line)</code> キーへ拡張する。</div>
+</div>
+
+<div class="feat">
+  <h4><span class="pill p-must">MUST</span>&nbsp; クエリ／フィルタ言語と保存フィルタ</h4>
+  <p class="why"><span class="tag">課題</span> 「未完で今週期限」「<code>#総務</code> かつ <code>[!]</code>」のような絞り込み手段が無い。集約と対で必要。</p>
+  <div class="how"><strong>実装方針：</strong> AST に対する宣言的フィルタ DSL を定義（例：<code>status:todo,doing due:&lt;=2026-07-05 tag:総務</code>）。まずは構造化オブジェクト（<code>{status, dueBefore, tags, sectionPath, priority}</code>）として実装し、各 <code>ast-to-*</code> 変換の前段に <code>filterNodes(doc, query)</code> を挟む。フィルタはコードブロック（<code>```task-query</code>）として Markdown に埋め込み or ビュー上の UI から指定。よく使う条件は設定に保存（スマートリスト）。</div>
+</div>
+
+<h3>4.2 時間・繰り返し</h3>
+
+<div class="feat">
+  <h4><span class="pill p-must">MUST</span>&nbsp; 繰り返しタスク（RRULE）</h4>
+  <p class="why"><span class="tag">課題</span> <code>project/__private/workspace/knowledge/RRULE.md</code> に検討メモがあるが未実装。「毎月第2・第4金曜の清掃」のような定期業務（ガイドの実例そのもの）が表現できない。org-agenda / Tasks / Todoist は標準装備。</p>
+  <div class="how"><strong>実装方針：</strong> メタに <code>@repeat</code>（または <code>@rrule</code>）を追加 → <code>meta-keys.ts</code> と <code>remark-meta-fields</code> を拡張、<code>Meta</code> 型に <code>repeat?: string</code>。値は RFC 5545 RRULE（<code>FREQ=WEEKLY;BYDAY=FR;INTERVAL=2</code>）または簡易記法（<code>every 2 weeks on Fri</code>）。<code>rrule</code> ライブラリで <code>@schedule</code> を起点に表示範囲分のオカレンスへ展開し、カレンダー/ガントへ投入。完了時の挙動（次回生成 or チェック蓄積）を仕様決定する。展開はビュー側のみ（本文は 1 行のまま）に留めると書き戻し問題を回避できる。</div>
+</div>
+
+<div class="feat">
+  <h4><span class="pill p-should">SHOULD</span>&nbsp; カレンダーの日/週/アジェンダ切替・終日帯</h4>
+  <p class="why"><span class="tag">課題</span> <code>__private</code> の prompt に week/month/day 検討が残るが、ビュー切替が UI として確立していない。<code>@due</code> のみ（時刻なし）のタスクが終日扱いで一覧化されると有用。</p>
+  <div class="how"><strong>実装方針：</strong> <code>ast-to-calendar.ts</code> に <code>@due</code> を all-day イベントとして射影するパスを追加（現状は <code>@schedule</code> 中心）。ビュー側ライブラリ（calendar-for-mywork）に view mode（month/week/day/agenda）を切替プロップとして渡す。</div>
+</div>
+
+<h3>4.3 アジェンダ・通知</h3>
+
+<div class="feat">
+  <h4><span class="pill p-must">MUST</span>&nbsp; Today / アジェンダビュー（期限ダッシュボード）</h4>
+  <p class="why"><span class="tag">課題</span> 「今日やること」「期限超過」を集約表示する画面が無い。タスク管理ツールで最も日常的に開かれる画面。org-agenda の中核。</p>
+  <div class="how"><strong>実装方針：</strong> 4.1 の集約基盤の上に新ビュー <code>AgendaView</code> を追加。<code>@due</code>/<code>@schedule</code> を「期限超過 / 今日 / 今週 / 予定なし」へ束ねて時系列リスト表示。各行クリックで既存のカーソルジャンプを再利用。優先度・ステータスでソート。</div>
+</div>
+
+<div class="feat">
+  <h4><span class="pill p-should">SHOULD</span>&nbsp; リマインド通知</h4>
+  <p class="why"><span class="tag">課題</span> 期限・開始時刻が来ても何も起きない。</p>
+  <div class="how"><strong>実装方針：</strong> プラグイン常駐タイマーで直近の <code>@schedule</code> 開始/<code>@due</code> を監視し、Obsidian <code>Notice</code>（＋デスクトップは Notification API）で通知。デフォルトのリードタイム（例：開始10分前）を設定化。<code>@reminder</code> メタで個別指定も可。</div>
+</div>
+
+<h3>4.4 進捗・依存・可視化</h3>
+
+<div class="grid cols-2">
+  <div class="feat">
+    <h4><span class="pill p-should">SHOULD</span>&nbsp; グループの進捗ロールアップ</h4>
+    <p class="why">グループ（<code>isGroup</code>）配下の完了率（3/5・60%）が出ない。</p>
+    <div class="how"><strong>方針：</strong> AST 派生段で子孫タスクの done 比率を集計し <code>progress</code> として付与。カンバン/ガント/AST のグループ見出しにバー表示。純粋な派生プロパティなので書き戻し不要・低リスク。</div>
+  </div>
+  <div class="feat">
+    <h4><span class="pill p-should">SHOULD</span>&nbsp; <code>@dependsOn</code> の依存矢印（ガント）</h4>
+    <p class="why"><code>dependsOn</code> はモデルにあるが <code>ast-to-gantt.ts</code> で<strong>可視化されていない</strong>。ID 解決もガイド上曖昧。</p>
+    <div class="how"><strong>方針：</strong> まず安定した参照 ID（<code>@id</code> メタ or 行ベース slug）を確立し、ガントへ依存リンク（dependency）を渡して矢印描画。循環検出と未解決 ID の警告も。</div>
+  </div>
+  <div class="feat">
+    <h4><span class="pill p-could">COULD</span>&nbsp; 色分け（タグ/優先度/ステータス）</h4>
+    <p class="why">全ビューで一貫した色規則が無い。</p>
+    <div class="how"><strong>方針：</strong> 設定で「タグ→色」「優先度→色」マップを定義し、<code>ast-to-*</code> 出力の <code>color</code> に反映。凡例表示。</div>
+  </div>
+  <div class="feat">
+    <h4><span class="pill p-could">COULD</span>&nbsp; カンバンのドラッグ＝ステータス遷移</h4>
+    <p class="why">現状グルーピングはセクション。列移動でステータス（todo→doing→done）を変える運用も一般的。</p>
+    <div class="how"><strong>方針：</strong> <code>groupByField</code> に <code>status</code> を選べるようにし、列間ドラッグ時に <code>[ ]→[&gt;]→[x]</code> を Markdown へ書き戻し（既存 patch 基盤を流用）。</div>
+  </div>
+</div>
+
+<h3>4.5 入力・編集体験</h3>
+<div class="grid cols-2">
+  <div class="feat">
+    <h4><span class="pill p-should">SHOULD</span>&nbsp; クイック追加 &amp; 日付ピッカー</h4>
+    <p class="why">タスク追加・日付入力が手打ち。記法ミス（<code>@schedule</code> 形式）が起きやすいことはガイドの「よくあるミス」表が示す。</p>
+    <div class="how"><strong>方針：</strong> コマンド＋モーダルで「タスク文＋日付＋ステータス」を入力→正規形を挿入。日付は Obsidian の suggest／カレンダーポップオーバー。自然言語入力（「明日10時」）は <code>chrono-node</code> で補助。</div>
+  </div>
+  <div class="feat">
+    <h4><span class="pill p-could">COULD</span>&nbsp; ステータス・メタキーのカスタマイズ</h4>
+    <p class="why">5 ステータス・5 メタキーがハードコード。組織ごとに語彙が違う。</p>
+    <div class="how"><strong>方針：</strong> <code>META_KEYS</code> とステータスマップを設定駆動に。ただし記法の安定性とトレードオフのため、まずは別名（alias）対応から。</div>
+  </div>
+</div>
+
+<h3>4.6 連携・堅牢性</h3>
+<div class="grid cols-2">
+  <div class="feat">
+    <h4><span class="pill p-could">COULD</span>&nbsp; iCal / 外部カレンダー連携（書き出し）</h4>
+    <p class="why">予定を Google Calendar 等で見たい需要。</p>
+    <div class="how"><strong>方針：</strong> <code>@schedule</code> 群を <code>.ics</code> へエクスポートするコマンド。双方向は競合多発のため当面エクスポートのみ。</div>
+  </div>
+  <div class="feat">
+    <h4><span class="pill p-should">SHOULD</span>&nbsp; 外部編集・競合への耐性 / モバイル検証</h4>
+    <p class="why">書き戻し中に本文が外部更新された場合の整合、巨大ファイルでのデバウンス負荷、モバイル（CM6 API 依存箇所）未検証。</p>
+    <div class="how"><strong>方針：</strong> 書き戻しを「行範囲の最小パッチ＋再 parse 検証」にし、行ズレ時は中断して通知。<code>(mdView.editor as any).cm</code> 依存（plugin.ts のスクロール処理）にモバイルフォールバックを用意。</div>
+  </div>
+</div>
+
+<!-- ============ 5. COMPARE ============ -->
+<h2 id="compare">5. 競合比較分析 ― 本アプリが「劣る」点と取り入れるべきもの</h2>
+<p>このセクションは <strong>意図的に「本アプリが負けている領域」だけ</strong>を取り上げる。各競合の優位機能のうち、<strong>本アプリに取り入れるべきもの</strong>を太字＋<span class="pill p-adopt">採用候補</span>で明示する。チーム議論では「採用するか／自前記法でどう表現するか」を論点にしてほしい。</p>
+
+<h3>5.1 機能マトリクス（× が本アプリの弱点 ＝ 議論対象）</h3>
+<table>
+  <thead><tr>
+    <th>機能</th><th>本プロダクト</th><th>Obsidian&nbsp;Tasks</th><th>Dataview</th><th>Projects</th><th>Kanban&nbsp;(mgmeyers)</th>
+  </tr></thead>
+  <tbody>
+    <tr><td>正データが素の Markdown</td><td class="ok">◎ 本文インライン</td><td class="ok">◎ インライン</td><td class="ok">◯ 読取主体</td><td class="part">△ frontmatter</td><td class="part">△ 専用形式</td></tr>
+    <tr><td>カレンダー表示</td><td class="ok">◎ 自作</td><td class="no">×（他依存）</td><td class="part">△ 自作クエリ</td><td class="ok">◯</td><td class="no">×</td></tr>
+    <tr><td>ガント表示</td><td class="ok">◎ 自作</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td class="no">×</td></tr>
+    <tr><td>カンバン</td><td class="ok">◯</td><td class="no">×</td><td class="no">×</td><td class="ok">◯</td><td class="ok">◎</td></tr>
+    <tr><td>ドラッグ→本文書き戻し</td><td class="ok">◎ 強み</td><td class="no">×</td><td class="no">×</td><td class="part">△ 項目編集</td><td class="ok">◯ ボード内</td></tr>
+    <tr><td>開始/終了レンジ schedule</td><td class="ok">◎</td><td class="part">△ due中心</td><td class="part">△</td><td class="part">△</td><td class="no">×</td></tr>
+    <tr><td><strong>複数ファイル横断集約</strong></td><td class="no">× 未実装</td><td class="ok">◎ 中核</td><td class="ok">◎ 中核</td><td class="ok">◎</td><td class="no">×</td></tr>
+    <tr><td><strong>クエリ/フィルタ</strong></td><td class="no">×</td><td class="ok">◎</td><td class="ok">◎</td><td class="ok">◯</td><td class="no">×</td></tr>
+    <tr><td><strong>繰り返し（recurring）</strong></td><td class="no">× 計画のみ</td><td class="ok">◎</td><td class="no">×</td><td class="no">×</td><td class="no">×</td></tr>
+    <tr><td>アジェンダ/Today</td><td class="no">×</td><td class="ok">◯</td><td class="ok">◯ 自作</td><td class="part">△</td><td class="no">×</td></tr>
+    <tr><td>通知/リマインド</td><td class="no">×</td><td class="part">△ 他依存</td><td class="no">×</td><td class="no">×</td><td class="no">×</td></tr>
+  </tbody>
+</table>
+<p class="legend">◎ 優れている／◯ 対応／△ 部分的・限定的／× なし。本プロダクトの空欄（×）が、そのまま投資対象のロードマップ候補。</p>
+
+<h3>5.2 製品別：本アプリが「劣る」ポイントと採用候補</h3>
+<p class="legend">各カードは「その製品に本アプリが負けている具体機能」→「だから何を取り入れるか」をセットで示す。</p>
+
+<div class="vs">
+  <div class="hd"><span class="name">Obsidian Tasks</span><span class="meta">Obsidian プラグイン・インラインタスクのデファクト</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> ① <code>```tasks</code> クエリブロックで <b>Vault 全体のタスクをノート内に集約表示</b>できる ② <b>繰り返し</b>（<code>🔁 every week</code>）③ <b>「タスク作成/編集」モーダル</b>（日付ピッカー・ステータス・優先度を GUI で入力し、記法は自動生成）④ 入力中のオートサジェスト ⑤ 相対日付（"in two weeks"）。本アプリはこれらが <span class="no">すべて未実装</span>。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>(a) 埋め込みクエリブロック</strong>（<code>```task-query</code> をノートにレンダリング）、<strong>(b) 繰り返し記法</strong>、<strong>(c) 編集モーダル＋日付ピッカー</strong>。特に (c) は「<code>@schedule</code> 形式を手打ちさせない」＝本アプリの記法ミス（ガイドの注意点表）を構造的に撲滅できる。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Dataview / Datacore</span><span class="meta">クエリ・集約のデファクト</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> ノートに <b>ライブクエリを埋め込み</b>、表示時に最新のタスク一覧へ自動展開（TABLE / LIST / TASK）。「管理簿を手で更新しない」運用の核。本アプリのビューは <b>外部パネル</b>で、ノート内に「この案件の未完タスク一覧」を差し込むことができない。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>ノート埋め込み型のライブ集約ブロック</strong>。例：案件ノートに <code>```task-query scope:folder status:!done</code> を書くと、その場に最新一覧が描画される。<em>転記レス</em>の決定打。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Projects（Marcus Olsson）</span><span class="meta">多ビュー・ノートDB</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> <b>編集可能なテーブル（表）ビュー</b>。スプレッドシートのようにセルを直接編集して一括で日付・ステータスを直せる。本アプリには <span class="no">表ビューが無い</span>（AST/カレンダー/ガント/カンバンのみ）。大量タスクの棚卸し・一括編集で大きく劣る。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>編集可能テーブルビュー</strong>（列：タスク/ステータス/期限/スケジュール/優先度/タグ/出典ファイル）。セル編集は既存の Markdown 書き戻し基盤に接続。<em>一覧で見て、その場で直す</em>＝転記レス＋抜け漏れ点検に効く。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Day Planner</span><span class="meta">タイムブロッキング</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> <b>1日のタイムライン</b>に予定を縦に並べ、<b>未定タスクをドラッグして時間に割り付け</b>、現在時刻インジケータで「今やること」を示す。本アプリのカレンダーは月/週中心で、1日の時間設計（タイムブロッキング）UI が弱い。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>デイ・タイムラインビュー</strong>。未スケジュールのタスクを今日の時間帯にドラッグ → <code>@schedule</code> を書き戻す。「予定に落とし込めていないタスク」を可視化し抜け漏れを防ぐ。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">org-mode / org-agenda（Emacs）</span><span class="meta">平文タスク管理の到達点</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> ① <b>横断アジェンダ</b>（全ファイルの SCHEDULED/DEADLINE を日付順に集約）② <b>キャプチャ</b>（どこからでも素早く取り込み、定位置へ）③ <b>Refile</b>（タスクを別ファイル/見出しへ移動し参照を維持）④ <b>clocking</b>（作業時間の記録）。本アプリは①〜④いずれも未実装。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>アジェンダ</strong>・<strong>クイックキャプチャ</strong>・<strong>Refile（タスク移動）</strong>。Refile は「散在した管理簿を1か所へ寄せる」哲学に直結する。clocking は優先度低。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Todoist / TickTick / Things 3</span><span class="meta">SaaS タスク管理（UX 参照）</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> ① <b>自然言語クイック追加</b>（「請求書 明日17時 #経理 p1」を1行で構造化）② <b>スマートリスト</b>（今日 / 次の予定 / いつか）③ ubiquitous capture（常時どこからでも追加）④ 通知 ⑤ TickTick は習慣・ポモドーロも内包。平文ではないが <b>「入れる速さ」「拾い上げる確実さ」</b>で大きく勝る。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>自然言語クイック追加</strong>・<strong>常設スマートリスト（今日/期限切れ/未スケジュール）</strong>。<em>速く入れられないと結局メモ帳に転記され、散在・抜け漏れが起きる</em>ため哲学に直結。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">obsidian-reminder / Logseq</span><span class="meta">通知・日次運用</span></div>
+  <div class="bd">
+    <p class="lose"><b>負けている点：</b> obsidian-reminder は <b>期限の通知</b>と <b>日付入力サジェスト</b>を提供。Logseq は <b>日次ノート（ジャーナル）中心の捕捉</b>と <b>LATER/NOW</b> 運用。本アプリは通知ゼロ・デイリーノート連携なし。</p>
+    <div class="adopt"><b>取り入れるべき：</b> <span class="pill p-adopt">採用候補</span> <strong>リマインド通知</strong>・<strong>日付入力サジェスト</strong>。通知は「気づかず期限超過」という最も典型的な抜け漏れの直接対策。</div>
+  </div>
+</div>
+
+<h3>5.3 まとめ：本アプリに取り入れるべき機能 ― 優先トップ7</h3>
+<table>
+  <thead><tr><th>#</th><th>取り入れる機能</th><th>出典（勝っている競合）</th><th>本アプリが解決する哲学</th><th>優先</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>横断アジェンダ / Today（全ファイルの期限・予定を集約）</td><td>org-agenda, Tasks</td><td>抜け漏れ防止・集約</td><td><span class="pill p-must">MUST</span></td></tr>
+    <tr><td>2</td><td>ノート埋め込み型ライブ集約ブロック</td><td>Dataview, Tasks</td><td>転記レス・集約</td><td><span class="pill p-must">MUST</span></td></tr>
+    <tr><td>3</td><td>編集モーダル＋日付ピッカー＋自然言語入力</td><td>Tasks, Todoist</td><td>転記レス・記法ミス防止</td><td><span class="pill p-must">MUST</span></td></tr>
+    <tr><td>4</td><td>繰り返しタスク（RRULE）</td><td>Tasks, org</td><td>抜け漏れ防止</td><td><span class="pill p-must">MUST</span></td></tr>
+    <tr><td>5</td><td>編集可能テーブル（表）ビュー</td><td>Projects</td><td>転記レス・棚卸し</td><td><span class="pill p-should">SHOULD</span></td></tr>
+    <tr><td>6</td><td>クイックキャプチャ／インボックス＆Refile</td><td>org, Todoist</td><td>転記レス・集約</td><td><span class="pill p-should">SHOULD</span></td></tr>
+    <tr><td>7</td><td>リマインド通知＋日付サジェスト</td><td>reminder, Todoist</td><td>抜け漏れ防止</td><td><span class="pill p-should">SHOULD</span></td></tr>
+  </tbody>
+</table>
+
+<blockquote>
+  立ち位置の再確認：本アプリの土台（インライン Markdown × 多ビュー × 双方向ドラッグ）は競合に対し独自で強い。<strong>負けているのは一貫して「入れる速さ（capture）」「集約（aggregate）」「拾い上げる確実さ（agenda/通知）」</strong>の3点であり、これはそのまま本プロダクトの哲学（転記レス・脱・散在管理簿・抜け漏れ防止）の未達領域と一致する。
+</blockquote>
+
+<!-- ============ 6. UX ============ -->
+<h2 id="ux">6. ユーザー体験向上の提案（プロダクト哲学に紐づけて）</h2>
+<p>本アプリの存在理由は <strong>「Markdown を唯一の正とし、① 無駄な転記をなくす ② 散在する管理簿をなくす ③ タスクの抜け漏れを防ぐ」</strong>こと。以下の UX 提案はすべてこの3つのゴールのどれに効くかを明示する。各提案は <span class="goal a">転記レス</span> <span class="goal b">脱・散在</span> <span class="goal c">抜け漏れ防止</span> でタグ付けした。</p>
+
+<div class="grid cols-3" style="margin-bottom:8px">
+  <div class="pillar a">
+    <h3><span class="goal a">ゴール A</span>転記をなくす</h3>
+    <p class="muted" style="font-size:13px">「見ている場所で直接直す」「一度書けば二度書かない」を徹底する。</p>
+
+    <div class="feat" style="margin:12px 0 0">
+      <h4>A-1 ビュー内インライン編集の全面化</h4>
+      <p class="why">現状ドラッグで日時は書き戻せるが、テキスト・ステータス・優先度・タグは編集できない。アジェンダ/テーブル/カンバンのカード上で<strong>全項目をその場編集→Markdown 書き戻し</strong>へ。「ビューで気づいた修正をエディタに戻って転記」をゼロにする。</p>
+      <div class="how"><strong>方針：</strong>既存 <code>markdown-patch.ts</code> をフィールド単位編集に汎化。<code>(sourcePath,line,field)</code> 指定の最小パッチ。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>A-2 貼り付け即変換（他記法→本記法）</h4>
+      <p class="why">ガイド第9章に「プレーンテキスト/Obsidian Tasks/表→本記法」の<strong>変換ルールが既に定義済み</strong>。これをコード化し、<strong>貼り付け時に自動変換</strong>すれば、既存メモ・メール・議事録からの取り込み転記が消える。</p>
+      <div class="how"><strong>方針：</strong>「変換して貼り付け」コマンド＋ヒューリスティック変換器。日付は <code>chrono-node</code>。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>A-3 構造テンプレート / スニペット</h4>
+      <p class="why">定型業務（月次清掃 等）のグループ＋メタ雛形をワンコマンド挿入。毎回の手打ちを排除。</p>
+      <div class="how"><strong>方針：</strong>テンプレートを Markdown 断片として保持し挿入。繰り返し（RRULE）と併用。</div>
+    </div>
+  </div>
+
+  <div class="pillar b">
+    <h3><span class="goal b">ゴール B</span>散在をなくす</h3>
+    <p class="muted" style="font-size:13px">複数ファイルに散ったタスクを「1か所で見える／寄せられる」状態に。</p>
+
+    <div class="feat" style="margin:12px 0 0">
+      <h4>B-1 常設スマートリスト（サイドバー）</h4>
+      <p class="why">「今日 / 期限切れ / 今週 / 未スケジュール / <code>#タグ</code>別」を<strong>常に左サイドに表示</strong>。どのノートを開いていても全体像が見える＝「あの管理簿を見に行く」をなくす。</p>
+      <div class="how"><strong>方針：</strong>集約インデックス（Phase1）＋保存フィルタを SidebarView に。各行クリックで既存カーソルジャンプ。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>B-2 クイックキャプチャ＆インボックス</h4>
+      <p class="why">グローバルホットキーで<strong>どこからでも1行追加</strong>→ 既定の inbox ファイルへ。「後で清書しよう」と別メモに書いて散らかる事故を防ぐ。後から Refile で定位置へ。</p>
+      <div class="how"><strong>方針：</strong>キャプチャモーダル→ 設定の inbox へ追記。NL 日付解釈付き。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>B-3 Refile（タスクのファイル間移動）</h4>
+      <p class="why">インボックスや雑多ノートのタスクを、<strong>案件ノートへ移動</strong>。手でコピペ＝転記・重複の温床を、参照を保ったまま移動に置き換える。</p>
+      <div class="how"><strong>方針：</strong>移動元の最小削除＋移動先への挿入を1トランザクションで。<code>sourcePath</code> 前提。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>B-4 関連タスク／文脈ナビ</h4>
+      <p class="why"><code>@dependsOn</code> や同タグ・同セクションのタスクへワンクリック移動。文脈を集めて散在を体感的に解消。</p>
+      <div class="how"><strong>方針：</strong>安定 ID 確立後、ホバーポップオーバーで関連表示。</div>
+    </div>
+  </div>
+
+  <div class="pillar c">
+    <h3><span class="goal c">ゴール C</span>抜け漏れを防ぐ</h3>
+    <p class="muted" style="font-size:13px">「気づかず落とす」を能動的・受動的の両面で潰す。</p>
+
+    <div class="feat" style="margin:12px 0 0">
+      <h4>C-1 抜け漏れ検出パネル（ヘルスチェック）</h4>
+      <p class="why">本提案の<strong>目玉</strong>。次を一覧で能動表示：<em>① 日付なしの未完タスク ② 過去日付なのに未完（超過）③ <code>[&gt;]</code> のまま N 日放置（停滞）④ 未解決の <code>@dependsOn</code> ⑤ 依存先が完了し「着手可能」になったタスク ⑥ 形式不正で集計から漏れているメタ</em>。「拾えていないタスク」を構造的にあぶり出す。</p>
+      <div class="how"><strong>方針：</strong>集約 AST に対するルール群（純関数）＋ HealthView。各ルールは ON/OFF と閾値を設定化。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>C-2 記法リント＆自動修正（エディタ内）</h4>
+      <p class="why">ガイドの「よくある変換ミス」表をそのまま<strong>リアルタイム診断</strong>に。<code>@schedule</code> の形式不正は<strong>静かにカレンダーから消える＝最も危険な抜け漏れ</strong>。下線警告＋クイックフィックスで修正。</p>
+      <div class="how"><strong>方針：</strong>CM6 診断（<code>task-decoration.ts</code> 拡張）。パーサーが落とした行を警告として可視化。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>C-3 アンビエント警告（件数バッジ＋通知）</h4>
+      <p class="why">リボン/ステータスバーに<strong>「超過 N 件・今日 M 件」バッジ</strong>を常時表示。開かなくても気づける。期限・開始時刻のリマインド通知も。</p>
+      <div class="how"><strong>方針：</strong>集約結果のカウントを UI に反映＋常駐タイマー通知。</div>
+    </div>
+    <div class="feat" style="margin:12px 0 0">
+      <h4>C-4 ウィークリーレビュー導線</h4>
+      <p class="why">週次で<strong>「未スケジュールの backlog に日付を割り当てる」</strong>ガイド付きフロー。放置タスクを定期的に棚卸しし、抜け漏れを仕組みで防ぐ（GTD/Sunsama 的レビュー）。</p>
+      <div class="how"><strong>方針：</strong>未スケジュール一覧＋デイ・タイムラインへのドラッグ割付（A-1/Day Planner 採用と合流）。</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h4>UX 提案の「効きどころ」早見</h4>
+  <table style="margin-top:6px">
+    <thead><tr><th>提案</th><th>転記レス</th><th>脱・散在</th><th>抜け漏れ防止</th><th>土台依存</th></tr></thead>
+    <tbody>
+      <tr><td>A-1 インライン編集の全面化</td><td class="ok">◎</td><td class="part">○</td><td class="part">○</td><td>既存patch拡張</td></tr>
+      <tr><td>A-2 貼り付け即変換</td><td class="ok">◎</td><td class="part">○</td><td class="no">—</td><td>独立（早期可）</td></tr>
+      <tr><td>B-1 常設スマートリスト</td><td class="part">○</td><td class="ok">◎</td><td class="ok">◎</td><td>Phase1集約</td></tr>
+      <tr><td>B-2/3 キャプチャ＆Refile</td><td class="ok">◎</td><td class="ok">◎</td><td class="part">○</td><td>Phase1集約</td></tr>
+      <tr><td>C-1 抜け漏れ検出パネル</td><td class="no">—</td><td class="part">○</td><td class="ok">◎</td><td>Phase1集約</td></tr>
+      <tr><td>C-2 記法リント</td><td class="part">○</td><td class="no">—</td><td class="ok">◎</td><td>独立（早期可）</td></tr>
+      <tr><td>C-3 バッジ＋通知</td><td class="no">—</td><td class="part">○</td><td class="ok">◎</td><td>Phase1集約</td></tr>
+    </tbody>
+  </table>
+  <p class="legend">「独立（早期可）」＝集約基盤を待たずに着手でき、単体で価値を出せる Quick Win。とくに <strong>A-2 貼り付け変換</strong>・<strong>C-2 記法リント</strong> は哲学への効果が高く低リスク。</p>
+</div>
+
+<!-- ============ 7. DIRECT MANIPULATION ============ -->
+<h2 id="direct">7. ダイレクト操作 ― 「md に書いてから、ドラッグで割り付ける」</h2>
+<p><strong>設計思想：</strong> Markdown は文字しか表現できず、<em>日時・期間・位置・関係</em>といった「非テキストの次元」が苦手である。本アプリの視覚ビュー（カレンダー/ガント/カンバン）は、まさにその次元を表現する平面だ。したがって理想的な操作モデルは ―― <strong>「考えていることは md に文字でバーっと書く → 足りない次元（いつ・どれだけ・どこ）はビュー上のドラッグで直接与える → 即 md に書き戻す」</strong>。これにより二重管理が一切発生せず、md だけで完結する。以下の中核機能はユーザー指定の <span class="must-badge">MUST</span> である。</p>
+
+<div class="core">
+  <h3>7.0 中核：選択テキスト → ビューへ DnD でメタ付与 <span class="must-badge">MUST</span></h3>
+  <p>エディタでタスク行（またはその一部テキスト）を選択し、そのままカレンダー/ガント/カンバンへ<strong>ドラッグ＆ドロップ</strong>すると、<strong>着地した場所に応じたメタデータがそのタスクへ書き込まれる</strong>。「とりあえず書いて、後でスケジューリング」という自然な思考順序をそのまま操作にできる。</p>
+  <div class="flow">md エディタ                          ビュー（ドロップ先）              md へ書き戻し（自動）
+─────────────────────────────────────────────────────────────────────────────
+<span class="hi">- [ ] 見積書を松田さんへ送る</span>  ──drag──▶  <span class="c">カレンダー 6/30 14:00 枠</span>   ▶  <span class="g">  - @schedule: 2026-06-30T14:00/...</span>
+<span class="hi">- [ ] 議事録の清書</span>          ──drag──▶  <span class="c">カレンダー 終日帯 7/2</span>     ▶  <span class="g">  - @due: 2026-07-02</span>
+<span class="hi">- [ ] 棚卸し作業</span>            ──drag──▶  <span class="y">ガント 7/3〜（バー幅=期間）</span> ▶  <span class="g">  - @schedule: 2026-07-03/2026-07-05</span>
+<span class="hi">- [ ] 稟議承認待ち</span>          ──drag──▶  <span class="c">カンバン「対応中」列</span>     ▶  ステータス <span class="g">[>]</span> ＋セクション移動
+  </div>
+  <ul class="clean">
+    <li><strong>カレンダー：</strong>時間グリッドにドロップ→開始時刻つき <code>@schedule</code>／終日帯にドロップ→<code>@due</code>。既定の所要時間（設定）でバー幅を補完。</li>
+    <li><strong>ガント：</strong>ドロップ位置＝開始日。横ドラッグの幅で期間（開始/終了）を <code>@schedule</code> に。</li>
+    <li><strong>カンバン：</strong>列＝ステータス or セクション or タグ（<code>groupByField</code> に連動）。ドロップで <code>[ ]→[&gt;]</code> 等を書き戻し。</li>
+    <li><strong>複数行選択で一括割り付け：</strong>連続ドロップ／日付を順に配分。「書いたものを一気に予定へ落とす」を高速化。</li>
+  </ul>
+  <div class="how" style="background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin-top:6px;font-size:13.5px">
+    <strong>実装方針：</strong>
+    ① <strong>エディタをドラッグ源に：</strong> CM6 で選択範囲の <code>dragstart</code> を捕捉し、行番号→AST ノードを <code>nodeLineMap</code> の逆引きで解決。<code>DataTransfer</code> に <code>{sourcePath, line, nodeId}</code> を載せる（カスタム MIME）。
+    ② <strong>各ビューを drop ターゲットに：</strong> <code>*ViewMount.svelte</code> に <code>dragover/drop</code> ハンドラを追加し、ドロップ座標→対象の日時/列を算出。
+    ③ <strong>書き戻し：</strong> 既存 <code>markdown-patch.ts</code> を「指定ノードの子リストへ <code>@meta</code> を挿入/更新」操作に汎化（ドラッグ移動の書き戻しと同基盤）。
+    ④ <strong>誤爆防止：</strong> ドラッグ中ゴーストに「何がどこへ書かれるか」をプレビュー（7.1）。対象がタスク行でない場合はドロップ不可表示。
+  </div>
+</div>
+
+<h3>7.1 関連するダイレクト操作の家族（中核と一緒に効く）</h3>
+<div class="grid cols-2">
+  <div class="feat">
+    <h4>★ 未スケジュール・トレイ <span class="pill p-must">MUST 相棒</span></h4>
+    <p class="why">日付の無いタスクだけを集めた<strong>引き出し（トレイ）</strong>を常設。ここから1件ずつカレンダー/ガントへドラッグして割り付ける。<strong>「md にバーっと書く→後で割り付ける」運用そのもの</strong>を体現し、<em>トレイが空＝全タスクが予定化済み</em>という抜け漏れチェックにもなる。</p>
+    <div class="how"><strong>方針：</strong>集約インデックス（Phase1）で <code>@schedule</code>/<code>@due</code> 無しの未完タスクを抽出→ドラッグ可能なリストに。7.0 の drop 基盤を共有。</div>
+  </div>
+  <div class="feat">
+    <h4>ドラッグ中の着地プレビュー（ゴースト）</h4>
+    <p class="why">ドロップ前に「<code>@schedule: 6/30 14:00</code> が書かれます」をその場に表示。文字で結果が見えない md の弱点を補い、誤った割り付けを防ぐ。</p>
+    <div class="how"><strong>方針：</strong><code>dragover</code> で対象スロットを算出し、生成予定の meta 文字列をツールチップ表示。</div>
+  </div>
+  <div class="feat">
+    <h4>逆方向：ビューのスロット → md へドラッグ挿入</h4>
+    <p class="why">執筆中に、カレンダーの枠やガントの日付を<strong>エディタのカーソル位置へドラッグ</strong>すると <code>@schedule</code>/<code>@due</code> 行が挿入される。書きながら日付を拾える。</p>
+    <div class="how"><strong>方針：</strong>ビュー側を drag 源、エディタを drop 先に。挿入位置はカーソル行の子リスト。</div>
+  </div>
+  <div class="feat">
+    <h4>クイック・ドロップ標的（今日/明日/来週チップ）</h4>
+    <p class="why">ビューを開かずとも、サイドの<strong>「今日・明日・来週・期限なし解除」チップ</strong>へドロップするだけで相対日付を付与。最頻ケースを1アクションに。</p>
+    <div class="how"><strong>方針：</strong>常設の小型ドロップゾーン。相対日付を絶対日付へ解決して書き戻し。</div>
+  </div>
+  <div class="feat">
+    <h4>時間ブロックのペイント</h4>
+    <p class="why">カレンダー上で時間帯を<strong>ドラッグして「塗る」→そこへタスクをドロップ</strong>で、その期間を <code>@schedule</code> に。所要時間を意識した予定化（タイムブロッキング）。</p>
+    <div class="how"><strong>方針：</strong>範囲選択ジェスチャ＋ドロップを合成。Day Planner 採用（§5）と合流。</div>
+  </div>
+  <div class="feat">
+    <h4>ビュー ⇄ エディタ 双方向ハイライト</h4>
+    <p class="why">エディタでタスク行を選択するとそのカードが全ビューで光り、逆も同様。<strong>「この行はどこに割り付いているか」</strong>が一目で分かり、ドラッグの狙いを定めやすい。</p>
+    <div class="how"><strong>方針：</strong><code>EditorEventBus</code> に hover/selection イベントを追加し各ビューで強調。</div>
+  </div>
+</div>
+
+<h3>7.2 ドラッグに頼らない「自然化」（キーボード／インライン）</h3>
+<p class="legend">ドラッグが最適でない場面（執筆中・キーボード主体・モバイル）でも、同じ「文字を打たずにメタを与える」体験を提供する。</p>
+<div class="grid cols-2">
+  <div class="feat">
+    <h4>チェックボックス click でステータス循環</h4>
+    <p class="why">エディタ/ビューの <code>[ ]</code> をクリックで <code>[ ]→[&gt;]→[x]→[ ]</code> と循環。マーカーを手打ちしない。低工数・高頻度。</p>
+    <div class="how"><strong>方針：</strong>CM6 のチェックボックス装飾にクリックハンドラ（<code>task-decoration.ts</code> 拡張）。</div>
+  </div>
+  <div class="feat">
+    <h4>行ホバーのインライン・アクションピル</h4>
+    <p class="why">タスク行にホバーすると行末に <span class="kbd">📅 日付</span> <span class="kbd">⚑ 優先</span> <span class="kbd">▸ 状態</span> のピルが出現。クリックでピッカーが開き、メタを<strong>打たずに</strong>付与。</p>
+    <div class="how"><strong>方針：</strong>CM6 ウィジェット装飾＋ポップオーバー。書き戻しは patch 基盤。</div>
+  </div>
+  <div class="feat">
+    <h4><code>@</code> オートコンプリート＋日付ピッカー</h4>
+    <p class="why">子リストで <code>@</code> を打つとメタキー候補、<code>@schedule</code>/<code>@due</code> 選択時は<strong>カレンダー・ポップオーバー</strong>が開いて正規形を自動挿入。形式ミス（ガイドの注意点表）を根絶。</p>
+    <div class="how"><strong>方針：</strong>Obsidian <code>EditorSuggest</code> ＋日付ピッカー。<code>meta-keys.ts</code> を候補源に。</div>
+  </div>
+  <div class="feat">
+    <h4>インライン日付チップ（クリックで再編集）</h4>
+    <p class="why">既存の <code>@schedule: …</code> をエディタ上で<strong>クリック可能なチップ</strong>として描画。クリックでピッカーが開き日時を変更→書き戻し。テキストを手で書き換えない。</p>
+    <div class="how"><strong>方針：</strong>CM6 ライブプレビュー装飾。値レンジを保持して置換。</div>
+  </div>
+  <div class="feat">
+    <h4>自然言語日付の即正規化</h4>
+    <p class="why"><code>@schedule: 明日10時</code> や <code>来週月曜</code> と打って確定すると <code>2026-06-29T10:00/…</code> へ自動変換。頭の中の言葉のまま入力できる。</p>
+    <div class="how"><strong>方針：</strong><code>chrono-node</code>（日本語対応）でパースし正規形へ置換。曖昧時は候補提示。</div>
+  </div>
+  <div class="feat">
+    <h4>キーボード・スケジュールパレット</h4>
+    <p class="why">タスク行にカーソルを置きホットキー→<strong>「today / tomorrow / +1w / 日付指定」パレット</strong>。マウスを使わず一瞬で予定化。パワーユーザー向け。</p>
+    <div class="how"><strong>方針：</strong>コマンド＋<code>SuggestModal</code>。選択を相対解決して meta 書き戻し。</div>
+  </div>
+</div>
+
+<blockquote>
+  このセクションの一貫した原理：<strong>「md を唯一の正に保ったまま、文字で表現できない次元（時間・期間・位置・関係）を直接操作で与え、即座に md へ書き戻す」</strong>。ユーザーは "管理簿を更新する" 意識を持たず、考えを書き、掴んで置くだけでスケジュールが完成する ―― これが本プロダクトが目指す「自然に行わせる」体験の中核である。
+</blockquote>
+
+<!-- ============ 8. FILTER ============ -->
+<h2 id="filter">8. フィルタ機構の設計指針（ホスト層・常設・パネル非依存）</h2>
+<p>§4(B)・§5・§6 で挙げたフィルタ／集約を、<strong>「パネルごとの内部機能」ではなく「全パネル共通のホスト層機構」</strong>として実装するための設計指針。要点は3つ ―― <strong>① データを渡す“境界”で効かせる（パネル非依存）／② エディタは行を消さず“表示しない”（折り畳み）／③ UI は普段最小・必要時展開</strong>。</p>
+
+<h3>8.1 ホスト層フィルタ ― 「パネルに渡すデータ自体」を絞る</h3>
+<p>現状、md をパースした階層構造（AST）を各 <code>*ViewMount.svelte</code> がパネル（自作 svelte ライブラリ）へ渡している。フィルタは<strong>この“渡す瞬間”に作用</strong>させ、<strong>パネルへ渡すデータ自体を絞る</strong>。パネル内部の機能（カンバンの <code>groupBy</code> 等）とは完全に独立し、<strong>「パネルの実装が何であろうと、共通してパネルへ渡すデータをフィルタする常設機構」</strong>として成立する。</p>
+<div class="flow">                         ┌─────────── ホスト層（エディタ側が提供する親要素）───────────┐
+  md ──parse──▶ AST(階層) │  <span class="y">[ ▾ フィルタバー（常設・パネル非依存）]</span>                       │
+                         │            │ filterNodes(doc, query)                       │
+                         │            ▼                                               │
+                         │   <span class="g">filtered AST</span> ──▶  <span class="c">Panel（Kanban / Calendar / Gantt …）描画</span>  │
+                         └────────────────────────────────────────────────────────────┘
+                                     ▲ パネルは「渡されたデータを描くだけ」＝無改修で共通フィルタの恩恵
+</div>
+<ul class="clean">
+  <li><strong>設置場所：</strong>各 <code>*ViewMount.svelte</code>（＝パネルの親要素）の<strong>直下</strong>に共通 <code>&lt;FilterBar&gt;</code> を差し込む。パネル本体（ライブラリ）には手を入れない。</li>
+  <li><strong>作用点：</strong>パネルへ <code>props</code> を渡す直前に <code>filteredDoc = filterNodes(doc, query)</code> を挟むだけ。各 Mount は <code>filteredDoc</code> を渡す。</li>
+  <li><strong>共通基盤：</strong>§4(B) の <code>filterNodes</code>、§6(B-1) スマートリスト、§5 採用候補2 の埋め込みクエリブロックと<strong>同一のフィルタ実装を共有</strong>（条件 DSL も共通）。</li>
+  <li><strong>階層の扱い：</strong>子タスクがヒットする場合は親グループ／セクションを残す（文脈保持）か、ヒット行のみ残すかを設定可能に。</li>
+</ul>
+<div class="how" style="background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-size:13.5px"><strong>実装方針：</strong> 純関数 <code>filterNodes(doc, query): Document</code>（AST→絞り込み済み AST）を新設。共通 Svelte コンポーネント <code>&lt;FilterBar bind:query /&gt;</code> を各 ViewMount に配置。Mount は <code>$: filteredDoc = filterNodes(doc, query)</code> を計算してパネルへ渡すのみ。パネル側は一切変更不要 ＝ 将来パネルが増えても自動で対応。</div>
+
+<h3>8.2 エディタへのフィルタ ― 行を消さず「表示しない」（折り畳み）</h3>
+<p>エディタ側のフィルタは、条件に<strong>ヒットしない（またはヒットする）タスク行を“非表示”</strong>にする。Excel の行の非表示と同じく ―― <strong>行自体は削除せず、表示だけしない（折り畳み）</strong>。md 本文は一切変更しないため、<em>「唯一の正」を壊さずに視界だけ整理</em>できる。</p>
+<ul class="clean">
+  <li><strong>非表示＝折り畳み：</strong>対象タスクとその子（<code>@meta</code>・<code>&gt;</code> コメント・子タスク）をまとめて畳む。完全に高さ 0 で隠す／薄いプレースホルダで「N 件非表示」を出すかは選択式。</li>
+  <li><strong>本文不変：</strong>テキストは無改変。トグルで即全展開でき、フィルタは“表示レイヤ”に閉じる。</li>
+  <li><strong>表示／非表示の向き：</strong>「ヒットのみ表示」「ヒットを隠す」の両方向を切替（例：完了タスクを隠す／緊急だけ表示）。</li>
+</ul>
+<div class="how" style="background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-size:13.5px"><strong>実装方針：</strong> CodeMirror6 の <code>Decoration.replace({block:true})</code> もしくは行を <code>display:none</code> 相当にする装飾で、対象行範囲を非表示化（<code>task-decoration.ts</code> と同系統の StateField）。AST の行範囲（<code>lineNumber</code>＋子孫の行域）を <code>filterNodes</code> の判定で得て、非表示レンジ集合を生成。アンフォールド用のガター/コマンドを用意。</div>
+
+<h3>8.3 フィルタ UI ― 普段は最小、必要時だけ展開</h3>
+<p>フィルタ設定エリアは常設だが<strong>場所を取らない</strong>。普段は<strong>小さなアイコン／チップ（適用中の条件数バッジ付き）</strong>のみ。クリックで条件入力エリアが展開し、フォーカスアウトで自動的に畳む。</p>
+<div class="flow"><span class="y">最小表示（既定）:</span>   [ ⛃ フィルタ ②]            ← 適用中2件のバッジ。クリックで展開
+<span class="y">展開時:</span>            [ ⛃ ▾ status:!done  due:&lt;=今週  +条件  × クリア ]
+</div>
+<ul class="clean">
+  <li><strong>適用中の明示：</strong>条件が効いている間はアイコンをアクティブ色＋件数バッジ表示。<em>「隠れているデータがある」ことを見落とさない</em>（抜け漏れ防止と整合）。</li>
+  <li><strong>素早い解除：</strong>ワンクリックで全解除＝全件表示へ復帰。</li>
+  <li><strong>一貫した配置：</strong>ホスト層（8.1）でもエディタ（8.2）でも同じ最小チップ UI を使い、操作を共通化。</li>
+</ul>
+
+<h3>8.4 スコープ：パネル個別 or 全体共通</h3>
+<p>フィルタ条件は<strong>パネルごとに独立</strong>（カンバンは未完だけ・ガントは全件、等）を基本としつつ、設定で<strong>「全パネル共通の条件に同期」</strong>も選べるようにする。共通モードでは 1 か所の変更が全ビューへ波及し、横断的な絞り込み（例：<code>#総務</code> だけを全ビューで見る）が 1 操作で済む。</p>
+
+<blockquote>
+  フィルタ設計の原理：<strong>フィルタはパネルの機能ではなく「md→パネルの間に立つ共通レイヤ」</strong>。データ境界で効かせるからパネルは無改修で恩恵を受け、エディタでは“折り畳み”に徹するから md は唯一の正であり続ける。UI を最小常設にすることで、絞り込みが「特別な操作」でなく日常の自然な動作になる。
+</blockquote>
+
+<!-- ============ 9. ROADMAP ============ -->
+<h2 id="roadmap">9. ロードマップ提案</h2>
+<p>強み（土台）は維持し、競合が標準装備する弱点を順に埋める。フェーズは依存関係順（集約 → その上の機能群）。</p>
+
+<div class="timeline">
+  <div class="item">
+    <h3>Phase 0 — Quick Win（集約基盤を待たず単体で価値）</h3>
+    <p class="muted">低リスクで哲学に直接効く。議論後すぐ着手できる候補。</p>
+    <ul class="clean">
+      <li><strong>記法リント＆クイックフィックス</strong>（C-2）― 形式不正で集計から消える事故を防止</li>
+      <li><strong>貼り付け即変換</strong>（A-2）― ガイド第9章の変換ルールをコード化、取り込み転記を撲滅</li>
+      <li>グループ進捗ロールアップ（派生プロパティのみ・書き戻し不要）</li>
+    </ul>
+  </div>
+  <div class="item">
+    <h3>Phase 1  — 集約基盤（土台の拡張）</h3>
+    <p class="muted">単一ファイル前提を脱し、ほぼ全機能の前提となるマルチソース化。<strong>競合に最も負けている領域</strong>の土台。</p>
+    <ul class="clean">
+      <li>複数ファイル／フォルダ／Vault スコープの AST インデックス（<code>sourcePath</code> 付与・差分更新）</li>
+      <li><strong>ホスト層フィルタ（§8.1）</strong>：<code>filterNodes</code> ＋共通 <code>&lt;FilterBar&gt;</code> を各 ViewMount 直下に。パネル非依存・常設・最小表示 UI（§8.3）</li>
+      <li><strong>エディタの折り畳み式フィルタ（§8.2）</strong>：行を消さず非表示（本文不変）</li>
+      <li><strong>ノート埋め込み型ライブ集約ブロック</strong>（採用候補2：Dataview/Tasks 相当・同一 <code>filterNodes</code> 基盤）</li>
+      <li><span class="muted">→ これが無いとアジェンダ・スマートリスト・抜け漏れ検出がすべて成立しない</span></li>
+    </ul>
+  </div>
+  <div class="item">
+    <h3>Phase 2 — 日常運用（capture / aggregate / agenda）＋ダイレクト操作の中核</h3>
+    <p class="muted">競合に負けている「入れる速さ・集約・拾い上げ」を埋めつつ、ユーザー MUST の DnD 割り付けを投入する中核フェーズ。</p>
+    <ul class="clean">
+      <li><strong class="no">【MUST】選択テキスト → ビューへ DnD でメタ付与</strong>（§7.0）＋着地プレビュー</li>
+      <li><strong>横断アジェンダ / Today</strong>（採用候補1）＋常設スマートリスト（B-1）</li>
+      <li><strong>抜け漏れ検出パネル</strong>（C-1・目玉）＋件数バッジ（C-3）</li>
+      <li><strong>編集モーダル＋日付ピッカー＋自然言語入力</strong>（採用候補3）</li>
+      <li>繰り返しタスク（RRULE 展開、ビュー側のみ）／リマインド通知</li>
+      <li><code>@due</code> の終日イベント射影・カレンダーの view 切替</li>
+    </ul>
+  </div>
+  <div class="item">
+    <h3>Phase 3 — 転記レスの完成・ダイレクト操作の家族・可視化</h3>
+    <ul class="clean">
+      <li><strong>未スケジュール・トレイ</strong>（§7.1・「書いてから割り付ける」の相棒）＋クイック・ドロップ標的</li>
+      <li>ダイレクト操作の「自然化」群（§7.2）：チェックボックス循環・<code>@</code>補完＋日付ピッカー・インライン日付チップ・自然言語日付</li>
+      <li>逆方向ドラッグ挿入・時間ブロックのペイント・双方向ハイライト（§7.1）</li>
+      <li><strong>編集可能テーブル（表）ビュー</strong>（採用候補5：Projects 相当）＋ビュー内インライン編集の全面化（A-1）</li>
+      <li><strong>クイックキャプチャ＆インボックス＋Refile</strong>（B-2/B-3：採用候補6）</li>
+      <li>デイ・タイムライン（Day Planner 相当）＋ウィークリーレビュー導線（C-4）</li>
+      <li>グループ進捗（Phase0未着手分）／<code>@dependsOn</code> 依存矢印＋安定 ID／色分け／カンバン列＝ステータス遷移／関連タスクナビ（B-4）</li>
+    </ul>
+  </div>
+  <div class="item">
+    <h3>Phase 4 — 連携・堅牢性・拡張</h3>
+    <ul class="clean">
+      <li>iCal エクスポート・構造テンプレート（A-3）</li>
+      <li>外部編集・競合耐性、モバイルフォールバック</li>
+      <li>ステータス/メタキーのカスタマイズ（alias から）</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card" style="margin-top:24px">
+  <h4>“Quick Win”（小工数・高効果・先行着手候補）</h4>
+  <ul class="clean">
+    <li><strong>グループ進捗ロールアップ</strong> — 派生プロパティ追加のみ。書き戻し不要でリスク最小。</li>
+    <li><strong><code>@due</code> の終日イベント化</strong> — 既存カレンダー変換に射影パスを足すだけで「期限の見える化」が一段進む。</li>
+    <li><strong>クイック追加モーダル</strong> — 集約基盤に依存せず単体で価値。記法ミス（ガイドが警告する形式エラー）を構造的に防げる。</li>
+  </ul>
+</div>
+
+<!-- ============ 10. ISSUES ============ -->
+<h2 id="issues">10. 付録：Issue 化候補リスト</h2>
+<p class="legend">本プロジェクトは Issue 駆動。下表をそのまま Issue 起票の素案として利用可（ID は起票時に 4 桁採番）。</p>
+<table>
+  <thead><tr><th>#</th><th>タイトル案</th><th>優先度</th><th>Phase</th><th>主な変更箇所（想定）</th></tr></thead>
+  <tbody>
+    <tr><td>A</td><td>マルチソース AST インデックス（複数ファイル集約）</td><td><span class="pill p-must">MUST</span></td><td>1</td><td><code>sync/file-sync.ts</code>, 型へ <code>sourcePath</code></td></tr>
+    <tr><td>B</td><td>構造化フィルタ <code>filterNodes(doc,query)</code>（共通基盤）</td><td><span class="pill p-must">MUST</span></td><td>1</td><td>新規 <code>lib/query/</code></td></tr>
+    <tr><td>C</td><td>繰り返しタスク <code>@repeat</code>（RRULE 展開）</td><td><span class="pill p-must">MUST</span></td><td>2</td><td><code>meta-keys</code>, <code>remark-meta-fields</code>, calendar/gantt 変換</td></tr>
+    <tr><td>D</td><td>Today / アジェンダビュー</td><td><span class="pill p-must">MUST</span></td><td>2</td><td>新規 <code>views/AgendaView</code></td></tr>
+    <tr><td>E</td><td>リマインド通知</td><td><span class="pill p-should">SHOULD</span></td><td>2</td><td><code>plugin.ts</code> 常駐タイマー＋ <code>Notice</code></td></tr>
+    <tr><td>F</td><td><code>@due</code> 終日イベント射影・カレンダー view 切替</td><td><span class="pill p-should">SHOULD</span></td><td>2</td><td><code>ast-to-calendar.ts</code>, CalendarView</td></tr>
+    <tr><td>G</td><td>グループ進捗ロールアップ</td><td><span class="pill p-should">SHOULD</span></td><td>3 (先行可)</td><td>AST 派生段, 各ビュー見出し</td></tr>
+    <tr><td>H</td><td><code>@dependsOn</code> 依存矢印＋安定 ID</td><td><span class="pill p-should">SHOULD</span></td><td>3</td><td><code>ast-to-gantt.ts</code>, ID 採番</td></tr>
+    <tr><td>I</td><td>クイック追加モーダル＋日付ピッカー</td><td><span class="pill p-should">SHOULD</span></td><td>3</td><td>新規コマンド/モーダル, シリアライザ</td></tr>
+    <tr><td>J</td><td>色分け（タグ/優先度）</td><td><span class="pill p-could">COULD</span></td><td>3</td><td>設定, 各 <code>ast-to-*</code></td></tr>
+    <tr><td>K</td><td>カンバン列＝ステータス遷移</td><td><span class="pill p-could">COULD</span></td><td>3</td><td><code>ast-to-kanban.ts</code>, patch</td></tr>
+    <tr><td>L</td><td>iCal エクスポート</td><td><span class="pill p-could">COULD</span></td><td>4</td><td>新規コマンド</td></tr>
+    <tr><td>M</td><td>外部編集競合耐性・モバイルフォールバック</td><td><span class="pill p-should">SHOULD</span></td><td>4</td><td><code>markdown-patch.ts</code>, <code>plugin.ts</code></td></tr>
+    <tr><td>N</td><td>ステータス/メタキーのカスタマイズ（alias）</td><td><span class="pill p-could">COULD</span></td><td>4</td><td><code>meta-keys.ts</code>, 設定</td></tr>
+    <tr><td>O</td><td>記法リント＆クイックフィックス（C-2）</td><td><span class="pill p-must">MUST</span></td><td>0</td><td><code>editor/task-decoration.ts</code>（CM6診断）</td></tr>
+    <tr><td>P</td><td>貼り付け即変換（他記法→本記法）（A-2）</td><td><span class="pill p-should">SHOULD</span></td><td>0</td><td>新規変換器, paste コマンド, <code>chrono-node</code></td></tr>
+    <tr><td>Q</td><td>ノート埋め込み型ライブ集約ブロック（採用候補2）</td><td><span class="pill p-must">MUST</span></td><td>1</td><td>MarkdownCodeBlockProcessor, <code>lib/query/</code></td></tr>
+    <tr><td>R</td><td>抜け漏れ検出パネル（HealthView）（C-1）</td><td><span class="pill p-must">MUST</span></td><td>2</td><td>新規 <code>views/HealthView</code>, ルール群</td></tr>
+    <tr><td>S</td><td>常設スマートリスト＋件数バッジ（B-1/C-3）</td><td><span class="pill p-should">SHOULD</span></td><td>2</td><td>新規 SidebarView, リボン/ステータスバー</td></tr>
+    <tr><td>T</td><td>編集可能テーブル（表）ビュー（採用候補5）</td><td><span class="pill p-should">SHOULD</span></td><td>3</td><td>新規 <code>views/TableView</code>, patch 汎化</td></tr>
+    <tr><td>U</td><td>クイックキャプチャ＆インボックス＋Refile（B-2/B-3）</td><td><span class="pill p-should">SHOULD</span></td><td>3</td><td>キャプチャモーダル, move トランザクション</td></tr>
+    <tr><td>V</td><td>デイ・タイムライン＋ウィークリーレビュー（C-4）</td><td><span class="pill p-could">COULD</span></td><td>3</td><td>新規タイムラインビュー, レビュー導線</td></tr>
+    <tr><td>W</td><td><strong>選択テキスト→ビューへ DnD でメタ付与（§7.0・ユーザー MUST）</strong></td><td><span class="pill p-must">MUST</span></td><td>2</td><td>CM6 drag源, 各 <code>*ViewMount.svelte</code> drop, <code>markdown-patch.ts</code> 汎化</td></tr>
+    <tr><td>X</td><td>未スケジュール・トレイ＋クイック・ドロップ標的（§7.1）</td><td><span class="pill p-must">MUST</span></td><td>3</td><td>新規トレイ UI, W の drop 基盤共有</td></tr>
+    <tr><td>Y</td><td>着地プレビュー＋ビュー⇄エディタ双方向ハイライト（§7.1）</td><td><span class="pill p-should">SHOULD</span></td><td>2–3</td><td><code>EditorEventBus</code>, dragover ツールチップ</td></tr>
+    <tr><td>Z</td><td>逆方向ドラッグ挿入・時間ブロックのペイント（§7.1）</td><td><span class="pill p-could">COULD</span></td><td>3</td><td>ビュー drag源, エディタ drop</td></tr>
+    <tr><td>AA</td><td>チェックボックス循環・インライン・アクションピル（§7.2）</td><td><span class="pill p-should">SHOULD</span></td><td>0–2</td><td><code>editor/task-decoration.ts</code> ＋ポップオーバー</td></tr>
+    <tr><td>AB</td><td><code>@</code> 補完＋日付ピッカー・インライン日付チップ・自然言語日付（§7.2）</td><td><span class="pill p-should">SHOULD</span></td><td>2–3</td><td><code>EditorSuggest</code>, CM6 装飾, <code>chrono-node</code></td></tr>
+    <tr><td>AC</td><td><strong>ホスト層フィルタバー（パネル非依存・常設・最小表示）（§8.1/8.3）</strong></td><td><span class="pill p-must">MUST</span></td><td>1</td><td>共通 <code>&lt;FilterBar&gt;</code>, 各 <code>*ViewMount.svelte</code> に <code>filterNodes</code> 挿入</td></tr>
+    <tr><td>AD</td><td>エディタの折り畳み式フィルタ（行非表示・本文不変）（§8.2）</td><td><span class="pill p-should">SHOULD</span></td><td>1–2</td><td>CM6 非表示装飾（StateField）, 行域算出</td></tr>
+    <tr><td>AE</td><td>フィルタのスコープ切替（パネル個別／全体共通）（§8.4）</td><td><span class="pill p-could">COULD</span></td><td>2</td><td>設定, 条件ストア共有</td></tr>
+  </tbody>
+</table>
+<p class="legend">A〜N は機能ギャップ（§4）由来、O〜V は競合採用候補（§5）／UX 提案（§6）由来、W〜AB はダイレクト操作（§7・ユーザー MUST 含む）由来、AC〜AE はフィルタ設計（§8・ユーザー指定）由来。Phase 0 は集約基盤を待たず着手できる Quick Win。</p>
+
+<p class="footnote">
+  本レポートは <code>main @ c12ff81</code> 時点のソースコード読解（<code>src/</code>、<code>project/</code> 配下のガバナンス・記法ガイド・既存 Issue／Plan）に基づく。未実装の判断はコード上に該当実装が存在しないことを根拠とする。競合製品の機能評価は一般的な公開仕様に基づく概況であり、各製品の最新バージョンで差異がある場合がある。実装着手時は本プロジェクトの Issue 駆動・トレーサビリティ・言語ポリシーに従うこと。
+</p>
+
+</div>
+</body>
+</html>

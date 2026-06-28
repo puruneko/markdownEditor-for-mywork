@@ -1,41 +1,51 @@
+<!--
+ISSUE TEMPLATE (structure is English per LANGUAGE_POLICY §5).
+Actual Issues are authored in Japanese (LANGUAGE_POLICY §2):
+render the Japanese equivalents of these headings when writing an Issue.
+
+Three parts, in this order:
+  1. Problem & Direction      → FOR HUMANS
+  2. Progress & Impl. Notes   → FOR AI
+  3. Metadata                 → machine fields, LAST
+
+Keep it short. No filler. Put metadata last.
+-->
+
 # <Title>
 
-## Status
+## 1. Problem & Direction  — FOR HUMANS
 
-open | proposed | approved | closed
-(AI may only use: open → proposed)
+### What this Issue solves
+State the problem in full: background, the current pain, and the goal.
+DO NOT abbreviate this part. The reason the Issue exists must be clear
+from this section alone.
 
----
-
-## Summary
-
-What this Issue is about (1–3 lines).
-
----
-
-## Current Direction
-
-Latest agreed approach.
-This section is updated as understanding evolves.
+### Direction
+The latest agreed approach. Key points only. Update as it evolves.
 
 ---
 
-## TODO
+## 2. Progress & Implementation Notes  — FOR AI
 
-* [ ] Task
-* [ ] Task
-* [ ] Task
+### TODO
+- [ ] ...
 
-Checklist is rewritten as needed.
+### Notes
+Technical decisions, scope, target files, gotchas. Append as needed.
+
+### History (append-only)
+Use the History format defined in WORKFLOW.md §3. Newest entries at the bottom.
+
+- YYYY-MM-DD — ...
 
 ---
 
-## Notes (Append Only)
-
-Record important discussion or decisions chronologically.
-
-* YYYY-MM-DD — Clarified that ...
-* YYYY-MM-DD — Changed approach to ...
-* YYYY-MM-DD — Reduced scope to ...
-
-Do not delete past notes. Add only when meaningful.
+## 3. Metadata
+- id: issue-phase<PPP>-<NNN>__<kebab-title>
+- status: open | proposed | approved | closed   (AI may only move open → proposed)
+- phase: <PPP>
+- related_specs:
+- related_decisions:
+- target_files:
+- created: YYYY-MM-DD
+- updated: YYYY-MM-DD

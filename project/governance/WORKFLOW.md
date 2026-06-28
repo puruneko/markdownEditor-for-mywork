@@ -40,13 +40,24 @@ In these cases:
 
 ---
 
+### 2.3 When an instruction arrives WITHOUT a specified Issue
+
+1. Check the most recent Issue(s) for relatedness (same problem domain,
+   feature, or component — apply the 2.2 criteria).
+2. If related → append to that Issue.
+3. If clearly unrelated → create a new Issue (see NAMING_AND_ID_RULES §1).
+
+If uncertain → prefer appending to the most recent related Issue.
+
+---
+
 ## 3. Issue Update Policy (History Preservation)
 
 When updating an Issue:
 
 1. NEVER delete previous content.
 2. NEVER overwrite original reasoning.
-3. Append updates under a `## History` section.
+3. Append updates under `2. Progress & Implementation Notes → History (append-only)`.
 4. Clearly document:
    - What changed
    - Why it changed
