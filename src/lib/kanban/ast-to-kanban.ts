@@ -1,13 +1,15 @@
 import type { CardData, LaneDefinition, KanbanBoardConfig, FieldDefinition, GroupDefinition } from 'svelte-kanban-lib'
 import { resolveGroupId } from 'svelte-kanban-lib'
 import type { Document, Section, Node, TaskNode } from '../parser/types'
+import type { SourceEntry } from '../viewmodel/contract'
+import { makeGlobalKey } from '../viewmodel/global-key'
 
 // ----------------------------------------------------------------
 // KanbanCard — CardData with typed fields
 // ----------------------------------------------------------------
 
 export type KanbanCard = CardData & {
-  id: string
+  id: string            // globalKey（{#each} キー・クリック・書き戻しで使用）
   title: string
   status: string        // 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
   /** セクション階層パス。ライブラリの groupBy: 'section' + sectionDepth で使用する。
@@ -18,6 +20,7 @@ export type KanbanCard = CardData & {
   /** 後方互換・フィルタ用。section の末尾要素と等価 */
   groupTitle: string
   depth: number
+  sourcePath: string    // どのファイルのカードか（書き戻し先の特定に使用）
   description?: string
   schedule?: string
   due?: string
@@ -101,17 +104,18 @@ function extractDescription(children: Node[]): string | undefined {
   return parts.length > 0 ? parts.join('\n') : undefined
 }
 
-function taskToCard(node: TaskNode, sectionPath: string[]): KanbanCard {
+function taskToCard(node: TaskNode, sectionPath: string[], sourcePath: string): KanbanCard {
   const sectionTitle = sectionPath[0] ?? ''
   const groupTitle = sectionPath[sectionPath.length - 1] ?? ''
   const card: KanbanCard = {
-    id: node.id,
+    id: makeGlobalKey(sourcePath, node.id),
     title: node.text,
     status: node.status,
     section: [...sectionPath],
     sectionTitle,
     groupTitle,
     depth: node.depth,
+    sourcePath,
   }
   const description = extractDescription(node.children)
   if (description !== undefined) card.description = description
@@ -122,28 +126,50 @@ function taskToCard(node: TaskNode, sectionPath: string[]): KanbanCard {
   return card
 }
 
-function extractFromNodes(nodes: Node[], sectionPath: string[], result: KanbanCard[]): void {
+function extractFromNodes(
+  nodes: Node[],
+  sectionPath: string[],
+  sourcePath: string,
+  result: KanbanCard[],
+): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
     if (node.type === 'task') {
-      result.push(taskToCard(node, sectionPath))
+      result.push(taskToCard(node, sectionPath, sourcePath))
       if (node.children.length > 0) {
-        extractFromNodes(node.children, sectionPath, result)
+        extractFromNodes(node.children, sectionPath, sourcePath, result)
       }
     } else if (node.type === 'list') {
       if (node.children.length > 0) {
-        extractFromNodes(node.children, [...sectionPath, node.text], result)
+        extractFromNodes(node.children, [...sectionPath, node.text], sourcePath, result)
       }
     }
   }
 }
 
-function extractFromSection(section: Section, parentPath: string[], result: KanbanCard[]): void {
+function extractFromSection(
+  section: Section,
+  parentPath: string[],
+  sourcePath: string,
+  result: KanbanCard[],
+): void {
   // 無名セクション（lineNumber=-1, title=""）はパスに追加しない
   const sectionPath = section.title ? [...parentPath, section.title] : [...parentPath]
-  extractFromNodes(section.children, sectionPath, result)
+  extractFromNodes(section.children, sectionPath, sourcePath, result)
   for (const sub of section.subSections) {
-    extractFromSection(sub, sectionPath, result)
+    extractFromSection(sub, sectionPath, sourcePath, result)
+  }
+}
+
+/** パスからファイル名（拡張子なし）を取り出す */
+function fileBaseName(path: string): string {
+  const name = path.split('/').pop() ?? path
+  return name.replace(/\.md$/i, '')
+}
+
+function extractFromDocument(doc: Document, sourcePath: string, initialPath: string[], result: KanbanCard[]): void {
+  for (const section of doc.sections) {
+    extractFromSection(section, initialPath, sourcePath, result)
   }
 }
 
@@ -151,10 +177,18 @@ function extractFromSection(section: Section, parentPath: string[], result: Kanb
 // Public API
 // ----------------------------------------------------------------
 
-export function extractKanbanCards(doc: Document): KanbanCard[] {
+/**
+ * 複数ソース（ファイルパスと Document のペア）から KanbanCard[] を生成する。
+ * 各カードの id は globalKey（sourcePath::localId）で、全体でユニーク。
+ * 単一ファイルの場合は要素 1 の配列として渡す。
+ * 複数ファイルの場合はセクション階層の先頭にファイル名を追加する。
+ */
+export function extractKanbanCards(sources: SourceEntry[]): KanbanCard[] {
   const result: KanbanCard[] = []
-  for (const section of doc.sections) {
-    extractFromSection(section, [], result)
+  const multiSource = sources.length > 1
+  for (const { path, doc } of sources) {
+    const initialPath = multiSource ? [fileBaseName(path)] : []
+    extractFromDocument(doc, path, initialPath, result)
   }
   return result
 }

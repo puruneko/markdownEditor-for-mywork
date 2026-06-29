@@ -21,6 +21,11 @@
 
 ### 依存
 - `issue-phase001-002__filter-nodes-core`（`filterNodes`/`FilterQuery`）を先に完了していること。
+- `issue-phase001-005__cross-file-identity-and-viewmodel`（globalKey とビューモデル契約）。
+
+### クロスファイル前提（phase001-005 準拠）
+- 集約表示では **Document を連結しない**。`filterNodes` は**ファイル単位の `Document` に適用**し、その結果を `phase001-005` のビューモデルへ畳んでパネルへ渡す。
+- パネルへ渡るキーは **globalKey**（生の `node.id` を使わない）。フィルタは「ビューモデルへ渡す直前のデータ」を絞る点は不変。
 
 ### 既存資産の再利用（必読・実装前に読む）
 - **データフローがビューごとに異なる**ので必ず両方を読むこと:
@@ -42,10 +47,10 @@
 - 差し込みは「パネルへ渡していた `doc` を `filteredDoc` に置換」する最小変更に留める。
 
 ### TODO
-- [ ] `FilterBar.svelte`（最小↔展開・条件数バッジ・クリア）を実装。
-- [ ] 4 Mount に設置し、パネルへ `filterNodes` 結果を渡す（各ビューの流儀に合わせる）。
-- [ ] 最小/展開のスタイルを `app.css` に追加。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] `FilterBar.svelte`（最小↔展開・条件数バッジ・クリア）を実装。
+- [x] 4 Mount に設置し、パネルへ `filterNodes` 結果を渡す（各ビューの流儀に合わせる）。
+- [x] 最小/展開のスタイルを `app.css` に追加。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - 4 ビューすべてにフィルタバーが表示される。
@@ -61,15 +66,17 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（ビュー別データフロー差異・確定仕様を内包）。
+- 2026-06-28 — 実装完了。`FilterBar.svelte` を新規作成。4 Mount（Calendar/Gantt/Kanban/Ast）に `<FilterBar bind:query>` を設置し `$derived(filterNodes(doc, query))` でパネルへ渡す。app.css にスタイル追加。全テスト 296 件パス。
 
 ---
 
 ## 3. メタデータ
 - id: issue-phase001-003__host-filter-bar
-- status: open
+- status: closed
 - phase: 001
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
 - target_files: src/lib/query/FilterBar.svelte, src/views/*ViewMount.svelte, src/app.css
 - created: 2026-06-28
+- closed: 2026-06-28
 - updated: 2026-06-28

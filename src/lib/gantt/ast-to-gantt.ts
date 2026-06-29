@@ -1,6 +1,9 @@
 import { DateTime } from 'luxon'
 import type { GanttNode, GanttNodeType } from 'svelte-gantt-lib'
 import type { Document, Section, Node, TaskNode, ListNode } from '../parser/types'
+import type { SourceEntry } from '../viewmodel/contract'
+import { makeGlobalKey } from '../viewmodel/global-key'
+import { expandOccurrences } from '../recurrence/expand'
 
 // ----------------------------------------------------------------
 // Schedule string parser (same logic as calendar/ast-to-calendar.ts)
@@ -94,10 +97,14 @@ function sectionDescendantDateRange(section: Section): DateRange | null {
 // Node traversal — builds flat GanttNode[] with parentId references
 // ----------------------------------------------------------------
 
+type ViewRange = { start: DateTime; end: DateTime }
+
 function extractFromNodes(
   nodes: Node[],
   parentId: string | null,
+  sourcePath: string,
   result: GanttNode[],
+  viewRange: ViewRange | null,
 ): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
@@ -108,9 +115,33 @@ function extractFromNodes(
 
       if (!hasSchedule && !hasChildSchedule) continue
 
+      const nodeId = makeGlobalKey(sourcePath, node.id)
+
+      // @repeat あり: viewRange があれば展開、なければスキップ（本体スケジュールは出さない）
+      if (hasSchedule && node.meta?.repeat) {
+        if (viewRange) {
+          const occurrences = expandOccurrences(node.meta, viewRange.start, viewRange.end)
+          occurrences.forEach((occ, idx) => {
+            result.push({
+              id: `${nodeId}__r${idx}`,
+              parentId,
+              type: 'task',
+              name: node.text,
+              start: occ.start,
+              end: occ.end,
+              metadata: { status: node.status, schedule: node.meta?.schedule ?? null, sourceNodeId: nodeId },
+            })
+          })
+        }
+        if (node.children.length > 0) {
+          extractFromNodes(node.children, nodeId, sourcePath, result, viewRange)
+        }
+        continue
+      }
+
       const type: GanttNodeType = hasChildSchedule ? 'subsection' : 'task'
       const ganttNode: GanttNode = {
-        id: node.id,
+        id: nodeId,
         parentId,
         type,
         name: node.text,
@@ -140,15 +171,16 @@ function extractFromNodes(
       result.push(ganttNode)
 
       if (node.children.length > 0) {
-        extractFromNodes(node.children, node.id, result)
+        extractFromNodes(node.children, nodeId, sourcePath, result, viewRange)
       }
     } else if (node.type === 'list') {
       const hasChildSchedule = node.children.length > 0 && hasScheduleDescendant(node.children)
       if (!hasChildSchedule) continue
 
       const range = descendantDateRange(node.children)
+      const nodeId = makeGlobalKey(sourcePath, node.id)
       const ganttNode: GanttNode = {
-        id: node.id,
+        id: nodeId,
         parentId,
         type: 'subsection',
         name: node.text,
@@ -160,7 +192,7 @@ function extractFromNodes(
       result.push(ganttNode)
 
       if (node.children.length > 0) {
-        extractFromNodes(node.children, node.id, result)
+        extractFromNodes(node.children, nodeId, sourcePath, result, viewRange)
       }
     }
   }
@@ -169,14 +201,17 @@ function extractFromNodes(
 function extractFromSection(
   section: Section,
   parentId: string | null,
+  sourcePath: string,
   result: GanttNode[],
+  viewRange: ViewRange | null,
 ): void {
   if (!sectionHasSchedule(section)) return
 
   const type: GanttNodeType = section.depth === 1 ? 'project' : 'section'
   const range = sectionDescendantDateRange(section)
+  const sectionId = makeGlobalKey(sourcePath, section.id)
   const ganttNode: GanttNode = {
-    id: section.id,
+    id: sectionId,
     parentId,
     type,
     name: section.title,
@@ -184,10 +219,21 @@ function extractFromSection(
   }
   result.push(ganttNode)
 
-  extractFromNodes(section.children, section.id, result)
+  extractFromNodes(section.children, sectionId, sourcePath, result, viewRange)
 
   for (const sub of section.subSections) {
-    extractFromSection(sub, section.id, result)
+    extractFromSection(sub, sectionId, sourcePath, result, viewRange)
+  }
+}
+
+function extractFromDocument(
+  doc: Document,
+  sourcePath: string,
+  result: GanttNode[],
+  viewRange: ViewRange | null,
+): void {
+  for (const section of doc.sections) {
+    extractFromSection(section, null, sourcePath, result, viewRange)
   }
 }
 
@@ -195,10 +241,17 @@ function extractFromSection(
 // Public API
 // ----------------------------------------------------------------
 
-export function extractGanttNodes(doc: Document): GanttNode[] {
+/**
+ * 複数ソースから GanttNode[] を生成する。
+ * viewRange を渡すと @repeat タスクを表示範囲内で展開する。
+ * 各ノードの id・parentId は globalKey で全体でユニーク。
+ * 単一ファイルの場合は要素 1 の配列として渡す。
+ */
+export function extractGanttNodes(sources: SourceEntry[], viewRange?: ViewRange): GanttNode[] {
   const result: GanttNode[] = []
-  for (const section of doc.sections) {
-    extractFromSection(section, null, result)
+  const range = viewRange ?? null
+  for (const { path, doc } of sources) {
+    extractFromDocument(doc, path, result, range)
   }
   return result
 }

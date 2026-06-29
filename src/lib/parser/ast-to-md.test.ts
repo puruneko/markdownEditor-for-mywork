@@ -103,6 +103,29 @@ describe('serializeAst', () => {
     expect(result).toContain('- [ ] タスク')
   })
 
+  it('@repeat フィールドをシリアライズする', () => {
+    const md = [
+      '- [ ] 繰り返しタスク',
+      '  - @schedule: 2026-04-03T10:00/2026-04-03T11:00',
+      '  - @repeat: FREQ=WEEKLY;BYDAY=FR',
+    ].join('\n') + '\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toContain('- @repeat: FREQ=WEEKLY;BYDAY=FR')
+  })
+
+  it('ラウンドトリップ: @repeat が消えない・変形しない', () => {
+    const md = [
+      '- [ ] 定期作業',
+      '  - @schedule: 2026-04-03T10:00/2026-04-03T12:00',
+      '  - @repeat: FREQ=WEEKLY;BYDAY=MO,FR;INTERVAL=2',
+    ].join('\n') + '\n'
+    const doc = parseMarkdown(md)
+    const roundtripped = parseMarkdown(serializeAst(doc))
+    const task = roundtripped.sections[0].children[0] as any
+    expect(task.meta?.repeat).toBe('FREQ=WEEKLY;BYDAY=MO,FR;INTERVAL=2')
+  })
+
   it('roundtrip: MD → AST → MD preserves structure', () => {
     const original = `# Webアプリ開発
 

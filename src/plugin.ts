@@ -4,11 +4,14 @@ import { AstView, AST_VIEW_TYPE } from './views/AstView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
+import { AgendaView, AGENDA_VIEW_TYPE } from './views/AgendaView'
+import { HealthView, HEALTH_VIEW_TYPE } from './views/HealthView'
 import { FileSync } from './sync/file-sync'
 import { AstIndex } from './sync/ast-index'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { createNotationLintExtension } from './editor/notation-lint'
+import { createQueryBlockProcessor } from './views/query-block'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
 
@@ -95,6 +98,16 @@ export class MdAstEditorPlugin extends Plugin {
       (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
+    this.registerView(
+      AGENDA_VIEW_TYPE,
+      (leaf) => new AgendaView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+    )
+
+    this.registerView(
+      HEALTH_VIEW_TYPE,
+      (leaf) => new HealthView(leaf, this.settings, this.fileSync, this.editorEventBus, this.astIndex),
+    )
+
     this.addCommand({
       id: 'open-ast-view',
       name: 'AST View を開く',
@@ -119,6 +132,18 @@ export class MdAstEditorPlugin extends Plugin {
       callback: () => void this.openView(KANBAN_VIEW_TYPE),
     })
 
+    this.addCommand({
+      id: 'open-agenda-view',
+      name: 'Agenda View を開く',
+      callback: () => void this.openView(AGENDA_VIEW_TYPE),
+    })
+
+    this.addCommand({
+      id: 'open-health-view',
+      name: 'Health Check を開く',
+      callback: () => void this.openView(HEALTH_VIEW_TYPE),
+    })
+
     if (this.settings.showRibbonIcon) {
       this.addRibbonIcon('code-2', 'AST View を開く', () => {
         void this.openView(AST_VIEW_TYPE)
@@ -132,12 +157,23 @@ export class MdAstEditorPlugin extends Plugin {
       this.addRibbonIcon('layout-grid', 'Kanban View を開く', () => {
         void this.openView(KANBAN_VIEW_TYPE)
       })
+      this.addRibbonIcon('calendar-check', 'Agenda View を開く', () => {
+        void this.openView(AGENDA_VIEW_TYPE)
+      })
+      this.addRibbonIcon('stethoscope', 'Health Check を開く', () => {
+        void this.openView(HEALTH_VIEW_TYPE)
+      })
     }
 
     if (this.settings.enableTaskHighlight) {
       this.registerEditorExtension(taskDecorationPlugin)
       this.registerEditorExtension(createNotationLintExtension())
     }
+
+    this.registerMarkdownCodeBlockProcessor(
+      'task-query',
+      createQueryBlockProcessor(this.app, this.astIndex),
+    )
 
     this.addSettingTab(new MdAstEditorSettingTab(this.app, this))
 
@@ -157,6 +193,8 @@ export class MdAstEditorPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(GANTT_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(AGENDA_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(HEALTH_VIEW_TYPE)
   }
 
   async loadSettings(): Promise<void> {

@@ -51,9 +51,9 @@
   ```
 
 ### TODO
-- [ ] `FilterQuery` 型と `filterNodes` を実装（上記キー・AND/OR）。
-- [ ] `keepAncestors` の両挙動。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] `FilterQuery` 型と `filterNodes` を実装（上記キー・AND/OR）。
+- [x] `keepAncestors` の両挙動。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - 各条件が単体で正しく動く。
@@ -70,15 +70,17 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（条件・境界・祖先保持を確定、型ガイドのみ提示）。
+- 2026-06-28 — 実装完了。`src/lib/query/filter.ts` に `FilterQuery` 型・`filterNodes` 純関数を実装。`keepAncestors` 両挙動・全条件・イミュータビリティ確認済み。テスト 34 件追加、全 276 件パス。
 
 ---
 
 ## 3. メタデータ
 - id: issue-phase001-002__filter-nodes-core
-- status: open
+- status: closed
 - phase: 001
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
 - target_files: src/lib/query/filter.ts
 - created: 2026-06-28
+- closed: 2026-06-28
 - updated: 2026-06-28

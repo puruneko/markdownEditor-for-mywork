@@ -17,8 +17,20 @@ export class Plugin {
   addStatusBarItem = vi.fn()
   addSettingTab = vi.fn()
   registerEditorExtension = vi.fn()
+  registerMarkdownCodeBlockProcessor = vi.fn()
   loadData = vi.fn().mockResolvedValue(null)
   saveData = vi.fn().mockResolvedValue(undefined)
+}
+
+export class MarkdownRenderChild {
+  containerEl: HTMLElement
+  constructor(containerEl: HTMLElement) {
+    this.containerEl = containerEl
+  }
+  onload(): void {}
+  onunload(): void {}
+  load(): void { this.onload() }
+  unload(): void { this.onunload() }
 }
 
 export class ItemView {

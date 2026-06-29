@@ -21,6 +21,10 @@
 
 ### 依存
 - `issue-phase001-001__multi-source-ast-index`（`AstIndex`）。
+- `issue-phase001-005__cross-file-identity-and-viewmodel`（globalKey・`resolveRef`）。
+
+### クロスファイル前提（phase001-005 準拠）
+- 各行は **globalKey** を持つ（`getAllTaskNodes` の `{path, node}` から `makeGlobalKey(path, node.id)` で生成）。行クリックは `resolveRef` で**該当ファイル**へジャンプ。**Document を連結しない。**
 
 ### 既存資産の再利用（必読・実装前に読む）
 - `src/views/KanbanView.ts` ＋ `src/views/KanbanViewMount.svelte` … `ItemView` 実装と Svelte マウントの**ひな形として最も近い**。これを土台に AgendaView を作る。
@@ -45,10 +49,30 @@
 - 行クリックは `resolveLine(path, nodeId)` → 既存 `onFocusLine` 経路へ。
 
 ### TODO
-- [ ] `buildAgenda` 純関数を実装。
-- [ ] `AgendaView` / Mount（バケツ表示・行クリックジャンプ）。
-- [ ] `plugin.ts` に登録・コマンド・リボン追加。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] `buildAgenda` 純関数を実装。
+- [x] `AgendaView` / Mount（バケツ表示・行クリックジャンプ）。
+- [x] `plugin.ts` に登録・コマンド・リボン追加。
+- [x] テストを追加・全見直し（下記テスト観点）。
+
+### 履歴（追記のみ）
+- 2026-06-28 — 起票。
+- 2026-06-28 — Haiku 実装可能な水準へ加筆。
+
+#### 2026-06-29
+
+- User Instruction: phase002-002 の実装。
+
+- Change:
+  - `src/lib/agenda/ast-to-agenda.ts` 新規作成（`buildAgenda` 純関数）
+  - `src/lib/agenda/ast-to-agenda.test.ts` 新規作成（21件）
+  - `src/views/AgendaView.ts` 新規作成（ShadowItemView 継承）
+  - `src/views/AgendaViewMount.svelte` 新規作成（4バケツ表示・1分タイマー）
+  - `src/plugin.ts` AgendaView 登録・コマンド・リボン追加
+  - `src/views/ShadowItemView.ts` `getExtraMountProps()` フック追加（HealthView のため）
+
+- Rationale:
+  - バケツ振り分けは純関数に集中させ View は薄く保った。
+  - `today` を引数で受けることでテストが容易。1分タイマーで時刻変化に追従。
 
 ### 受け入れ基準（すべて満たすこと）
 - 全ファイルのタスクが 4 バケツに正しく振り分く。
@@ -69,7 +93,7 @@
 
 ## 3. メタデータ
 - id: issue-phase002-002__agenda-today-view
-- status: open
+- status: closed
 - phase: 002
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:

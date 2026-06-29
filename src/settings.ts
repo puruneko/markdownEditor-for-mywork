@@ -2,6 +2,7 @@ import { PluginSettingTab, Setting } from 'obsidian'
 import type { App } from 'obsidian'
 import type { MdAstEditorPlugin } from './plugin'
 import type { IndexScope } from './sync/ast-index'
+import type { HealthRuleConfig } from './lib/health/rules'
 
 export interface MdAstEditorSettings {
   showRibbonIcon: boolean
@@ -12,6 +13,10 @@ export interface MdAstEditorSettings {
   indexScope: IndexScope
   /** indexScope が 'folder' の場合に対象フォルダのパスを指定する（末尾スラッシュ不要）。 */
   indexScopeFolder: string
+  /** HealthView: doing 停滞判定の閾値（日数）。 */
+  healthStaleDays: number
+  /** HealthView: 各ルールの ON/OFF。 */
+  healthRules: HealthRuleConfig
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -21,6 +26,15 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   scrollOffsetLines: 4,
   indexScope: 'vault',
   indexScopeFolder: '',
+  healthStaleDays: 7,
+  healthRules: {
+    undated: true,
+    overdue: true,
+    stale: true,
+    unresolvedDeps: true,
+    readyTasks: true,
+    malformed: true,
+  },
 }
 
 export class MdAstEditorSettingTab extends PluginSettingTab {
@@ -124,5 +138,46 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
             await this.plugin.astIndex.setScope(this.plugin.settings.indexScope, value.trim())
           }),
       )
+
+    containerEl.createEl('h3', { text: 'ヘルスチェック' })
+
+    new Setting(containerEl)
+      .setName('停滞判定の閾値（日数）')
+      .setDesc('doing のまま何日経過したら「停滞」と見なすか（既定: 7 日）。')
+      .addText(text =>
+        text
+          .setPlaceholder('7')
+          .setValue(String(this.plugin.settings.healthStaleDays))
+          .onChange(async (value) => {
+            const num = parseInt(value, 10)
+            if (!isNaN(num) && num >= 1) {
+              this.plugin.settings.healthStaleDays = num
+              await this.plugin.saveSettings()
+            }
+          }),
+      )
+
+    const ruleLabels: Array<{ key: keyof typeof this.plugin.settings.healthRules; label: string; desc: string }> = [
+      { key: 'undated',       label: 'ルール1: 日付なし',     desc: '未完なのに @schedule/@due がないタスクを検出' },
+      { key: 'overdue',       label: 'ルール2: 期限超過',     desc: '過去日付なのに未完のタスクを検出' },
+      { key: 'stale',         label: 'ルール3: doing 停滞',   desc: 'doing のまま閾値以上放置されたタスクを検出' },
+      { key: 'unresolvedDeps',label: 'ルール4: 未解決依存',   desc: '@dependsOn の参照先が見つからないタスクを検出' },
+      { key: 'readyTasks',    label: 'ルール5: 着手可能',     desc: '依存先がすべて完了し着手可能になったタスクを検出' },
+      { key: 'malformed',     label: 'ルール6: 形式不正',     desc: 'メタ記法が不正で集計から漏れているタスクを検出' },
+    ]
+
+    for (const { key, label, desc } of ruleLabels) {
+      new Setting(containerEl)
+        .setName(label)
+        .setDesc(desc)
+        .addToggle(toggle =>
+          toggle
+            .setValue(this.plugin.settings.healthRules[key])
+            .onChange(async (value) => {
+              this.plugin.settings.healthRules[key] = value
+              await this.plugin.saveSettings()
+            }),
+        )
+    }
   }
 }

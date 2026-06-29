@@ -2,27 +2,22 @@
   import { GanttChart, getTickDefinitionForScale } from 'svelte-gantt-lib'
   import type { GanttNode, GanttEventHandlers, GanttConfig } from 'svelte-gantt-lib'
   import { extractGanttNodes } from './ast-to-gantt'
-  import { findNodeById, patchScheduleForNode, formatSchedule } from '../calendar/markdown-patch'
-  import type { Document } from '../parser/types'
+  import { patchScheduleForNode, formatSchedule } from '../calendar/markdown-patch'
+  import type { Document, TaskNode } from '../parser/types'
+  import type { SourceEntry } from '../viewmodel/contract'
 
   interface Props {
-    /** Raw markdown string — used as patch target (source of truth) */
-    mdValue: string
-    /** Parsed AST — used for GanttNode extraction and node lookup */
-    doc: Document
-    onMdChange: (newMd: string) => void
-    /** バークリック時にノードIDを通知するコールバック。エディタカーソル移動に使用。 */
-    onNodeClick?: (nodeId: string) => void
+    /** 複数ソース（ファイルパスと Document のペア）— GanttNode 抽出に使用 */
+    sources: SourceEntry[]
+    /** globalKey を受けて該当ファイルへ書き戻す非同期コールバック */
+    onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+    /** バークリック時に globalKey を通知するコールバック。エディタカーソル移動に使用。 */
+    onNodeClick?: (globalKey: string) => void
   }
 
-  let { mdValue, doc, onMdChange, onNodeClick }: Props = $props()
+  let { sources, onNodePatch, onNodeClick }: Props = $props()
 
-  // Derive GanttNode[] from AST every time doc changes
-  let ganttNodes: GanttNode[] = $derived(extractGanttNodes(doc))
-
-  // ----------------------------------------------------------------
-  // dragSnapDivision = 1 / minorInterval_days (1 minor tick per snap)
-  // ----------------------------------------------------------------
+  let ganttNodes: GanttNode[] = $derived(extractGanttNodes(sources))
 
   const INITIAL_DAY_WIDTH = 30
 
@@ -38,20 +33,18 @@
     dragSnapDivision: snapDivisionForScale(INITIAL_DAY_WIDTH / 40),
   })
 
-  // ----------------------------------------------------------------
-  // #0024: bar drag → patch @schedule line only
-  // ----------------------------------------------------------------
-
   const handlers: GanttEventHandlers = {
     onBarDrag(_nodeId, _newStart, _newEnd) {
       // ドラッグ中は markdown を更新しない。ライブラリが視覚プレビューを管理する。
     },
     onBarDragEnd(nodeId, finalStart, finalEnd) {
-      const node = findNodeById(doc, nodeId)
-      if (!node || !node.meta?.schedule) return
-      const newSchedule = formatSchedule(finalStart, finalEnd)
-      if (newSchedule === node.meta.schedule) return
-      onMdChange(patchScheduleForNode(mdValue, node, newSchedule))
+      // nodeId は globalKey
+      void onNodePatch(nodeId, (md, _doc, node) => {
+        if (!node.meta?.schedule) return md
+        const newSchedule = formatSchedule(finalStart, finalEnd)
+        if (newSchedule === node.meta.schedule) return md
+        return patchScheduleForNode(md, node, newSchedule)
+      })
     },
     onBarClick(ganttNode) {
       onNodeClick?.(ganttNode.id)

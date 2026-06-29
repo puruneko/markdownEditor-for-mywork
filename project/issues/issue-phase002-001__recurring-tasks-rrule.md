@@ -39,10 +39,10 @@
 - 既存の非繰り返しタスクの挙動は不変（回帰させない）。
 
 ### TODO
-- [ ] `meta-keys`/`remark-meta-fields`/`types`/`ast-to-md` に `@repeat` を追加（パース・型・シリアライズ）。
-- [ ] `rrule` 追加し `expandOccurrences` を実装。
-- [ ] `ast-to-calendar`/`ast-to-gantt` に展開反映（元 nodeId 紐付け）。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] `meta-keys`/`remark-meta-fields`/`types`/`ast-to-md` に `@repeat` を追加（パース・型・シリアライズ）。
+- [x] `rrule` 追加し `expandOccurrences` を実装（`src/lib/recurrence/expand.ts`）。
+- [x] `ast-to-calendar`/`ast-to-gantt` に展開反映（元 nodeId 紐付け）。viewRange なし → スキップ（本体スケジュールを出さない）。
+- [x] テストを追加・全見直し（expand.test.ts 10件・calendar @repeat 6件・gantt @repeat 6件・ast-to-md roundtrip 2件、全352件パス）。
 
 ### 受け入れ基準（すべて満たすこと）
 - `@repeat: FREQ=WEEKLY;BYDAY=FR;INTERVAL=2` が表示範囲内の該当金曜すべてに展開表示。
@@ -61,14 +61,50 @@
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（触る 5 箇所・確定仕様を内包）。
 
+#### 2026-06-29
+
+- User Instruction:
+  - phase002-001 の実装を開始して
+
+- Change:
+  - `rrule` パッケージを npm install
+  - `meta-keys.ts` に `repeat` を追加
+  - `types.ts` の `Meta` に `repeat?: string` を追加
+  - `remark-meta-fields.ts` の `applyMetaKey` に `@repeat` パース処理を追加
+  - `ast-to-md.ts` の `serializeMeta` に `@repeat` シリアライズを追加
+  - `src/lib/recurrence/expand.ts` を新規作成（`expandOccurrences` 純関数）
+  - `ast-to-calendar.ts` に viewRange 引数と @repeat 展開を追加
+  - `ast-to-gantt.ts` に viewRange 引数と @repeat 展開を追加
+  - @repeat + viewRange なし → スキップ（本体スケジュールを出さない）
+  - テスト追加: expand.test.ts / calendar @repeat / gantt @repeat / roundtrip
+
+- Rationale:
+  - 展開はビュー側（ast-to-calendar/gantt）のみで行い、AST・本文は変更しない。
+  - viewRange なしの場合も本体スケジュールを出さない（展開不能なので空の方が一貫性がある）。
+
+#### 2026-06-29（追記）
+
+- User Instruction:
+  - npm run dev の動作確認マークダウンを demo_markdown.md に切り替え。
+  - 機能追加時は demo_markdown.md も更新して動作確認できるようにする。
+
+- Change:
+  - `src/vite-env.d.ts` を追加（Vite `?raw` import のための型宣言）
+  - `EditorLayout.svelte` の巨大ハードコード `INITIAL_MD` を削除し `demo/demo_markdown.md?raw` を静的インポートに変更
+  - `demo/demo_markdown.md` に「@repeat デモ」セクション追加（WEEKLY/MONTHLY/INTERVAL 等の例）
+
+- Rationale:
+  - `npm run dev` のサンプルデータが機能と乖離しないよう、demo_markdown.md を単一ソースにする。
+  - 機能追加のたびに EditorLayout.svelte のハードコードを変更するより demo_markdown.md を更新する方が保守性が高い。
+
 ---
 
 ## 3. メタデータ
 - id: issue-phase002-001__recurring-tasks-rrule
-- status: open
+- status: closed
 - phase: 002
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
 - target_files: src/lib/parser/(meta-keys|types|ast-to-md).ts, src/lib/parser/plugins/remark-meta-fields.ts, src/lib/recurrence/expand.ts, src/lib/calendar/ast-to-calendar.ts, src/lib/gantt/ast-to-gantt.ts, package.json
 - created: 2026-06-28
-- updated: 2026-06-28
+- updated: 2026-06-29

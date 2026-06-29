@@ -29,7 +29,11 @@
 
 ### 依存
 - `issue-phase001-001__multi-source-ast-index`（`AstIndex`）。
+- `issue-phase001-005__cross-file-identity-and-viewmodel`（globalKey・`resolveRef`）。
 - ルール 6 は `issue-phase000-001__notation-lint-quickfix` の検出と**同一基準**（重複実装しない。リントの検出純関数を再利用）。
+
+### クロスファイル前提（phase001-005 準拠）
+- `HealthFinding` は `path` と `line` を持ち、行クリックは `resolveRef`／globalKey で**該当ファイル**へジャンプ。判定は**ファイル単位の Document**に対して行う（`findNodeById` を集約データに呼ばない）。依存突き合わせ（ルール 4・5）も globalKey 単位で行う。
 
 ### 既存資産の再利用（必読・実装前に読む）
 - `src/views/KanbanView.ts` ＋ Mount … `ItemView` ＋ Svelte マウントのひな形。
@@ -51,11 +55,32 @@
 - View は薄く、判定は純関数側に寄せる。
 
 ### TODO
-- [ ] 各ルール純関数 ＋ `runHealthChecks(tasks, today, config)` を実装。
-- [ ] `settings.ts` にルール ON/OFF・閾値を追加。
-- [ ] `HealthView` / Mount（一覧・行クリックジャンプ）。
-- [ ] `plugin.ts` に登録・コマンド・リボン追加。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] 各ルール純関数 ＋ `runHealthChecks(tasks, today, config)` を実装。
+- [x] `settings.ts` にルール ON/OFF・閾値を追加。
+- [x] `HealthView` / Mount（一覧・行クリックジャンプ）。
+- [x] `plugin.ts` に登録・コマンド・リボン追加。
+- [x] テストを追加・全見直し（下記テスト観点）。
+
+### 履歴（追記のみ）
+- 2026-06-28 — 起票。
+- 2026-06-28 — Haiku 実装可能な水準へ加筆。
+
+#### 2026-06-29
+
+- User Instruction: phase002-003 の実装。
+
+- Change:
+  - `src/lib/health/rules.ts` 新規作成（`runHealthChecks`・6ルール純関数・`HealthFinding`型）
+  - `src/lib/health/rules.test.ts` 新規作成（35件）
+  - `src/views/HealthView.ts` 新規作成（`getExtraMountProps` で settings を config として注入）
+  - `src/views/HealthViewMount.svelte` 新規作成（ルール別グルーピング表示）
+  - `src/settings.ts` `healthStaleDays` / `healthRules` 追加・設定 UI 追加
+  - `src/plugin.ts` HealthView 登録・コマンド・リボン追加
+
+- Rationale:
+  - ルール 6 は `lintLine`（純関数）を直接呼び出してリントと同一基準を保証。
+  - `HealthView.getExtraMountProps()` で `ShadowItemView` を変更最小限に設定を注入。
+  - ルール 4・5 の @dependsOn 突き合わせはタスク text 完全一致（暫定仕様）。
 
 ### 受け入れ基準（すべて満たすこと）
 - ルール 1〜6 が固定 today ＋フィクスチャで正しいタスクを検出（4・5 は text 突き合わせの暫定仕様で動作）。
@@ -76,7 +101,7 @@
 
 ## 3. メタデータ
 - id: issue-phase002-003__health-check-panel
-- status: open
+- status: closed
 - phase: 002
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:

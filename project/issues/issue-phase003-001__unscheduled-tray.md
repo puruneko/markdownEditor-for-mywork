@@ -23,7 +23,11 @@
 ### 依存
 - `issue-phase001-001__multi-source-ast-index`（索引・`onChange`）
 - `issue-phase001-002__filter-nodes-core`（`hasDate` 条件）
+- `issue-phase001-005__cross-file-identity-and-viewmodel`（globalKey・`patchInFile`）
 - `issue-phase002-004__selection-drag-to-view-meta`（**ドラッグペイロードとドロップ処理を必ず共有**。重複実装しない）
+
+### クロスファイル前提（phase001-005 準拠）
+- トレイ項目は **globalKey** を持ち、ドラッグペイロードは `phase002-004` と**完全同一**（globalKey ベース）。抽出は `filterNodes` を**ファイル単位**に適用してから集約する（mergedDoc を作らない）。割り付けの書き戻しは `patchInFile` で**該当ファイル**へ。
 
 ### 既存資産の再利用（必読・実装前に読む）
 - `issue-phase002-004` で実装した DataTransfer ペイロード（MIME `application/x-md-task`、`{sourcePath,line,nodeId}`）と各ビューの drop 処理 … トレイ項目はこれを**そのまま**ドラッグ源にする。受け手（Mount の drop）は改修不要。

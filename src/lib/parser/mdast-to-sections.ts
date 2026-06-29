@@ -68,7 +68,8 @@ export function buildSectionsFromRoot(root: Root): { sections: Section[]; nodeLi
   if (headings.length === 0) {
     // No headings → single anonymous section
     const blocks = children.filter(c => c.type !== 'heading') as BlockContent[]
-    const sectionChildren = convertSectionContent(blocks, 1, '')
+    const sectionPosPfx = ['s0']
+    const sectionChildren = convertSectionContent(blocks, 1, '', sectionPosPfx)
     flatSections.push({
       type: 'section',
       id: 'section-0',
@@ -82,7 +83,8 @@ export function buildSectionsFromRoot(root: Root): { sections: Section[]; nodeLi
     // Content before first heading
     if (headings[0].index > 0) {
       const preBlocks = children.slice(0, headings[0].index).filter(c => c.type !== 'heading') as BlockContent[]
-      const preChildren = convertSectionContent(preBlocks, 1, '')
+      const prePosPfx = ['s0']
+      const preChildren = convertSectionContent(preBlocks, 1, '', prePosPfx)
       if (preChildren.length > 0) {
         flatSections.push({
           type: 'section',
@@ -99,7 +101,9 @@ export function buildSectionsFromRoot(root: Root): { sections: Section[]; nodeLi
     headings.forEach((heading, hi) => {
       const nextIndex = hi + 1 < headings.length ? headings[hi + 1].index : children.length
       const contentBlocks = children.slice(heading.index + 1, nextIndex).filter(c => c.type !== 'heading') as BlockContent[]
-      const sectionChildren = convertSectionContent(contentBlocks, 1, heading.title)
+      // 位置プレフィックス: セクション番号を先頭に付与してノード id の名前空間を分ける
+      const sectionPosPfx = [`s${hi + 1}`]
+      const sectionChildren = convertSectionContent(contentBlocks, 1, heading.title, sectionPosPfx)
 
       flatSections.push({
         type: 'section',

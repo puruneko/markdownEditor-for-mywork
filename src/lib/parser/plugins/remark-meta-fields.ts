@@ -31,6 +31,9 @@ function applyMetaKey(meta: Partial<Meta>, key: string, value: string): void {
     case META_KEYS.tags:
       meta.tags = value.split(',').map(s => s.trim())
       break
+    case META_KEYS.repeat:
+      meta.repeat = value.trim()
+      break
   }
 }
 

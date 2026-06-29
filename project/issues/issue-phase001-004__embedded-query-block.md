@@ -23,6 +23,11 @@
 ### 依存
 - `issue-phase001-001__multi-source-ast-index`（`AstIndex`）
 - `issue-phase001-002__filter-nodes-core`（`filterNodes`/`FilterQuery`）
+- `issue-phase001-005__cross-file-identity-and-viewmodel`（globalKey・`resolveRef`）
+
+### クロスファイル前提（phase001-005 準拠）
+- 一覧の各行は **globalKey** を持つ。行クリックのジャンプは `resolveRef(index, globalKey)` で**該当ファイル**を解決して移動する（mergedDoc を作らない）。
+- 絞り込みは `filterNodes` を**ファイル単位**に適用してから集約する。
 
 ### 既存資産の再利用（必読・実装前に読む）
 - `src/sync/editor-event-bus.ts` ＋ `src/plugin.ts`（`this.editorEventBus.onFocusLine(...)` の購読箇所）… 行クリック→カーソル移動は**この既存経路をそのまま使う**。別ファイルの場合のファイルオープン処理も plugin.ts に既にある。
@@ -48,9 +53,9 @@
 - 購読解除を忘れない（ブロック再描画のたびに購読が積み上がらないよう、登録/解除をペアにする）。
 
 ### TODO
-- [ ] DSL パース純関数（文字列→`FilterQuery`、不正行は無視）。
-- [ ] CodeBlockProcessor 登録・一覧描画・クリックジャンプ・`onChange` 再描画・購読解除。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] DSL パース純関数（文字列→`FilterQuery`、不正行は無視）。
+- [x] CodeBlockProcessor 登録・一覧描画・クリックジャンプ・`onChange` 再描画・購読解除。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - `task-query` ブロックで条件に合致するタスク一覧が描画される。
@@ -66,15 +71,17 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（DSL 確定・既存ジャンプ経路の再利用を明記）。
+- 2026-06-28 — 実装完了。`src/lib/query/parse-query.ts`（DSL→FilterQuery 純関数）・`src/views/query-block.ts`（MarkdownRenderChild ベースのプロセッサ）を新規作成。plugin.ts に `task-query` ブロックプロセッサ登録を追加。テスト 20 件追加、全 296 件パス。クロスファイルジャンプは path+line ベースで実装（globalKey 対応は phase001-005 で追加）。
 
 ---
 
 ## 3. メタデータ
 - id: issue-phase001-004__embedded-query-block
-- status: open
+- status: closed
 - phase: 001
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
 - target_files: src/lib/query/parse-query.ts, src/views/query-block.ts, src/plugin.ts
 - created: 2026-06-28
+- closed: 2026-06-28
 - updated: 2026-06-28

@@ -50,6 +50,7 @@
     "monaco-editor": "^0.52.0",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
+    "rrule": "^2.8.1",
     "svelte-calendar-lib": "file:../calendar-for-mywork",
     "svelte-gantt-lib": "file:../ganttchart-for-mywork",
     "svelte-kanban-lib": "file:../kanban-for-mywork",

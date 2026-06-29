@@ -2,5 +2,7 @@
   "showRibbonIcon": true,
   "enableTaskHighlight": true,
   "debounceMs": 300,
-  "scrollOffsetLines": 4
+  "scrollOffsetLines": 4,
+  "indexScope": "current-file",
+  "indexScopeFolder": ""
 }

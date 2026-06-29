@@ -6,6 +6,7 @@ export type Meta = {
   priority?: number
   dependsOn?: string[]
   tags?: string[]
+  repeat?: string
 }
 
 export type TaskNode = {

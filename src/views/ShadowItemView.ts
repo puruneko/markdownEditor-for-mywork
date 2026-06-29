@@ -5,9 +5,10 @@ import type { Component } from 'svelte'
 import type { FileSync } from '../sync/file-sync'
 import type { AstIndex } from '../sync/ast-index'
 import type { EditorEventBus } from '../sync/editor-event-bus'
-import type { Document } from '../lib/parser/types'
-
-const EMPTY_DOC: Document = { type: 'document', sections: [], nodeLineMap: new Map() }
+import type { Document, TaskNode } from '../lib/parser/types'
+import type { SourceEntry } from '../lib/viewmodel/contract'
+import { parseGlobalKey } from '../lib/viewmodel/global-key'
+import { patchInFile } from '../lib/viewmodel/resolve'
 
 const SHADOW_RESET_CSS = `
   *, *::before, *::after {
@@ -35,34 +36,10 @@ const SHADOW_RESET_CSS = `
 `.trim()
 
 export interface ViewMountProps {
-  initialMd: string
-  initialDoc: Document
-  onMdChange: (newMd: string) => void
-  registerUpdater: (fn: (md: string, doc: Document) => void) => void
-  onNodeClick: (nodeId: string) => void
-}
-
-/** nodeId → {filePath, lineNumber} のクロスファイルナビゲーション用マップ。 */
-type NodeToFile = Map<string, { path: string; line: number }>
-
-function buildMergedDoc(astIndex: AstIndex): { doc: Document; nodeToFile: NodeToFile } {
-  const docs = astIndex.getDocuments()
-  const mergedSections: Document['sections'] = []
-  const mergedNodeLineMap = new Map<string, number>()
-  const nodeToFile: NodeToFile = new Map()
-
-  for (const [path, doc] of docs) {
-    mergedSections.push(...doc.sections)
-    for (const [nodeId, line] of doc.nodeLineMap) {
-      mergedNodeLineMap.set(nodeId, line)
-      nodeToFile.set(nodeId, { path, line })
-    }
-  }
-
-  return {
-    doc: { type: 'document', sections: mergedSections, nodeLineMap: mergedNodeLineMap },
-    nodeToFile,
-  }
+  sources: SourceEntry[]
+  registerUpdater: (fn: (sources: SourceEntry[]) => void) => void
+  onNodeClick: (globalKey: string) => void
+  onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
 }
 
 export abstract class ShadowItemView extends ItemView {
@@ -70,10 +47,8 @@ export abstract class ShadowItemView extends ItemView {
   protected astIndex: AstIndex | null
   protected editorEventBus: EditorEventBus
   private component: Record<string, unknown> | null = null
-  private updater: ((md: string, doc: Document) => void) | null = null
-  private nodeToFile: NodeToFile = new Map()
-  private astIndexUnsubscribe: (() => void) | null = null
-  private readonly fileSyncHandler: (doc: Document, file: TFile) => void
+  private updater: ((sources: SourceEntry[]) => void) | null = null
+  private offIndex: (() => void) | null = null
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -85,25 +60,13 @@ export abstract class ShadowItemView extends ItemView {
     this.fileSync = fileSync
     this.astIndex = astIndex ?? null
     this.editorEventBus = editorEventBus
-
-    // fileSync ハンドラ: AstIndex がある場合も fileSync の変更を受け取り、
-    // currentFile の markdown を md 編集バッファとして保持しつつ merged doc で表示する。
-    this.fileSyncHandler = (_doc) => {
-      if (!this.updater) return
-      const currentMd = this.fileSync.getCurrentMarkdown() ?? ''
-      if (this.astIndex) {
-        const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
-        this.nodeToFile = nodeToFile
-        this.updater(currentMd, doc)
-      } else {
-        this.updater(currentMd, _doc)
-      }
-    }
   }
 
   protected abstract getViewClass(): string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected abstract getMountComponent(): Component<ViewMountProps, any, any>
+  /** サブクラスが追加 props を注入するためのフック。既定は空オブジェクト。 */
+  protected getExtraMountProps(): Record<string, unknown> { return {} }
 
   async onOpen(): Promise<void> {
     const container = this.containerEl.children[1] as HTMLElement
@@ -122,103 +85,141 @@ export abstract class ShadowItemView extends ItemView {
     mountTarget.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;'
     shadow.appendChild(mountTarget)
 
-    // 初期マウントは常に fileSync データを使用（実証済みの動作）
-    const initialMd = this.fileSync.getCurrentMarkdown() ?? ''
-    const initialDoc = this.fileSync.getCurrentDocument() ?? EMPTY_DOC
+    const initialSources = this.getSources()
 
-    const onNodeClick = (nodeId: string): void => {
-      void this.navigateToNode(nodeId)
+    const onNodeClick = (globalKey: string): void => {
+      void this.navigateToNode(globalKey)
+    }
+
+    const onNodePatch = async (
+      globalKey: string,
+      patcher: (md: string, doc: Document, node: TaskNode) => string,
+    ): Promise<void> => {
+      if (!this.astIndex) return
+      await patchInFile(
+        this.astIndex,
+        globalKey,
+        (fp) => {
+          const f = this.app.vault.getAbstractFileByPath(fp) as TFile
+          return this.app.vault.read(f)
+        },
+        (fp, content) => {
+          const f = this.app.vault.getAbstractFileByPath(fp) as TFile
+          return this.app.vault.modify(f, content)
+        },
+        patcher,
+      )
     }
 
     this.component = mount(this.getMountComponent(), {
       target: mountTarget,
       props: {
-        initialMd,
-        initialDoc,
-        onMdChange: (newMd: string) => void this.handleMdChange(newMd),
-        registerUpdater: (fn: (md: string, doc: Document) => void) => {
+        sources: initialSources,
+        registerUpdater: (fn: (sources: SourceEntry[]) => void) => {
           this.updater = fn
         },
         onNodeClick,
+        onNodePatch,
+        ...this.getExtraMountProps(),
       },
     })
 
-    // fileSync を常に購読（現在ファイルの更新を受け取る）
-    this.fileSync.subscribe(this.fileSyncHandler)
-
-    // AstIndex がある場合は追加で購読し、マルチファイル更新をビューに反映する。
+    // AstIndex がある場合はその変更を購読する
     if (this.astIndex) {
-      this.astIndexUnsubscribe = this.astIndex.onChange(() => {
-        if (!this.updater || !this.astIndex) return
-        const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
-        this.nodeToFile = nodeToFile
-        const currentMd = this.fileSync.getCurrentMarkdown() ?? ''
-        this.updater(currentMd, doc)
+      this.offIndex = this.astIndex.onChange(() => {
+        if (!this.updater) return
+        this.updater(this.getSources())
       })
-
-      // 既にインデックスにデータがあれば即座に反映する。
-      // mount() が registerUpdater を同期実行するので this.updater はここで有効。
-      const { doc, nodeToFile } = buildMergedDoc(this.astIndex)
-      if (doc.sections.length > 0 && this.updater) {
-        this.nodeToFile = nodeToFile
-        this.updater(initialMd, doc)
-      }
+    } else {
+      // astIndex がない場合は fileSync の更新を購読する（単一ファイル fallback）
+      this.fileSync.subscribe(this.fileSyncHandler)
     }
   }
 
   async onClose(): Promise<void> {
-    this.fileSync.unsubscribe(this.fileSyncHandler)
-    this.astIndexUnsubscribe?.()
-    this.astIndexUnsubscribe = null
+    if (this.offIndex) {
+      this.offIndex()
+      this.offIndex = null
+    } else {
+      this.fileSync.unsubscribe(this.fileSyncHandler)
+    }
     if (this.component) {
       unmount(this.component)
       this.component = null
     }
   }
 
-  private async navigateToNode(nodeId: string): Promise<void> {
-    const target = this.nodeToFile.get(nodeId)
-
-    if (!target) {
-      // AstIndex なし、または単一ファイルモードのフォールバック
-      const doc = this.fileSync.getCurrentDocument()
-      if (!doc) return
-      const line = doc.nodeLineMap.get(nodeId)
-      if (line !== undefined) this.editorEventBus.requestFocusLine(line)
-      return
+  private getSources(): SourceEntry[] {
+    if (this.astIndex) {
+      const docs = this.astIndex.getDocuments()
+      return [...docs.entries()].map(([path, doc]) => ({ path, doc }))
     }
-
-    const { path, line } = target
-    const currentFile = this.fileSync.getCurrentFile()
-
-    if (currentFile?.path === path) {
-      // 同一ファイルなら EditorEventBus 経由で移動
-      this.editorEventBus.requestFocusLine(line)
-      return
-    }
-
-    // 別ファイル: Obsidian workspace API でファイルを開いてカーソル移動
-    const abstractFile = this.app.vault.getAbstractFileByPath(path)
-    if (!abstractFile || !('extension' in abstractFile)) return
-
-    const tfile = abstractFile as TFile
-    let targetLeaf = this.app.workspace.getMostRecentLeaf()
-    if (!targetLeaf) targetLeaf = this.app.workspace.getLeaf(false)
-    if (!targetLeaf) return
-
-    await targetLeaf.openFile(tfile)
-    this.app.workspace.revealLeaf(targetLeaf)
-
-    const mdView = targetLeaf.view
-    if (mdView instanceof MarkdownView) {
-      mdView.editor.setCursor({ line, ch: 0 })
-      mdView.editor.focus()
-    }
+    // fallback: fileSync の現在ファイル
+    const doc = this.fileSync.getCurrentDocument()
+    const file = this.fileSync.getCurrentFile()
+    if (doc && file) return [{ path: file.path, doc }]
+    return []
   }
 
-  private async handleMdChange(newMd: string): Promise<void> {
+  private readonly fileSyncHandler = (doc: Document): void => {
+    if (!this.updater) return
     const file = this.fileSync.getCurrentFile()
     if (!file) return
-    await this.app.vault.modify(file, newMd)
+    this.updater([{ path: file.path, doc }])
+  }
+
+  private async navigateToNode(globalKey: string): Promise<void> {
+    let filePath: string
+    let localId: string
+    try {
+      ;({ filePath, localId } = parseGlobalKey(globalKey))
+    } catch {
+      return
+    }
+
+    // 対象ファイルの Document と行番号を解決する
+    const doc = this.astIndex
+      ? this.astIndex.getDocument(filePath)
+      : this.fileSync.getCurrentDocument()
+    if (!doc) return
+    const line = doc.nodeLineMap.get(localId)
+    if (line === undefined) return
+
+    const currentFilePath = this.fileSync.getCurrentFile()?.path
+    if (filePath === currentFilePath) {
+      // 同ファイル → editorEventBus 経由でカーソル移動
+      this.editorEventBus.requestFocusLine(line)
+    } else {
+      // 別ファイル → ファイルを開いてからカーソル移動
+      const abstractFile = this.app.vault.getAbstractFileByPath(filePath)
+      if (!abstractFile) return
+      const file = abstractFile as TFile
+
+      // 既存リーフを探す
+      let targetLeaf: WorkspaceLeaf | null = null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ws = this.app.workspace as any
+      if (typeof ws.iterateAllLeaves === 'function') {
+        ws.iterateAllLeaves((leaf: WorkspaceLeaf) => {
+          if (targetLeaf) return
+          const view = (leaf as unknown as { view?: { file?: TFile } }).view
+          if (view?.file?.path === filePath) targetLeaf = leaf
+        })
+      }
+
+      if (!targetLeaf) {
+        targetLeaf = this.app.workspace.getLeaf(false)
+        if (!targetLeaf) return
+        await targetLeaf.openFile(file)
+      } else {
+        this.app.workspace.revealLeaf(targetLeaf)
+      }
+
+      const mdView = (targetLeaf as unknown as { view?: MarkdownView }).view
+      if (mdView instanceof MarkdownView && mdView.editor) {
+        mdView.editor.setCursor({ line, ch: 0 })
+        mdView.editor.focus()
+      }
+    }
   }
 }

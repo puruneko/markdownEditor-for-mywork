@@ -16,3 +16,9 @@ body,
   background: #1e1e1e;
   color: #d4d4d4;
 }
+
+.filter-bar-row {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-bottom: 1px solid #444;
+}

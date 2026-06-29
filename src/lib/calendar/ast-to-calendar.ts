@@ -1,6 +1,9 @@
 import { DateTime } from 'luxon'
 import type { Task, TaskStatus, CalendarItem } from 'svelte-calendar-lib'
 import type { Document, Section, Node, Status } from '../parser/types'
+import type { SourceEntry } from '../viewmodel/contract'
+import { makeGlobalKey } from '../viewmodel/global-key'
+import { expandOccurrences } from '../recurrence/expand'
 
 // ----------------------------------------------------------------
 // Status mapping (AST → CalendarItem)
@@ -59,44 +62,83 @@ export function parseSchedule(schedule: string): ParsedSchedule | null {
 // Node traversal
 // ----------------------------------------------------------------
 
-function extractFromNodes(nodes: Node[], items: CalendarItem[]): void {
+type ViewRange = { start: DateTime; end: DateTime }
+
+function extractFromNodes(
+  nodes: Node[],
+  sourcePath: string,
+  items: CalendarItem[],
+  viewRange: ViewRange | null,
+): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
 
     if (node.type === 'task' && node.meta?.schedule) {
-      const parsed = parseSchedule(node.meta.schedule)
-      if (parsed) {
-        // Build parents from path (strip sibling index from each element)
-        const parents = node.path.slice(0, -1).map(p => p.replace(/\[\d+\]$/, ''))
+      const parents = node.path.slice(0, -1).map(p => p.replace(/\[\d+\]$/, ''))
+      const baseId = makeGlobalKey(sourcePath, node.id)
 
-        // temporal 型をスケジュール形式に応じて分岐
-        const temporal = parsed.kind === 'dateRange'
-          ? { kind: 'CalendarDateRange' as const, start: parsed.start, endExclusive: parsed.endExclusive }
-          : { kind: 'CalendarDateTimeRange' as const, start: parsed.start, end: parsed.end }
-
-        // Create Task-shaped object directly (factory functions not in dist)
-        const item: Task = {
-          id: node.id,
-          type: 'task',
-          title: node.text,
-          status: mapStatus(node.status),
-          parents,
-          temporal,
+      if (node.meta.repeat) {
+        // @repeat あり: viewRange があれば展開、なければスキップ（本体スケジュールは出さない）
+        if (viewRange) {
+          const occurrences = expandOccurrences(node.meta, viewRange.start, viewRange.end)
+          occurrences.forEach((occ, idx) => {
+            const item: Task = {
+              id: `${baseId}__r${idx}`,
+              type: 'task',
+              title: node.text,
+              status: mapStatus(node.status),
+              parents,
+              temporal: { kind: 'CalendarDateTimeRange' as const, start: occ.start, end: occ.end },
+            }
+            items.push(item)
+          })
         }
-        items.push(item)
+      } else {
+        const parsed = parseSchedule(node.meta.schedule)
+        if (parsed) {
+          const temporal = parsed.kind === 'dateRange'
+            ? { kind: 'CalendarDateRange' as const, start: parsed.start, endExclusive: parsed.endExclusive }
+            : { kind: 'CalendarDateTimeRange' as const, start: parsed.start, end: parsed.end }
+
+          const item: Task = {
+            id: baseId,
+            type: 'task',
+            title: node.text,
+            status: mapStatus(node.status),
+            parents,
+            temporal,
+          }
+          items.push(item)
+        }
       }
     }
 
     if ((node.type === 'task' || node.type === 'list') && node.children.length > 0) {
-      extractFromNodes(node.children, items)
+      extractFromNodes(node.children, sourcePath, items, viewRange)
     }
   }
 }
 
-function extractFromSection(section: Section, items: CalendarItem[]): void {
-  extractFromNodes(section.children, items)
+function extractFromSection(
+  section: Section,
+  sourcePath: string,
+  items: CalendarItem[],
+  viewRange: ViewRange | null,
+): void {
+  extractFromNodes(section.children, sourcePath, items, viewRange)
   for (const sub of section.subSections) {
-    extractFromSection(sub, items)
+    extractFromSection(sub, sourcePath, items, viewRange)
+  }
+}
+
+function extractFromDocument(
+  doc: Document,
+  sourcePath: string,
+  items: CalendarItem[],
+  viewRange: ViewRange | null,
+): void {
+  for (const section of doc.sections) {
+    extractFromSection(section, sourcePath, items, viewRange)
   }
 }
 
@@ -104,10 +146,17 @@ function extractFromSection(section: Section, items: CalendarItem[]): void {
 // Public API
 // ----------------------------------------------------------------
 
-export function extractCalendarItems(doc: Document): CalendarItem[] {
+/**
+ * 複数ソースから CalendarItem[] を生成する。
+ * viewRange を渡すと @repeat タスクを表示範囲内で展開する。
+ * 各アイテムの id は globalKey（sourcePath::localId）で全体でユニーク。
+ * 単一ファイルの場合は要素 1 の配列として渡す。
+ */
+export function extractCalendarItems(sources: SourceEntry[], viewRange?: ViewRange): CalendarItem[] {
   const items: CalendarItem[] = []
-  for (const section of doc.sections) {
-    extractFromSection(section, items)
+  const range = viewRange ?? null
+  for (const { path, doc } of sources) {
+    extractFromDocument(doc, path, items, range)
   }
   return items
 }

@@ -9,23 +9,23 @@
     KANBAN_FIELD_DEFINITIONS,
   } from './ast-to-kanban'
   import type { KanbanCard } from './ast-to-kanban'
-  import { findNodeById, patchNodeStatus } from '../calendar/markdown-patch'
-  import type { Document, Status } from '../parser/types'
+  import { patchNodeStatus } from '../calendar/markdown-patch'
+  import type { Document, TaskNode, Status } from '../parser/types'
+  import type { SourceEntry } from '../viewmodel/contract'
 
   interface Props {
-    /** Raw markdown string — patch target */
-    mdValue: string
-    /** Parsed AST — card extraction and node lookup */
-    doc: Document
-    onMdChange: (newMd: string) => void
-    /** カードクリック時にノードIDを通知するコールバック */
-    onNodeClick?: (nodeId: string) => void
+    /** 複数ソース（ファイルパスと Document のペア）— カード抽出とキーの名前空間化に使用 */
+    sources: SourceEntry[]
+    /** globalKey を受けて該当ファイルへ書き戻す非同期コールバック */
+    onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+    /** カードクリック時に globalKey を通知するコールバック */
+    onNodeClick?: (globalKey: string) => void
   }
 
-  let { mdValue, doc, onMdChange, onNodeClick }: Props = $props()
+  let { sources, onNodePatch, onNodeClick }: Props = $props()
 
-  // カード抽出（doc 変化のたびに再計算）
-  const cards: KanbanCard[] = $derived(extractKanbanCards(doc))
+  // カード抽出（sources 変化のたびに再計算）
+  const cards: KanbanCard[] = $derived(extractKanbanCards(sources))
 
   $effect(() => {
     const withDesc = cards.filter(c => c.description)
@@ -43,8 +43,6 @@
   let allowCrossGroupMove = $state(false)
   let cardTitleMultiline = $state(false)
 
-  // ライブラリの section 配列フィールド + sectionDepth を使った config を生成する。
-  // groups 定義は渡さず、ライブラリがカードから自動収集する。
   const config: KanbanBoardConfig = $derived({
     ...createKanbanConfig(cards, userGroupBy, userSectionDepth),
     lanes: userLanes,
@@ -54,14 +52,11 @@
 
   function handleCardMove(event: CardMoveEvent): void {
     const { card, updatedCard } = event
-    const node = findNodeById(doc, card.id)
-    if (!node) return
     const newStatus = updatedCard.status as Status
-    const newMd = patchNodeStatus(mdValue, node, newStatus)
-    if (newMd !== mdValue) onMdChange(newMd)
+    // card.id は globalKey — patchInFile が該当ファイルを解決して書き戻す
+    void onNodePatch(card.id, (md, _doc, node) => patchNodeStatus(md, node, newStatus))
   }
 
-  // ユーザーが変更したすべての board 設定を保持する
   function handleConfigChange(event: ConfigChangeEvent): void {
     userLanes = event.config.lanes
     userGroupBy = event.config.groupBy ?? 'section'
@@ -82,7 +77,7 @@
       // the click event. Work around by tracking movement via window pointerup capture.
       const startX = e.clientX
       const startY = e.clientY
-      const id = card.id
+      const id = card.id  // globalKey
       const handleUp = (evt: PointerEvent): void => {
         window.removeEventListener('pointerup', handleUp, true)
         const dx = evt.clientX - startX
@@ -118,8 +113,6 @@
   /* ------------------------------------------------------------------
    * CSS custom properties — Obsidian変数を優先し、ブラウザダーク環境では
    * フォールバック値を使用する。
-   * Obsidian では :root / body に --background-primary 等が定義されているため
-   * var(--obsidian-var, fallback) が正しく解決される。
    * ------------------------------------------------------------------ */
   .kanban-tab {
     width: 100%;
@@ -170,12 +163,9 @@
     --kanban-group-count-bg:            var(--background-modifier-border,  #3e3e42);
     --kanban-group-count-color:         var(--text-muted,                  #858585);
     --kanban-group-accent:              var(--interactive-accent,          #4ec9b0);
-    /* sticky lane-headers-bar の top 位置。kanban-group-header の実際の高さに合わせる */
     --kanban-group-header-height:       43px;
-    /* Section header（仮想親グループ）の背景色 */
     --kanban-section-header-bg:         var(--background-primary-alt,     #252526);
     --kanban-section-header-hover-bg:   var(--background-modifier-hover,  #2d2d30);
-    /* 子グループのインデント border 色 */
     --kanban-group-children-border:     var(--interactive-accent,         #4ec9b0);
     --kanban-group-children-border-l2:  var(--background-modifier-border, #404040);
     --kanban-group-children-border-l3:  var(--background-modifier-border, #3a3a3a);
@@ -188,7 +178,6 @@
     --kanban-filter-nested-border: var(--background-modifier-border, #404040);
   }
 
-  /* カスタムカードスニペットのスタイル */
   .kanban-card-inner {
     cursor: pointer;
     padding: 4px 2px;

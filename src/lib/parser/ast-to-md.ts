@@ -26,6 +26,7 @@ function serializeMeta(meta: Meta): string[] {
   if (meta.priority  !== undefined) lines.push(`- @${META_KEYS.priority}: ${meta.priority}`)
   if (meta.dependsOn !== undefined) lines.push(`- @${META_KEYS.dependsOn}: ${meta.dependsOn.join(', ')}`)
   if (meta.tags      !== undefined) lines.push(`- @${META_KEYS.tags}: ${meta.tags.join(', ')}`)
+  if (meta.repeat    !== undefined) lines.push(`- @${META_KEYS.repeat}: ${meta.repeat}`)
   return lines
 }
 
