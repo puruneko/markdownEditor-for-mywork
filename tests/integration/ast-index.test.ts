@@ -331,6 +331,70 @@ describe('AstIndex', () => {
     })
   })
 
+  // ── setScope（スコープ切り替え） ──────────────────────
+
+  describe('setScope()', () => {
+    it('vault → current-file に切り替えると古いデータが消え現在ファイルのみ返す', async () => {
+      const fileA = new TFile('a.md')
+      const fileB = new TFile('b.md')
+      app.vault.getMarkdownFiles.mockReturnValue([fileA, fileB])
+      app.vault.read
+        .mockResolvedValueOnce(MD_A)
+        .mockResolvedValueOnce(MD_B)
+
+      index = makeIndex(app, { scope: 'vault' })
+      await index.start()
+      expect(index.getAllTaskNodes().length).toBeGreaterThanOrEqual(4)
+
+      // current-file に切り替え（a.md のみ）
+      index.setCurrentFilePath('a.md')
+      app.vault.getMarkdownFiles.mockReturnValue([fileA, fileB])
+      app.vault.read.mockResolvedValueOnce(MD_A).mockResolvedValueOnce(MD_B)
+      await index.setScope('current-file')
+
+      const tasks = index.getAllTaskNodes()
+      expect(tasks.every(t => t.path === 'a.md')).toBe(true)
+      expect(tasks.some(t => t.path === 'b.md')).toBe(false)
+    })
+
+    it('current-file → vault に切り替えると全ファイルが再索引化される', async () => {
+      const fileA = new TFile('a.md')
+      const fileB = new TFile('b.md')
+      app.vault.getMarkdownFiles.mockReturnValue([fileA])
+      app.vault.read.mockResolvedValueOnce(MD_A)
+
+      index = makeIndex(app, { scope: 'current-file' })
+      index.setCurrentFilePath('a.md')
+      await index.start()
+      expect(index.getAllTaskNodes().some(t => t.path === 'b.md')).toBe(false)
+
+      // vault に切り替え
+      app.vault.getMarkdownFiles.mockReturnValue([fileA, fileB])
+      app.vault.read.mockResolvedValueOnce(MD_A).mockResolvedValueOnce(MD_B)
+      await index.setScope('vault')
+
+      expect(index.getAllTaskNodes().some(t => t.path === 'b.md')).toBe(true)
+    })
+
+    it('setScope 後に onChange が発火する', async () => {
+      const fileA = new TFile('a.md')
+      app.vault.getMarkdownFiles.mockReturnValue([fileA])
+      app.vault.read.mockResolvedValue(MD_A)
+
+      index = makeIndex(app, { scope: 'vault' })
+      await index.start()
+
+      const onChange = vi.fn()
+      index.onChange(onChange)
+
+      app.vault.getMarkdownFiles.mockReturnValue([fileA])
+      app.vault.read.mockResolvedValue(MD_A)
+      await index.setScope('current-file')
+
+      expect(onChange).toHaveBeenCalled()
+    })
+  })
+
   // ── stop / イベント解除 ───────────────────────────────
 
   describe('stop()', () => {

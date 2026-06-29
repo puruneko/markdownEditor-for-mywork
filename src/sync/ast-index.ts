@@ -48,8 +48,8 @@ export class AstIndex {
   private readonly handlers: Set<IndexChangeHandler> = new Set()
   private readonly debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
   private readonly debounceMs: number
-  private readonly scope: IndexScope
-  private readonly scopeFolder: string
+  private scope: IndexScope
+  private scopeFolder: string
   private currentFilePath: string | null = null
 
   constructor(app: App, options: {
@@ -66,6 +66,19 @@ export class AstIndex {
   /** 'current-file' スコープ時に参照するファイルパスを更新する。 */
   setCurrentFilePath(path: string | null): void {
     this.currentFilePath = path
+  }
+
+  /**
+   * スコープを変更し、索引を再構築する。
+   * 既存データを全消去した上で新スコープで初期スキャンを再実行する。
+   */
+  async setScope(scope: IndexScope, scopeFolder?: string): Promise<void> {
+    this.scope = scope
+    this.scopeFolder = scopeFolder ?? ''
+    this.index.clear()
+    await this.initialScan()
+    // スコープ変更自体を通知（スキャン対象ゼロの場合も変更をビューに伝える）。
+    this.notify()
   }
 
   /** 初期走査を実行し vault イベントを購読する。 */

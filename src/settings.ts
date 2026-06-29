@@ -107,6 +107,7 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.indexScope = value as IndexScope
             await this.plugin.saveSettings()
+            await this.plugin.astIndex.setScope(value as IndexScope, this.plugin.settings.indexScopeFolder)
           }),
       )
 
@@ -120,6 +121,7 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.indexScopeFolder = value.trim()
             await this.plugin.saveSettings()
+            await this.plugin.astIndex.setScope(this.plugin.settings.indexScope, value.trim())
           }),
       )
   }
