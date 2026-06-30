@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { KanbanBoard } from 'svelte-kanban-lib'
+  import { KanbanBoard, HIERARCHY_GROUP_BY } from 'svelte-kanban-lib'
   import type { CardData, CardMoveEvent, ConfigChangeEvent, LaneDefinition } from 'svelte-kanban-lib'
   import type { KanbanBoardConfig } from 'svelte-kanban-lib'
   import {
@@ -41,14 +41,19 @@
 
   // ユーザーがカスタマイズできるレーン定義と board 設定
   let userLanes: LaneDefinition[] = $state([...DEFAULT_KANBAN_CONFIG.lanes])
-  let userGroupBy = $state<string>('section')
-  let userSectionDepth = $state<number>(2)
+  // 既定は階層グルーピング（見出し階層でカードをグループ化）
+  let userGroupBy = $state<string>(HIERARCHY_GROUP_BY)
+  let headingLevel = $state<number>(2)
+  let showUnits = $state<boolean>(false)
   let allowCrossGroupMove = $state(false)
   let cardTitleMultiline = $state(false)
 
   const config: KanbanBoardConfig = $derived({
-    ...createKanbanConfig(cards, userGroupBy, userSectionDepth),
+    ...createKanbanConfig(cards, headingLevel, showUnits),
     lanes: userLanes,
+    groupBy: userGroupBy,
+    headingLevel,
+    showUnits,
     allowCrossGroupMove,
     cardTitleMultiline,
   })
@@ -97,8 +102,9 @@
 
   function handleConfigChange(event: ConfigChangeEvent): void {
     userLanes = event.config.lanes
-    userGroupBy = event.config.groupBy ?? 'section'
-    userSectionDepth = event.config.sectionDepth ?? 2
+    userGroupBy = event.config.groupBy ?? HIERARCHY_GROUP_BY
+    headingLevel = event.config.headingLevel ?? 2
+    showUnits = event.config.showUnits ?? false
     allowCrossGroupMove = event.config.allowCrossGroupMove ?? false
     cardTitleMultiline = event.config.cardTitleMultiline ?? false
   }

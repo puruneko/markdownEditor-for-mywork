@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { extractKanbanCards, createKanbanConfig, DEFAULT_KANBAN_CONFIG } from './ast-to-kanban'
+import { HIERARCHY_GROUP_BY } from 'svelte-kanban-lib'
 import { parseMarkdown } from '../parser/parse-markdown'
 import { parseGlobalKey } from '../viewmodel/global-key'
 
@@ -219,38 +220,50 @@ describe('DEFAULT_KANBAN_CONFIG', () => {
 })
 
 describe('createKanbanConfig', () => {
-  it('デフォルトで groupBy: section を設定する', () => {
+  it('デフォルトで groupBy を階層モード（HIERARCHY_GROUP_BY）に設定する', () => {
     const cards = extractKanbanCards(src('# S\n\n- [ ] タスク'))
-    expect(createKanbanConfig(cards).groupBy).toBe('section')
+    expect(createKanbanConfig(cards).groupBy).toBe(HIERARCHY_GROUP_BY)
   })
 
-  it('デフォルトで sectionDepth: 2 を設定する', () => {
+  it('デフォルトで headingLevel: 2 / showUnits: false を設定する', () => {
     const cards = extractKanbanCards(src('# S\n\n- [ ] タスク'))
-    expect(createKanbanConfig(cards).sectionDepth).toBe(2)
+    const config = createKanbanConfig(cards)
+    expect(config.headingLevel).toBe(2)
+    expect(config.showUnits).toBe(false)
   })
 
   it('groups は Markdown 出現順の order を持つ GroupDefinition[] を返す', () => {
-    const cards = extractKanbanCards(src('# S\n\n- グループA\n  - [ ] T1\n- グループB\n  - [ ] T2'))
+    const cards = extractKanbanCards(src('# 見出しA\n\n- [ ] T1\n\n# 見出しB\n\n- [ ] T2'))
     const config = createKanbanConfig(cards)
     const ids = config.groups!.map(g => g.id)
-    expect(ids.indexOf('S / グループA')).toBeLessThan(ids.indexOf('S / グループB'))
+    expect(ids.indexOf('見出しA')).toBeLessThan(ids.indexOf('見出しB'))
   })
 
   it('グループ順序が Markdown 記述順と一致する（逆順テスト）', () => {
-    const cards = extractKanbanCards(src('# S\n\n- グループB\n  - [ ] T1\n- グループA\n  - [ ] T2'))
+    const cards = extractKanbanCards(src('# 見出しB\n\n- [ ] T1\n\n# 見出しA\n\n- [ ] T2'))
     const config = createKanbanConfig(cards)
     const ids = config.groups!.map(g => g.id)
-    expect(ids.indexOf('S / グループB')).toBeLessThan(ids.indexOf('S / グループA'))
+    expect(ids.indexOf('見出しB')).toBeLessThan(ids.indexOf('見出しA'))
   })
 
-  it('groupByField 引数でグループフィールドを変更できる', () => {
-    const cards = extractKanbanCards(src('# S\n\n- [ ] タスク'))
-    expect(createKanbanConfig(cards, 'sectionTitle').groupBy).toBe('sectionTitle')
+  it('showUnits=false ではリストグループを含めず heading のみでグループ化する', () => {
+    const cards = extractKanbanCards(src('# S\n\n- グループA\n  - [ ] T1\n- グループB\n  - [ ] T2'))
+    const config = createKanbanConfig(cards, 2, false)
+    expect(config.groups!.map(g => g.id)).toEqual(['S'])
   })
 
-  it('sectionDepth 引数で深さを変更できる', () => {
-    const cards = extractKanbanCards(src('# S\n\n- [ ] タスク'))
-    expect(createKanbanConfig(cards, 'section', 1).sectionDepth).toBe(1)
+  it('showUnits=true でリストグループ（unit 段）を階層グループに含める', () => {
+    const cards = extractKanbanCards(src('# S\n\n- グループA\n  - [ ] T1\n- グループB\n  - [ ] T2'))
+    const config = createKanbanConfig(cards, 1, true)
+    const ids = config.groups!.map(g => g.id)
+    expect(ids).toContain('S / グループA')
+    expect(ids).toContain('S / グループB')
+  })
+
+  it('headingLevel 引数で採用する見出し段数を変更できる', () => {
+    const cards = extractKanbanCards(src('# H1\n\n## H2\n\n- [ ] タスク'))
+    expect(createKanbanConfig(cards, 1).groups!.map(g => g.id)).toEqual(['H1'])
+    expect(createKanbanConfig(cards, 2).groups!.map(g => g.id)).toEqual(['H1 / H2'])
   })
 
   it('DEFAULT_KANBAN_CONFIGのlanesを引き継ぐ', () => {

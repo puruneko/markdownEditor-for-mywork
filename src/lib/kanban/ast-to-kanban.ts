@@ -1,5 +1,5 @@
-import type { CardData, LaneDefinition, KanbanBoardConfig, FieldDefinition, GroupDefinition } from 'svelte-kanban-lib'
-import { resolveGroupId } from 'svelte-kanban-lib'
+import type { CardData, LaneDefinition, KanbanBoardConfig, FieldDefinition, GroupDefinition, HierarchySegment } from 'svelte-kanban-lib'
+import { resolveHierarchyGroupId, HIERARCHY_GROUP_BY } from 'svelte-kanban-lib'
 import type { Document, Section, Node, TaskNode } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
@@ -12,8 +12,14 @@ export type KanbanCard = CardData & {
   id: string            // globalKey（{#each} キー・クリック・書き戻しで使用）
   title: string
   status: string        // 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
-  /** セクション階層パス。ライブラリの groupBy: 'section' + sectionDepth で使用する。
-   *  例: ["Heading A", "List B"] */
+  /** 順序付き階層パス。ライブラリの groupBy: HIERARCHY_GROUP_BY（階層グルーピング）と
+   *  headingLevel / showUnits で使用する。heading（見出し）は level を持ち、
+   *  リスト由来のグループは unit として扱う。 */
+  hierarchy: HierarchySegment[]
+  /** 親カードの globalKey。カードグループ（サブカードのインライン展開）で使用する。
+   *  親がタスクでない（リスト等）場合は未設定。 */
+  parentId?: string
+  /** 後方互換・フィルタ用。hierarchy の name 配列。例: ["Heading A", "List B"] */
   section: string[]
   /** 後方互換・フィルタ用。section[0] と等価 */
   sectionTitle: string
@@ -104,19 +110,23 @@ function extractDescription(children: Node[]): string | undefined {
   return parts.length > 0 ? parts.join('\n') : undefined
 }
 
-function taskToCard(node: TaskNode, sectionPath: string[], sourcePath: string): KanbanCard {
-  const sectionTitle = sectionPath[0] ?? ''
-  const groupTitle = sectionPath[sectionPath.length - 1] ?? ''
+function taskToCard(node: TaskNode, hierarchy: HierarchySegment[], sourcePath: string): KanbanCard {
+  const section = hierarchy.map(seg => seg.name)
+  const sectionTitle = section[0] ?? ''
+  const groupTitle = section[section.length - 1] ?? ''
   const card: KanbanCard = {
     id: makeGlobalKey(sourcePath, node.id),
     title: node.text,
     status: node.status,
-    section: [...sectionPath],
+    hierarchy: [...hierarchy],
+    section,
     sectionTitle,
     groupTitle,
     depth: node.depth,
     sourcePath,
   }
+  // 親がタスクの場合のみカードグループの親子関係を張る（親リストにはカードが無い）
+  if (node.parentId !== undefined) card.parentId = makeGlobalKey(sourcePath, node.parentId)
   const description = extractDescription(node.children)
   if (description !== undefined) card.description = description
   if (node.meta?.schedule !== undefined) card.schedule = node.meta.schedule
@@ -128,20 +138,21 @@ function taskToCard(node: TaskNode, sectionPath: string[], sourcePath: string): 
 
 function extractFromNodes(
   nodes: Node[],
-  sectionPath: string[],
+  hierarchy: HierarchySegment[],
   sourcePath: string,
   result: KanbanCard[],
 ): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
     if (node.type === 'task') {
-      result.push(taskToCard(node, sectionPath, sourcePath))
+      result.push(taskToCard(node, hierarchy, sourcePath))
       if (node.children.length > 0) {
-        extractFromNodes(node.children, sectionPath, sourcePath, result)
+        extractFromNodes(node.children, hierarchy, sourcePath, result)
       }
     } else if (node.type === 'list') {
       if (node.children.length > 0) {
-        extractFromNodes(node.children, [...sectionPath, node.text], sourcePath, result)
+        // リストグループは unit 段として階層に追加する
+        extractFromNodes(node.children, [...hierarchy, { type: 'unit', name: node.text }], sourcePath, result)
       }
     }
   }
@@ -149,15 +160,18 @@ function extractFromNodes(
 
 function extractFromSection(
   section: Section,
-  parentPath: string[],
+  parentHierarchy: HierarchySegment[],
   sourcePath: string,
   result: KanbanCard[],
 ): void {
-  // 無名セクション（lineNumber=-1, title=""）はパスに追加しない
-  const sectionPath = section.title ? [...parentPath, section.title] : [...parentPath]
-  extractFromNodes(section.children, sectionPath, sourcePath, result)
+  // 無名セクション（lineNumber=-1, title=""）は階層に追加しない。
+  // section.depth は Markdown 見出しレベル（# = 1, ## = 2, ...）。
+  const hierarchy: HierarchySegment[] = section.title
+    ? [...parentHierarchy, { type: 'heading', level: section.depth, name: section.title }]
+    : [...parentHierarchy]
+  extractFromNodes(section.children, hierarchy, sourcePath, result)
   for (const sub of section.subSections) {
-    extractFromSection(sub, sectionPath, sourcePath, result)
+    extractFromSection(sub, hierarchy, sourcePath, result)
   }
 }
 
@@ -167,9 +181,9 @@ function fileBaseName(path: string): string {
   return name.replace(/\.md$/i, '')
 }
 
-function extractFromDocument(doc: Document, sourcePath: string, initialPath: string[], result: KanbanCard[]): void {
+function extractFromDocument(doc: Document, sourcePath: string, initialHierarchy: HierarchySegment[], result: KanbanCard[]): void {
   for (const section of doc.sections) {
-    extractFromSection(section, initialPath, sourcePath, result)
+    extractFromSection(section, initialHierarchy, sourcePath, result)
   }
 }
 
@@ -187,25 +201,31 @@ export function extractKanbanCards(sources: SourceEntry[]): KanbanCard[] {
   const result: KanbanCard[] = []
   const multiSource = sources.length > 1
   for (const { path, doc } of sources) {
-    const initialPath = multiSource ? [fileBaseName(path)] : []
-    extractFromDocument(doc, path, initialPath, result)
+    // 複数ファイル時はファイル名を最上位の heading 段（level 0）として階層に追加する
+    const initialHierarchy: HierarchySegment[] = multiSource
+      ? [{ type: 'heading', level: 0, name: fileBaseName(path) }]
+      : []
+    extractFromDocument(doc, path, initialHierarchy, result)
   }
   return result
 }
 
 /**
- * ライブラリの section 配列フィールドと sectionDepth を使った階層グルーピング設定を生成する。
- * groups にカードの Markdown 出現順の order を付与することで、表示順を Markdown 記述順に固定する。
+ * ライブラリの階層グルーピング（groupBy: HIERARCHY_GROUP_BY）設定を生成する。
+ * headingLevel / showUnits で採用する階層段を決め、カードの Markdown 出現順の order を
+ * groups に付与することで、グループの表示順を Markdown 記述順に固定する。
+ *
+ * @param headingLevel 先頭から採用する heading 段数（最小 1、既定 2）
+ * @param showUnits    採用した最後の heading 以降の unit 段もグループ化に含めるか（既定 false）
  */
 export function createKanbanConfig(
   cards: KanbanCard[],
-  groupByField: string = 'section',
-  sectionDepth: number = 2,
+  headingLevel: number = 2,
+  showUnits: boolean = false,
 ): KanbanBoardConfig {
   const groupOrderMap = new Map<string, number>()
   for (const card of cards) {
-    const val = card[groupByField as keyof KanbanCard]
-    const gid = resolveGroupId(val, sectionDepth)
+    const gid = resolveHierarchyGroupId(card.hierarchy, headingLevel, showUnits)
     if (!groupOrderMap.has(gid)) groupOrderMap.set(gid, groupOrderMap.size)
   }
   const groups: GroupDefinition[] = [...groupOrderMap.entries()].map(([id, order]) => {
@@ -215,8 +235,9 @@ export function createKanbanConfig(
 
   return {
     ...DEFAULT_KANBAN_CONFIG,
-    groupBy: groupByField,
-    sectionDepth,
+    groupBy: HIERARCHY_GROUP_BY,
+    headingLevel,
+    showUnits,
     groups,
   }
 }
