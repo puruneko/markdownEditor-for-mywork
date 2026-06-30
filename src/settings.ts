@@ -17,6 +17,8 @@ export interface MdAstEditorSettings {
   healthStaleDays: number
   /** HealthView: 各ルールの ON/OFF。 */
   healthRules: HealthRuleConfig
+  /** DnD でタスクをカレンダー時間グリッドにドロップしたときの既定所要時間（分）。 */
+  defaultDurationMin: number
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   indexScope: 'vault',
   indexScopeFolder: '',
   healthStaleDays: 7,
+  defaultDurationMin: 60,
   healthRules: {
     undated: true,
     overdue: true,

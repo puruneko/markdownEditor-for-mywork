@@ -4,5 +4,15 @@
   "debounceMs": 300,
   "scrollOffsetLines": 4,
   "indexScope": "current-file",
-  "indexScopeFolder": ""
+  "indexScopeFolder": "",
+  "healthStaleDays": 7,
+  "defaultDurationMin": 60,
+  "healthRules": {
+    "undated": true,
+    "overdue": true,
+    "stale": true,
+    "unresolvedDeps": true,
+    "readyTasks": true,
+    "malformed": true
+  }
 }

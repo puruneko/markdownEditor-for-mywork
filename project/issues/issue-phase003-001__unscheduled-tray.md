@@ -47,11 +47,11 @@
 - 抽出は純関数に寄せてテスト可能にする（完了・日付ありが除外されること）。
 
 ### TODO
-- [ ] 抽出（未完・日付なし）を `filterNodes` で実装。
-- [ ] トレイビュー（列挙・ドラッグ源＝W と同一ペイロード）。
-- [ ] `onChange` 購読で自動更新・購読解除。
-- [ ] `plugin.ts` に登録・コマンド・リボン追加。
-- [ ] テストを追加・全見直し（下記テスト観点）。
+- [x] 抽出（未完・日付なし）を `filterNodes` で実装。
+- [x] トレイビュー（列挙・ドラッグ源＝W と同一ペイロード）。
+- [x] `onChange` 購読で自動更新・購読解除（`ShadowItemView` の `registerUpdater` 機構を再利用）。
+- [x] `plugin.ts` に登録・コマンド・リボン追加。
+- [x] テストを追加・全見直し（下記テスト観点）。
 
 ### 受け入れ基準（すべて満たすこと）
 - スコープ内の「未完・日付なし」だけがトレイに並ぶ。
@@ -67,6 +67,10 @@
 ### 履歴（追記のみ）
 - 2026-06-28 — 起票。
 - 2026-06-28 — Haiku 実装可能な水準へ加筆（抽出条件確定・W とのペイロード共有を明記・実装順を指定）。
+- 2026-06-29 — 実装完了。
+  新規ファイル: `src/lib/tray/extract-unscheduled.ts`・`.test.ts`、`src/views/UnscheduledTrayView.ts`・`UnscheduledTrayViewMount.svelte`。
+  変更ファイル: `src/plugin.ts`。
+  全ユニットテスト 438 件パス（新規 16 件含む）。
 
 ---
 
@@ -76,6 +80,6 @@
 - phase: 003
 - related_specs: なし（仕様は本issueに内包）
 - related_decisions:
-- target_files: src/views/UnscheduledTrayView.ts, src/views/UnscheduledTrayViewMount.svelte, src/plugin.ts
+- target_files: src/lib/tray/extract-unscheduled.ts, src/views/UnscheduledTrayView.ts, src/views/UnscheduledTrayViewMount.svelte, src/plugin.ts
 - created: 2026-06-28
-- updated: 2026-06-28
+- updated: 2026-06-29

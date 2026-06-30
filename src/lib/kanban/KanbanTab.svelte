@@ -12,6 +12,9 @@
   import { patchNodeStatus } from '../calendar/markdown-patch'
   import type { Document, TaskNode, Status } from '../parser/types'
   import type { SourceEntry } from '../viewmodel/contract'
+  import { makeGlobalKey } from '../viewmodel/global-key'
+  import { MD_TASK_MIME } from '../../editor/task-drag-source'
+  import type { TaskDragPayload } from '../../editor/task-drag-source'
 
   interface Props {
     /** 複数ソース（ファイルパスと Document のペア）— カード抽出とキーの名前空間化に使用 */
@@ -57,6 +60,41 @@
     void onNodePatch(card.id, (md, _doc, node) => patchNodeStatus(md, node, newStatus))
   }
 
+  // ----------------------------------------------------------------
+  // 外部ドロップ（エディタからのタスク DnD）
+  // ----------------------------------------------------------------
+
+  const VALID_STATUSES = new Set<string>(['todo', 'doing', 'done', 'blocked', 'hold'])
+
+  function handleExternalDragOver(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes(MD_TASK_MIME)) return
+    const target = e.target as HTMLElement
+    if (!target.closest?.('[data-lane-id]')) return
+    e.preventDefault()
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+  }
+
+  function handleExternalDrop(e: DragEvent) {
+    const raw = e.dataTransfer?.getData(MD_TASK_MIME)
+    if (!raw) return
+
+    // status grouping のときのみ対応（lane ID = status 値）
+    if (userGroupBy !== 'status') return
+
+    let payload: TaskDragPayload
+    try { payload = JSON.parse(raw) } catch { return }
+
+    const target = e.target as HTMLElement
+    const laneEl = target.closest?.('[data-lane-id]') as HTMLElement | null
+    if (!laneEl) return
+
+    const laneId = laneEl.getAttribute('data-lane-id')
+    if (!laneId || !VALID_STATUSES.has(laneId)) return
+
+    const globalKey = makeGlobalKey(payload.sourcePath, payload.nodeId)
+    void onNodePatch(globalKey, (md, _doc, node) => patchNodeStatus(md, node, laneId as Status))
+  }
+
   function handleConfigChange(event: ConfigChangeEvent): void {
     userLanes = event.config.lanes
     userGroupBy = event.config.groupBy ?? 'section'
@@ -98,7 +136,11 @@
   </div>
 {/snippet}
 
-<div class="kanban-tab">
+<div
+  class="kanban-tab"
+  ondragover={handleExternalDragOver}
+  ondrop={handleExternalDrop}
+>
   <KanbanBoard
     {cards}
     {config}

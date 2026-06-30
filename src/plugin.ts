@@ -6,11 +6,13 @@ import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
 import { AgendaView, AGENDA_VIEW_TYPE } from './views/AgendaView'
 import { HealthView, HEALTH_VIEW_TYPE } from './views/HealthView'
+import { UnscheduledTrayView, UNSCHEDULED_TRAY_VIEW_TYPE } from './views/UnscheduledTrayView'
 import { FileSync } from './sync/file-sync'
 import { AstIndex } from './sync/ast-index'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { createNotationLintExtension } from './editor/notation-lint'
+import { createTaskDragSourceExtension } from './editor/task-drag-source'
 import { createQueryBlockProcessor } from './views/query-block'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
@@ -108,6 +110,11 @@ export class MdAstEditorPlugin extends Plugin {
       (leaf) => new HealthView(leaf, this.settings, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
+    this.registerView(
+      UNSCHEDULED_TRAY_VIEW_TYPE,
+      (leaf) => new UnscheduledTrayView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+    )
+
     this.addCommand({
       id: 'open-ast-view',
       name: 'AST View を開く',
@@ -144,6 +151,12 @@ export class MdAstEditorPlugin extends Plugin {
       callback: () => void this.openView(HEALTH_VIEW_TYPE),
     })
 
+    this.addCommand({
+      id: 'open-unscheduled-tray',
+      name: '未スケジュール・トレイを開く',
+      callback: () => void this.openView(UNSCHEDULED_TRAY_VIEW_TYPE),
+    })
+
     if (this.settings.showRibbonIcon) {
       this.addRibbonIcon('code-2', 'AST View を開く', () => {
         void this.openView(AST_VIEW_TYPE)
@@ -163,12 +176,24 @@ export class MdAstEditorPlugin extends Plugin {
       this.addRibbonIcon('stethoscope', 'Health Check を開く', () => {
         void this.openView(HEALTH_VIEW_TYPE)
       })
+      this.addRibbonIcon('inbox', '未スケジュール・トレイを開く', () => {
+        void this.openView(UNSCHEDULED_TRAY_VIEW_TYPE)
+      })
     }
 
     if (this.settings.enableTaskHighlight) {
       this.registerEditorExtension(taskDecorationPlugin)
       this.registerEditorExtension(createNotationLintExtension())
     }
+
+    this.registerEditorExtension(
+      createTaskDragSourceExtension(() => {
+        const doc = this.fileSync.getCurrentDocument()
+        const file = this.fileSync.getCurrentFile()
+        if (!doc || !file) return null
+        return { sourcePath: file.path, doc }
+      }),
+    )
 
     this.registerMarkdownCodeBlockProcessor(
       'task-query',
@@ -195,6 +220,7 @@ export class MdAstEditorPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(AGENDA_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(HEALTH_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(UNSCHEDULED_TRAY_VIEW_TYPE)
   }
 
   async loadSettings(): Promise<void> {
