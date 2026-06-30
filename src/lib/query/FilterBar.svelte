@@ -2,7 +2,12 @@
   import type { FilterQuery } from './filter'
   import type { Status } from '../parser/types'
 
-  let { query = $bindable<FilterQuery>({}) } = $props()
+  interface Props {
+    query?: FilterQuery
+    onReload?: () => void
+  }
+
+  let { query = $bindable<FilterQuery>({}), onReload }: Props = $props()
 
   let expanded = $state(false)
 
@@ -64,6 +69,15 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="filter-bar" onfocusout={handleFocusOut}>
+  {#if onReload}
+    <button
+      class="reload-btn"
+      onclick={onReload}
+      type="button"
+      aria-label="強制リロード"
+      title="強制リロード（現在のMDファイルを再パース）"
+    >⟳</button>
+  {/if}
   <button
     class="filter-chip"
     class:active={activeCount > 0}
@@ -142,6 +156,30 @@
   .filter-bar {
     position: relative;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .reload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--background-modifier-border, #444);
+    background: var(--background-secondary, #2d2d2d);
+    color: var(--text-muted, #999);
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .reload-btn:hover {
+    background: var(--background-modifier-hover, #3a3a3a);
+    color: var(--text-normal, #d4d4d4);
   }
 
   .filter-chip {

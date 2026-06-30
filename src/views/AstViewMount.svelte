@@ -9,9 +9,10 @@
     registerUpdater: (fn: (sources: SourceEntry[]) => void) => void
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+    onReload: () => void
   }
 
-  let { sources: initialSources, registerUpdater }: Props = $props()
+  let { sources: initialSources, registerUpdater, onReload }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -41,7 +42,7 @@
 
 <div class="ast-mount">
   <div class="filter-bar-row">
-    <FilterBar bind:query />
+    <FilterBar bind:query {onReload} />
   </div>
   <div class="ast-view">
     <pre class="ast-json">{filteredDoc ? stringify(filteredDoc) : ''}</pre>

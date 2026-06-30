@@ -47,6 +47,20 @@ export class FileSync {
     return this.currentMarkdown
   }
 
+  /** 現在のファイルを強制的に再パースして購読者に通知する（内容が変わっていなくても実行）。 */
+  async forceReparse(): Promise<void> {
+    if (!this.currentFile) return
+    try {
+      const content = await this.app.vault.read(this.currentFile)
+      const doc = parseMarkdown(content)
+      this.currentDoc = doc
+      this.currentMarkdown = content
+      this.notify(doc, this.currentFile)
+    } catch {
+      // 読み取りエラーは無視する。
+    }
+  }
+
   /** 現在のアクティブファイルを返す。 */
   getCurrentFile(): TFile | null {
     return this.currentFile

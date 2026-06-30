@@ -40,6 +40,7 @@ export interface ViewMountProps {
   registerUpdater: (fn: (sources: SourceEntry[]) => void) => void
   onNodeClick: (globalKey: string) => void
   onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+  onReload: () => void
 }
 
 export abstract class ShadowItemView extends ItemView {
@@ -111,6 +112,14 @@ export abstract class ShadowItemView extends ItemView {
       )
     }
 
+    const onReload = (): void => {
+      if (this.astIndex) {
+        void this.astIndex.forceReparse()
+      } else {
+        void this.fileSync.forceReparse()
+      }
+    }
+
     this.component = mount(this.getMountComponent(), {
       target: mountTarget,
       props: {
@@ -120,6 +129,7 @@ export abstract class ShadowItemView extends ItemView {
         },
         onNodeClick,
         onNodePatch,
+        onReload,
         ...this.getExtraMountProps(),
       },
     })

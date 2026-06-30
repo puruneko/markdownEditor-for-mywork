@@ -10,6 +10,7 @@
     registerUpdater: (fn: (sources: SourceEntry[]) => void) => void
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+    onReload: () => void
     config?: HealthConfig
   }
 

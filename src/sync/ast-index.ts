@@ -63,9 +63,30 @@ export class AstIndex {
     this.scopeFolder = options.scopeFolder ?? ''
   }
 
-  /** 'current-file' スコープ時に参照するファイルパスを更新する。 */
+  /**
+   * 'current-file' スコープ時に参照するファイルパスを更新する。
+   * パスが実際に変わった場合かつ scope が 'current-file' のとき、
+   * 新しいファイルを再パースして購読者に通知する。
+   */
   setCurrentFilePath(path: string | null): void {
+    if (this.currentFilePath === path) return
     this.currentFilePath = path
+    if (this.scope !== 'current-file') return
+    if (path === null) {
+      this.notify()
+      return
+    }
+    const file = this.app.vault.getAbstractFileByPath(path)
+    if (file) {
+      void this.updateFile(file as TFile)
+    } else {
+      this.notify()
+    }
+  }
+
+  /** 現スコープ内の全ファイルを強制的に再読み込み・再パースする。 */
+  async forceReparse(): Promise<void> {
+    await this.initialScan()
   }
 
   /**

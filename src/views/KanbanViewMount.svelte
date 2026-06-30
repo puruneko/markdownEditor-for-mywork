@@ -10,9 +10,10 @@
     registerUpdater: (fn: (sources: SourceEntry[]) => void) => void
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
+    onReload: () => void
   }
 
-  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch }: Props = $props()
+  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -29,7 +30,7 @@
 
 <div class="kanban-mount">
   <div class="filter-bar-row">
-    <FilterBar bind:query />
+    <FilterBar bind:query {onReload} />
   </div>
   <KanbanTab sources={filteredSources} {onNodePatch} {onNodeClick} />
 </div>
