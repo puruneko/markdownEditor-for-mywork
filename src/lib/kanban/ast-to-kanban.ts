@@ -110,7 +110,12 @@ function extractDescription(children: Node[]): string | undefined {
   return parts.length > 0 ? parts.join('\n') : undefined
 }
 
-function taskToCard(node: TaskNode, hierarchy: HierarchySegment[], sourcePath: string): KanbanCard {
+function taskToCard(
+  node: TaskNode,
+  hierarchy: HierarchySegment[],
+  sourcePath: string,
+  ancestorTaskId: string | undefined,
+): KanbanCard {
   const section = hierarchy.map(seg => seg.name)
   const sectionTitle = section[0] ?? ''
   const groupTitle = section[section.length - 1] ?? ''
@@ -125,8 +130,9 @@ function taskToCard(node: TaskNode, hierarchy: HierarchySegment[], sourcePath: s
     depth: node.depth,
     sourcePath,
   }
-  // 親がタスクの場合のみカードグループの親子関係を張る（親リストにはカードが無い）
-  if (node.parentId !== undefined) card.parentId = makeGlobalKey(sourcePath, node.parentId)
+  // カードグループ：最も近い祖先タスクの globalKey を親として張る。
+  // リスト（ユニット）はカード化されないため、祖先タスクの localId まで遡った値が渡ってくる。
+  if (ancestorTaskId !== undefined) card.parentId = makeGlobalKey(sourcePath, ancestorTaskId)
   const description = extractDescription(node.children)
   if (description !== undefined) card.description = description
   if (node.meta?.schedule !== undefined) card.schedule = node.meta.schedule
@@ -141,18 +147,20 @@ function extractFromNodes(
   hierarchy: HierarchySegment[],
   sourcePath: string,
   result: KanbanCard[],
+  ancestorTaskId: string | undefined,
 ): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
     if (node.type === 'task') {
-      result.push(taskToCard(node, hierarchy, sourcePath))
+      result.push(taskToCard(node, hierarchy, sourcePath, ancestorTaskId))
       if (node.children.length > 0) {
-        extractFromNodes(node.children, hierarchy, sourcePath, result)
+        // 子の祖先タスクは「このタスク自身」
+        extractFromNodes(node.children, hierarchy, sourcePath, result, node.id)
       }
     } else if (node.type === 'list') {
       if (node.children.length > 0) {
-        // リストグループは unit 段として階層に追加する
-        extractFromNodes(node.children, [...hierarchy, { type: 'unit', name: node.text }], sourcePath, result)
+        // リストグループは unit 段として階層に追加する（カード化しないので祖先タスクは透過）
+        extractFromNodes(node.children, [...hierarchy, { type: 'unit', name: node.text }], sourcePath, result, ancestorTaskId)
       }
     }
   }
@@ -169,7 +177,7 @@ function extractFromSection(
   const hierarchy: HierarchySegment[] = section.title
     ? [...parentHierarchy, { type: 'heading', level: section.depth, name: section.title }]
     : [...parentHierarchy]
-  extractFromNodes(section.children, hierarchy, sourcePath, result)
+  extractFromNodes(section.children, hierarchy, sourcePath, result, undefined)
   for (const sub of section.subSections) {
     extractFromSection(sub, hierarchy, sourcePath, result)
   }

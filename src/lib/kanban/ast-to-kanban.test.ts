@@ -16,6 +16,48 @@ describe('extractKanbanCards', () => {
     expect(extractKanbanCards(src(''))).toEqual([])
   })
 
+  it('子タスクの parentId は親タスクカードの id を指す', () => {
+    const cards = extractKanbanCards(src('# S\n\n- [ ] 親\n  - [ ] 子'))
+    const parent = cards.find(c => c.title === '親')!
+    const child = cards.find(c => c.title === '子')!
+    expect(child.parentId).toBe(parent.id)
+  })
+
+  it('最上位タスク（祖先タスク無し）の parentId は未設定', () => {
+    const cards = extractKanbanCards(src('# S\n\n- [ ] 親\n  - [ ] 子'))
+    const parent = cards.find(c => c.title === '親')!
+    expect(parent.parentId).toBeUndefined()
+  })
+
+  it('孫タスクの parentId は直近の親タスク（子）を指す', () => {
+    const cards = extractKanbanCards(src('# S\n\n- [ ] 親\n  - [ ] 子\n    - [ ] 孫'))
+    const child = cards.find(c => c.title === '子')!
+    const grand = cards.find(c => c.title === '孫')!
+    expect(grand.parentId).toBe(child.id)
+  })
+
+  it('間にリスト（ユニット）が挟まっても parentId は最も近い祖先タスクを指す', () => {
+    const cards = extractKanbanCards(src('# S\n\n- [ ] 親\n  - ユニット\n    - [ ] 子'))
+    const parent = cards.find(c => c.title === '親')!
+    const child = cards.find(c => c.title === '子')!
+    // ユニット（リスト）はカード化されないため、その id を指してはならない
+    expect(child.parentId).toBe(parent.id)
+  })
+
+  it('リスト直下の最上位タスクは parentId 未設定（リスト id を指さない）', () => {
+    const cards = extractKanbanCards(src('# S\n\n- ユニット\n  - [ ] タスク'))
+    const task = cards.find(c => c.title === 'タスク')!
+    expect(task.parentId).toBeUndefined()
+  })
+
+  it('全カードの parentId は宙吊りにならない（存在するカード id を指す）', () => {
+    const cards = extractKanbanCards(src('# S\n\n- [ ] 親\n  - ユニット\n    - [ ] 子\n      - [ ] 孫'))
+    const ids = new Set(cards.map(c => c.id))
+    for (const c of cards) {
+      if (c.parentId !== undefined) expect(ids.has(c.parentId)).toBe(true)
+    }
+  })
+
   it('TaskNodeをKanbanCardに変換する', () => {
     const cards = extractKanbanCards(src('# プロジェクト\n\n- [ ] タスクA\n- [x] タスクB'))
     expect(cards).toHaveLength(2)

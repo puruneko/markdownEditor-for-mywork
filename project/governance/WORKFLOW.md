@@ -51,6 +51,45 @@ If uncertain → prefer appending to the most recent related Issue.
 
 ---
 
+### 2.4 Required Detail Level (Haiku-Executable Standard)
+
+Every Issue must be written in enough detail that a SMALL model
+(e.g. Claude Haiku) can implement it with ZERO interpretation gap.
+
+The test to apply before finalizing an Issue:
+
+> "If Haiku alone read this Issue and the named files, would it produce
+>  the intended implementation without guessing, inferring intent, or
+>  making a design decision?"
+
+If the answer is not clearly "yes", the Issue is UNDER-SPECIFIED and
+must be expanded before it is considered ready.
+
+To satisfy this standard, an Issue MUST make the following explicit:
+
+- **Root cause**: the concrete reason the change is needed, cited to
+  exact `path:line` (not "somewhere in X").
+- **Exact edit sites**: every file and function to change, by name.
+- **Before / After**: for each change, show the current code (or its
+  behavior) and the intended code (or its behavior). Prefer literal
+  snippets over prose when logic changes.
+- **Algorithm / data-flow**: step-by-step, including how data links
+  between structures (field-by-field mapping where relevant).
+- **All branch/edge cases**: enumerate them; do not leave "handle other
+  cases appropriately".
+- **Test cases**: concrete inputs → expected outputs, so a model can
+  write the tests without inventing scenarios.
+- **Out of scope**: state explicitly what must NOT be changed, to
+  prevent scope drift.
+
+No creative gap-filling is allowed at implementation time
+(`AI_RUNTIME_RULES §2, §4`). Therefore the gap must be removed at
+authoring time. Ambiguity in an Issue is an authoring defect.
+
+This standard applies to BOTH new Issues and Issue updates.
+
+---
+
 ## 3. Issue Update Policy (History Preservation)
 
 When updating an Issue:
