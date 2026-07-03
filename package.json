@@ -12,8 +12,10 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test:unit": "npm run libs:update && vitest run",
     "test:e2e": "npm run libs:update && playwright test",
-    "test:obs:e2e": "npm run libs:update && wdio run wdio.conf.mts",
-    "test": "npm run libs:update && npm run test:unit && npm run build && npm run test:obs:e2e",
+    "test:obs:e2e": "npm run build && wdio run wdio.conf.mts",
+    "test:obs:e2e:run": "wdio run wdio.conf.mts",
+    "test:obs:e2e:headed": "npm run build && OBS_E2E_HEADED=1 wdio run wdio.conf.mts",
+    "test": "npm run test:unit && npm run test:obs:e2e",
     "obs:update:manifest": "cp ./main.js ./manifest.json /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
   },
   "devDependencies": {

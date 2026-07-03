@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX改善提案レポート（editor / gantt / calendar / kanban） — md-ast-editor</title>
+<style>
+  :root{
+    --bg:#fbfbfd; --panel:#ffffff; --ink:#1c2333; --muted:#5f6b7d; --line:#dfe4ec;
+    --accent:#2563eb; --accent-soft:#eff4ff;
+    --green:#15803d; --green-soft:#ecfdf3;
+    --amber:#b45309; --amber-soft:#fffaeb;
+    --red:#b91c1c; --red-soft:#fef2f2;
+    --purple:#7c3aed; --purple-soft:#f5f0ff;
+    --mono:"SF Mono",Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Roboto,sans-serif;
+    line-height:1.85;font-size:15px}
+  .wrap{max-width:1060px;margin:0 auto;padding:48px 30px 100px}
+  header.cover{border-bottom:3px solid var(--accent);padding-bottom:26px;margin-bottom:36px}
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+  h1{font-size:28px;margin:.3em 0 .15em;line-height:1.35}
+  .sub{color:var(--muted);font-size:13.5px}
+  h2{font-size:22px;margin:60px 0 14px;padding:6px 0 6px 14px;border-left:5px solid var(--accent)}
+  h3{font-size:17px;margin:34px 0 10px}
+  h4{font-size:15px;margin:22px 0 6px;color:var(--accent)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-size:13px;font-family:var(--mono);color:#0f3b8c}
+  .muted{color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;
+    box-shadow:0 1px 3px rgba(20,30,60,.05);margin:14px 0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 28px}
+  .toc ol{margin:8px 0;padding-left:22px}
+  .toc a{text-decoration:none}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px;background:var(--panel)}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f4f6fb;font-weight:700}
+  .pill{display:inline-block;border-radius:999px;padding:1px 11px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .p-host{background:var(--accent-soft);color:var(--accent);border:1px solid #c5d7f7}
+  .p-lib{background:var(--purple-soft);color:var(--purple);border:1px solid #ddd0f5}
+  .p-nota{background:var(--amber-soft);color:var(--amber);border:1px solid #f4dfb0}
+  .p-bug{background:var(--red-soft);color:var(--red);border:1px solid #f3c6c6}
+  .p-idea{background:var(--green-soft);color:var(--green);border:1px solid #bbe5c8}
+  .item{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;
+    background:var(--panel);padding:14px 20px;margin:16px 0}
+  .item.nota{border-left-color:#f59e0b}
+  .item.bug{border-left-color:#ef4444}
+  .item h4{margin:0 0 4px;color:var(--ink);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .item .req{color:var(--muted);font-size:13.5px;margin:4px 0}
+  .item .plan{background:#f6f8fc;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13.5px}
+  .item .idea{background:var(--green-soft);border:1px solid #bbe5c8;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13.5px}
+  .item .idea b:first-child{color:var(--green)}
+  .item .q{background:var(--red-soft);border:1px solid #f3c6c6;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:13.5px}
+  .item .q b:first-child{color:var(--red)}
+  .flow{background:#0f1420;color:#d6deea;border-radius:10px;padding:14px 18px;margin:14px 0;
+    font-family:var(--mono);font-size:12.5px;white-space:pre;overflow-x:auto;line-height:1.6}
+  .flow .hi{color:#c4a5ff} .flow .g{color:#6ee7a0} .flow .y{color:#fcd34d} .flow .c{color:#67e8f9} .flow .d{color:#6b7684}
+  blockquote{margin:14px 0;padding:10px 18px;border-left:4px solid var(--purple);
+    background:var(--purple-soft);border-radius:0 8px 8px 0;color:#3d3355;font-size:14px}
+  ul.clean{margin:8px 0;padding-left:22px}
+  ul.clean li{margin:5px 0}
+  .footnote{color:var(--muted);font-size:12.5px;margin-top:64px;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">UX Improvement Proposals · For Team Review</div>
+  <h1>UX 改善提案レポート — editor / gantt / calendar / kanban</h1>
+  <p class="sub">
+    実運用フィードバック（2026-07-03 オーナー提示）の整理と実装検討資料。<br>
+    作成日：2026-07-03 ・ 関連資料：<a href="completeness-review-and-third-party-comparison.html">完成度評価と第三者比較（2026-07-03）</a> ・
+    実装着手時は Issue 駆動ガバナンスに従い各項目を Issue 化すること
+  </p>
+</header>
+
+<div class="toc">
+  <b>目次</b>
+  <ol>
+    <li><a href="#s0">整理の考え方 — 3 つのレイヤーに分解する</a></li>
+    <li><a href="#s1">横断テーマ A：記法の拡張（最初に決めるべきもの）</a></li>
+    <li><a href="#s2">横断テーマ B：共通設定（祝日・表示パラメータ）</a></li>
+    <li><a href="#s3">Editor の改善</a></li>
+    <li><a href="#s4">Gantt の改善</a></li>
+    <li><a href="#s5">Calendar の改善</a></li>
+    <li><a href="#s6">Kanban の改善（バグ含む）</a></li>
+    <li><a href="#s7">実装順の提案（依存関係）</a></li>
+    <li><a href="#s8">Issue 化候補一覧</a></li>
+    <li><a href="#s9">チームで決めたい論点（未決事項リスト）</a></li>
+  </ol>
+</div>
+
+<h2 id="s0">0. 整理の考え方 — 3 つのレイヤーに分解する</h2>
+
+<p>提示された改善項目はビュー別に書かれているが、実装の観点では<b>「どのレイヤーに手が入るか」</b>で分類し直すと検討しやすい。本プロダクトは 3 レイヤー構成である：</p>
+
+<table>
+  <tr><th style="width:130px">レイヤー</th><th>実体</th><th>変更の重さ</th></tr>
+  <tr><td><span class="pill p-nota">記法/パーサー</span></td><td>本リポジトリ <code>src/lib/parser/</code>（meta-keys・remark プラグイン・normalize）</td><td><b>最重</b>。全ビュー・lint・patch・テストに波及。Spec 起票必須。後方互換に注意</td></tr>
+  <tr><td><span class="pill p-host">ホスト</span></td><td>本リポジトリ（ast-to-* 変換・設定・エディタ装飾・patch）</td><td>中。ビュー単位で閉じる</td></tr>
+  <tr><td><span class="pill p-lib">ライブラリ</span></td><td>別リポジトリ <code>../calendar-for-mywork</code> / <code>../ganttchart-for-mywork</code> / <code>../kanban-for-mywork</code>（file: 参照）</td><td>中。<b>汎用性を保つ</b>のがライブラリ方針（kaisou 構想メモ）なので、md 固有概念を持ち込まず prop で渡す設計にする</td></tr>
+</table>
+
+<p>今回の項目を分類すると、<b>記法レイヤーに触るものが 4 つ</b>（仮置き <code>?</code>・<code>@plan</code>・schedule 短縮・メタ位置規約）あり、これらは全ビューの前提になるため<b>最初に仕様を確定すべき</b>。逆にガント・カレンダーの見た目系はライブラリ側で独立に進められる。</p>
+
+<div class="flow"><span class="hi">記法レイヤー（先に決める）</span>
+  ├ 仮置き予定 <span class="y">@schedule?:</span>          → 全ビューの描画・Health に波及
+  ├ 新メタ <span class="y">@plan</span>（この期間でやる枠）   → gantt 点線枠・Health に波及
+  ├ schedule 短縮記法                  → lint・補完・正規化に波及
+  └ メタ行の位置規約（タスク行直下）    → lint・upsert-meta に波及
+<span class="hi">共通設定（ホスト）</span>
+  └ 祝日・週末定義 / 表示パラメータ設定 → gantt・calendar 両方へ prop で配布
+<span class="hi">ビュー個別（並行可能）</span>
+  ├ editor：ハイライト強化・日付ピッカー
+  ├ gantt：サブタスク表示・マイルストン・done 表現・左パネル
+  ├ calendar：種別の視覚区別
+  └ kanban：DnD バグ修正・親カード/ユニットのラベル表示</div>
+
+<h2 id="s1">1. 横断テーマ A：記法の拡張（最初に決めるべきもの）</h2>
+
+<h3>A-1. 仮置き予定 — メタキー末尾の <code>?</code></h3>
+<div class="item nota">
+  <h4>要望 <span class="pill p-nota">記法</span><span class="pill p-lib">gantt/calendar</span></h4>
+  <p class="req"><code>@schedule?: 2026-07-10T10:00/12:00</code> のように <code>?</code> を付けたら「仮置き」。ガントでは透明度を上げ「?」マークを表示。</p>
+  <div class="plan"><b>実装方針：</b>remark-meta-fields でキー末尾の <code>?</code> を検出し、値は通常どおりパース、<code>Meta</code> 型に <code>tentative: { schedule?: true, due?: true, ... }</code> を追加（キーごとに保持すれば <code>@due?:</code> にも自然に拡張できる）。ast-to-* 変換で <code>tentative</code> フラグをライブラリの item prop へ渡し、描画（半透明＋?バッジ）はライブラリ側。書き戻し（ドラッグ移動）時は <code>?</code> を保持する必要があるため <code>upsert-meta</code>／<code>markdown-patch</code> の対応が必須。lint は「<code>?</code> はキー直後のみ有効」を検査。</div>
+  <div class="idea"><b>追加提案①：</b>仮置きの「確定操作」を用意する — ガント/カレンダーのイベント右クリックまたは編集ダイアログに「確定」ボタンを置き、<code>?</code> を外す書き戻しを行う。手でエディタに戻って <code>?</code> を消す運用だと仮置きが放置される。<br>
+  <b>追加提案②：</b>Health に新ルール「tentative-near：仮置きのまま開始が N 日以内に迫っている」を追加。仮置きの放置は「いつやるか未確定」問題（P2）の再発なので、検知まで含めて一つの機能とみなすのが良い。</div>
+</div>
+
+<h3>A-2. 新メタ <code>@plan</code> — 「この期間内でやる」枠</h3>
+<div class="item nota">
+  <h4>要望 <span class="pill p-nota">記法</span><span class="pill p-lib">gantt</span></h4>
+  <p class="req">「この間でこのタスクをやる」を点線枠で表現。schedule バーを枠が包むイメージ。</p>
+  <div class="plan"><b>実装方針：</b><code>META_KEYS</code> に <code>plan</code> を追加。値は <code>@schedule</code> と同じ期間形式（<code>2026-07-07/07-11</code>）で、<code>schedule-normalize</code> の省略記法をそのまま流用。ガントへは task item に <code>plan?: {start,end}</code> を渡し、ライブラリ側でバーの背後に点線フレームを描画する。日単位精度で十分（時刻は不要）と思われるが要確認（§9）。</div>
+  <div class="idea"><b>追加提案①：</b>意味論を「plan ⊇ schedule」と定義し、Health に「schedule が plan 期間からはみ出している」検査を追加する。枠の意味がツールに理解されていると、単なる飾りではなく計画の整合性チェックになる。<br>
+  <b>追加提案②：</b>@schedule 未設定で @plan だけのタスクを「粗い予定あり」として扱い、Agenda の undated から除外／ガントでは点線枠のみ表示。これで「週は決めたが日時未定」という現実によくある状態を表現できる（仮置き <code>?</code> との使い分け：<code>?</code>＝日時はあるが自信なし、<code>@plan</code> のみ＝日時そのものが未定）。</div>
+</div>
+
+<h3>A-3. 「schedule」が長い — 短縮記法</h3>
+<div class="item nota">
+  <h4>要望 <span class="pill p-nota">記法</span><span class="pill p-host">editor</span></h4>
+  <p class="req">毎回 <code>@schedule:</code> と打つのは長い。</p>
+  <div class="plan"><b>実装方針（2 案）：</b><br>
+  <b>案 1：入力だけ短くする（推奨）</b> — ファイルに残る正規形は <code>@schedule</code> のまま、エディタ補完で <code>@s</code>→<code>@schedule: </code> に展開（issue-phase003-008 のメタ補完に統合）。パーサー・lint・他ツールとの互換に一切影響しない。<br>
+  <b>案 2：エイリアスを正式採用</b> — <code>@sch:</code> / <code>@s:</code> をパーサーが受理（<code>meta-keys</code> にエイリアステーブル追加）。ファイル上も短くなるが、正規形が 2 つになり lint・grep・可読性のコストを恒久的に払う。採用するなら「lint のクイックフィックスで正規形へ揃える／揃えない」を設定にする必要がある。</div>
+  <div class="idea"><b>提案：</b>まず案 1 で運用し、それでも「読むときも長くて邪魔」が残るなら、エディタ装飾（A-4/E-1）で <code>@schedule:</code> を <code>📅</code> 等に<b>表示上だけ置換</b>する（Obsidian の Live Preview 的アプローチ）。データは長く・見た目は短く、が最も安全。</div>
+</div>
+
+<h3>A-4. メタ行の位置規約 — タスク行の直下に置く</h3>
+<div class="item nota">
+  <h4>要望 <span class="pill p-nota">記法</span><span class="pill p-host">lint/patch</span></h4>
+  <p class="req">ネストタスクのメタ情報（@schedule など）はタスク記載行の直下に置く、を規約化したい。</p>
+  <div class="plan"><b>実装方針：</b>これは新機能というより<b>記法 Spec への規約追加＋lint ルール化</b>。①Spec に「メタ行はタスク行直下に連続して置く（サブタスク・メモより前）」を明記、②<code>notation-lint</code> に「メタ行がサブタスクの後にある」警告＋クイックフィックス（直下へ移動）を追加、③<code>upsert-meta</code> の挿入位置ロジック（現状 taskIdx+1 から走査）がこの規約と一致しているかテストで固定。</div>
+  <div class="q"><b>要確認：</b>現状パーサーは「サブタスクの後に書かれたメタ」を拾ってしまうのか、無視するのか。拾う場合、規約化後に既存ファイルが警告だらけにならないよう、クイックフィックスの一括適用（ファイル単位）もセットで用意したい。</div>
+</div>
+
+<h2 id="s2">2. 横断テーマ B：共通設定</h2>
+
+<h3>B-1. 週末・祝日の色分け（gantt / calendar 共通）</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">設定</span><span class="pill p-lib">gantt/calendar</span></h4>
+  <p class="req">日付ヘッダの土日の色を変える。ユーザー定義の祝祭日も指定でき、その日も色を変える。ガント・カレンダー両方。</p>
+  <div class="plan"><b>実装方針：</b>ホスト設定に「週末とみなす曜日（デフォ土日）」と「祝日リスト」を持ち、両ライブラリへ <code>holidays: string[]（YYYY-MM-DD）</code>＋<code>weekend: number[]</code> の prop として配布。ライブラリ側はヘッダ・列背景の色替えのみ実装（祝日の意味は知らない＝汎用性維持）。祝日リストの持ち方は、設定 UI での手入力より<b>Vault 内の markdown/JSON ファイル（例 <code>holidays-2026.md</code>）を指定して読む</b>方が、年次更新・共有・Git 管理に向く。</div>
+  <div class="idea"><b>追加提案：</b>日本の祝日は年ごとに官報で確定する固定リストなので、「内閣府 CSV から変換した 2026 年版をテンプレートとして同梱」しておくと導入即使える。将来 ics 購読（前レポート §7.4）を入れるなら祝日 ics もそこに統合できるため、データ形式は ics 互換の日付配列にしておくと二度手間がない。</div>
+</div>
+
+<h3>B-2. バー横の表示パラメータ設定（gantt）</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">設定</span><span class="pill p-lib">gantt</span></h4>
+  <p class="req">タスク名の横に期間情報のほかステータス等を表示。表示するパラメータは設定で変更できる（デフォはステータスのみ）。</p>
+  <div class="plan"><b>実装方針：</b>ライブラリは「バー右側に任意のラベル配列を描く」汎用 slot/prop（<code>trailingLabels: {text, kind}[]</code>）だけ持ち、<b>何を出すかはホストが組み立てる</b>。ホスト設定に表示項目のチェックリスト（status / due / priority / tags / progress…）を置き、ast-to-gantt で文字列化して渡す。この分担なら将来「進捗率を出したい」等が設定追加だけで済む。</div>
+</div>
+
+<h2 id="s3">3. Editor の改善</h2>
+
+<h3>E-1. ハイライトの工夫（メタ・見出し）</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">editor 装飾</span></h4>
+  <p class="req">メタ情報や H1 要素などをもっと見やすくハイライトしたい。</p>
+  <div class="plan"><b>実装方針：</b><code>task-decoration.ts</code>（CM6 装飾）の拡張。具体案：①メタ行はキー部分をバッジ風（背景色つき角丸）に、値の日付部分を等幅で強調、②H1〜H3 は文字サイズ／下線で段階付け、③ステータス記号 <code>[&gt;]</code>/<code>[!]</code> は色分け（doing=青、blocked=赤系）を行全体の淡い背景にも反映。<b>先にモック（スクリーンショット合成）で見た目を合意してから実装</b>することを推奨 — 装飾は好みの差が出やすく、作り直しが多い領域。</div>
+  <div class="idea"><b>追加提案：</b>A-3 と統合し「表示上の圧縮」もここで扱う（<code>@schedule:</code>→アイコン化、カーソルが乗ったら生テキスト表示）。また仮置き <code>?</code>（A-1）は黄色系、<code>@plan</code>（A-2）は点線下線など、<b>新記法の装飾を記法実装と同じ Issue に含める</b>と抜けがない。</div>
+</div>
+
+<h3>E-2. 期間入力のデートピッカー</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">editor</span> <span class="pill p-idea">既存 issue-phase003-008 と統合</span></h4>
+  <p class="req">@schedule などの期間入力系に、素早く入力できるデートピッカーをアシスト表示。</p>
+  <div class="plan"><b>実装方針：</b>open 中の issue-phase003-008（メタ補完・日付ピッカー）がそのまま該当。今回の要望で加わる要件は<b>「期間（start/end）を 1 つの UI で入れる」</b>こと — カレンダーポップオーバーで開始日クリック→終了日クリック→時刻はテキスト（<code>10:00-12:00</code>）が最速。既存の省略記法（<code>26-07-10T10/12:30</code> 等は normalize が展開）を活かし、ピッカーは<b>省略形のまま挿入</b>するとファイルが冗長にならない。</div>
+</div>
+
+<h2 id="s4">4. Gantt の改善</h2>
+
+<h3>G-1. 左パネルのスリム化</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-lib">gantt-lib</span></h4>
+  <p class="req">左パネルのデフォルトインデントをもっと短く。パネル幅ももっと短く。</p>
+  <div class="plan"><b>実装方針：</b>ライブラリの定数を prop 化（<code>indentWidth</code>・<code>panelWidth</code>、デフォルト値を現状より縮小）し、ホスト設定から渡す。パネル幅はドラッグでリサイズ＋記憶があると調整不要になる。小さいが体感効果の大きい改善なので、G 系の先頭で消化するのが良い。</div>
+</div>
+
+<h3>G-2. サブタスクの概念（折り畳み・期間なしサブタスク・その場 DnD）</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-lib">gantt-lib</span><span class="pill p-host">ast-to-gantt</span> — 今回最大の機能</h4>
+  <p class="req">デフォ OFF のサブタスク表示。期間なしでも成立し、親バーの下にリスト表示。文字を DnD するとその場で期間設定できる。親タスク単位で折り畳み。</p>
+  <div class="flow">■■■■■■■ 親タスク ■■■■■■■
+ |・サブA                <span class="d">← 期間なし：行として表示</span>
+ |　 ■■ サブB ■■         <span class="d">← 期間あり：バー表示</span>
+ |・サブC                <span class="d">← 行を DnD → @schedule が書き込まれてバー化</span></div>
+  <div class="plan"><b>実装方針：</b>AST は既に親子（TaskNode.children）を持つため、ホスト側は「サブタスクを畳んで range 集約」（現状の descendantDateRange）に加え「展開して個別 item として渡す」モードを追加するだけ。ライブラリ側が本丸で、①行の親子関係と折り畳み（デフォ collapsed／表示自体デフォ OFF）、②期間なし item は「チャート領域に左寄せのテキスト行」として描画、③そのテキストをタイムライン上へドラッグしたら <code>onSchedule(itemId, start, end)</code> をコールバック → ホストが <code>upsert-meta</code> で <code>@schedule</code> を書き戻し。<b>これは Unscheduled Tray（issue-phase003-001）の「未予定→ドラッグで予定化」とコールバック仕様を共通化すべき</b> — 同じ「無から期間を作る」操作が 2 箇所にできるため。</div>
+  <div class="q"><b>要確認：</b>ドラッグで作る期間のデフォルト長（例：1 時間？その場でリサイズ？）と、ネスト 3 段以上のときの表示（全展開か、直下 1 段のみか）。</div>
+</div>
+
+<h3>G-3. due のマイルストン表示・done の見た目・仮置きの半透明</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-lib">gantt-lib</span><span class="pill p-host">ast-to-gantt</span></h4>
+  <p class="req">① @due はマイルストン（◆）で表示。② done は完了と分かる見た目に。③ 仮置き（A-1）は透明度を上げ「?」マーク。</p>
+  <div class="plan"><b>実装方針：</b>いずれも「item に状態フラグを渡し、ライブラリが描き分ける」パターンで一括設計できる。item prop に <code>milestone?: date</code> / <code>status</code> / <code>tentative</code> を追加し、描画規則は：due=バー右に ◆（バーなしタスクは ◆ 単独）、done=彩度を落として✓（バー自体は残す：実績の記録なので消さない）、tentative=opacity 0.5＋「?」バッジ。@plan（A-2）の点線枠も同じ改修に同乗させると、ライブラリ改修が 1 回で済む。</div>
+</div>
+
+<h2 id="s5">5. Calendar の改善</h2>
+
+<h3>C-1. 週末・祝日の色分け</h3>
+<p>→ <b>B-1 に統合</b>（gantt と共通の設定・prop 設計で 1 Issue にする）。</p>
+
+<h3>C-2. タスク／打合せ／単純な予定の視覚的区別</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">記法 or 設定</span><span class="pill p-lib">calendar-lib</span></h4>
+  <p class="req">タスクと打合せと単純な予定が視覚的に分かるように。ただし、うるさいのは NG。</p>
+  <div class="plan"><b>実装方針：</b>まず「打合せ」「単純な予定」を記法上どう表すかの決めが必要（§9）。現実的な案：<br>
+  <b>種別の判定：</b>①チェックボックス付き＝タスク、②チェックボックスなしのリスト項目＋@schedule＝予定（追うステータスが無いもの）、③予定のうち <code>@tags: 会議</code> 等の指定タグ＝打合せ。タグ→種別のマッピングは設定で定義（「会議/MTG/打合せ → meeting」）。<br>
+  <b>描き分け（うるさくしない）：</b>色数を増やすのではなく<b>形で区別</b>する — タスク＝左ボーダー＋チェック余白、打合せ＝塗りつぶし、単純予定＝枠線のみ（ゴースト）。色はステータス／タグ由来の 1 系統に留める。</div>
+  <div class="idea"><b>追加提案：</b>前レポート §7.4 の外部カレンダー（ics 読み取り）を入れると「打合せ」は大半がそちら由来になる。その場合「外部予定＝グレー系で固定・編集不可」という区別が自然に生まれるため、<b>種別記法を作り込みすぎる前に ics 連携の時期を決める</b>ことを推奨（先に ics が来るなら②③の記法は最小限でよい）。</div>
+</div>
+
+<h2 id="s6">6. Kanban の改善（バグ含む）</h2>
+
+<h3>K-1. サブカードグループ DnD のドロップ位置バグ</h3>
+<div class="item bug">
+  <h4>バグ <span class="pill p-bug">要修正</span><span class="pill p-lib">kanban-lib</span></h4>
+  <p class="req">サブカードグループの DnD でドロップ位置がおかしい（座標計算の疑い）。ステータスは変更されるが、カードの表示位置が変わらない。</p>
+  <div class="plan"><b>対応方針：</b>issue-phase003-012（カードグループ、status: implemented・ユーザー動作確認待ち）の確認プロセスで検出された退行とみなし、<b>新規 Issue ではなく 003-012 を差し戻し（open へ）て再現手順を追記</b>するのがガバナンス上素直。「ステータス書き戻しは成功・表示位置のみ不整合」という症状は、書き戻し→再パース→ビュー再構築の経路でカードグループの並び順が再計算されていない（またはネスト時のドロップインデックスがフラットな座標で計算されている）ことを示唆。再現手順・階層構成・期待位置をスクリーンショット付きで Issue に固定してから修正に入ること。</div>
+</div>
+
+<h3>K-2. 非グループ表示時のコンテキスト表示（親カード／ユニット）</h3>
+<div class="item">
+  <h4>要望 <span class="pill p-host">ast-to-kanban</span><span class="pill p-lib">kanban-lib</span></h4>
+  <p class="req">① カードグループ表示でないとき、親カードがある場合はセクション欄に親カードを記載。② ユニット表示でないとき、ユニットに属する場合はカードにユニット名も記載。</p>
+  <div class="plan"><b>実装方針：</b>2 件は同型の要望＝<b>「グルーピングを解除しても所属コンテキストを失わない」</b>。カードの prop に <code>breadcrumb: string[]</code>（例 <code>["セクション", "親カード", "ユニット"]</code>）を渡し、ライブラリはカード下部に小さく <code>セクション › 親カード › ユニット</code> と 1 行表示する設計に一般化すると、①②が 1 実装で済み、将来ファイル横断表示時の「どのファイル由来か」もここに載せられる。表示・非表示と粒度（親カードまで／ユニットまで）は設定。</div>
+</div>
+
+<h2 id="s7">7. 実装順の提案（依存関係）</h2>
+
+<div class="flow"><span class="hi">Step 0（即時・独立）</span>
+  └ K-1 kanban DnD バグ差し戻し修正      <span class="d">← 動作確認待ち Issue の決着を最優先</span>
+
+<span class="hi">Step 1（記法の確定）</span> — Spec 起票して 1 セットで決める
+  ├ A-1 仮置き ?    A-2 @plan    A-4 メタ位置規約
+  └ A-3 短縮（案 1 なら記法変更なし＝Step 3 へ回せる）
+
+<span class="hi">Step 2（共通設定と gantt/calendar ライブラリ改修）</span> — Step 1 の描画仕様を同乗
+  ├ B-1 週末・祝日（gantt+calendar 共通）
+  ├ G-1 左パネル    G-3 マイルストン/done/仮置き/plan 描画    B-2 表示パラメータ
+  └ C-2 種別の描き分け（ics 連携の時期を先に判断）
+
+<span class="hi">Step 3（エディタ入力・表示）</span> — 003-008 と統合
+  ├ E-2 期間デートピッカー（＋A-3 案 1 の補完展開）
+  └ E-1 ハイライト強化（新記法の装飾込み・モック先行）
+
+<span class="hi">Step 4（大物）</span>
+  ├ G-2 gantt サブタスク（003-001 Unscheduled Tray とコールバック仕様共通化）
+  └ K-2 breadcrumb 表示</div>
+
+<p><b>並行性：</b>Step 2 のライブラリ改修（別リポジトリ）と Step 3 のエディタ改修（本体）は担当を分ければ完全に並行できる。Step 1 だけは全員の合意を先に取ること（後から記法を変えると全レイヤーに手戻り）。</p>
+
+<h2 id="s8">8. Issue 化候補一覧</h2>
+
+<table>
+  <tr><th>#</th><th>タイトル案</th><th>レイヤー</th><th>対象リポジトリ</th><th>依存</th><th>備考</th></tr>
+  <tr><td>K-1</td><td>カードグループ DnD ドロップ位置不整合（差し戻し）</td><td><span class="pill p-bug">バグ</span></td><td>kanban-lib（＋本体）</td><td>—</td><td>issue-phase003-012 を open に差し戻し</td></tr>
+  <tr><td>A-1</td><td>仮置きメタ記法 <code>@key?:</code> と確定操作・Health 連携</td><td><span class="pill p-nota">記法</span></td><td>本体＋gantt/calendar-lib</td><td>—</td><td>Spec 必須</td></tr>
+  <tr><td>A-2</td><td><code>@plan</code> メタ（期間枠）と整合チェック</td><td><span class="pill p-nota">記法</span></td><td>本体＋gantt-lib</td><td>—</td><td>Spec 必須</td></tr>
+  <tr><td>A-4</td><td>メタ行位置規約の Spec 化・lint・一括クイックフィックス</td><td><span class="pill p-nota">記法</span></td><td>本体</td><td>—</td><td>既存ファイル救済込み</td></tr>
+  <tr><td>A-3</td><td>schedule 短縮入力（補完展開／エイリアス判断）</td><td><span class="pill p-nota">記法</span> or 補完</td><td>本体</td><td>003-008</td><td>§9 の判断待ち</td></tr>
+  <tr><td>B-1</td><td>週末・祝日定義と gantt/calendar 色分け</td><td><span class="pill p-host">設定</span></td><td>本体＋両 lib</td><td>—</td><td>祝日テンプレ同梱</td></tr>
+  <tr><td>B-2</td><td>ganttバー横の表示パラメータ設定</td><td><span class="pill p-host">設定</span></td><td>本体＋gantt-lib</td><td>—</td><td>汎用 trailingLabels</td></tr>
+  <tr><td>G-1</td><td>gantt 左パネルのインデント・幅調整／リサイズ</td><td><span class="pill p-lib">lib</span></td><td>gantt-lib</td><td>—</td><td>小・先行消化</td></tr>
+  <tr><td>G-3</td><td>gantt 描画拡張（due ◆／done 表現／仮置き／plan 枠）</td><td><span class="pill p-lib">lib</span></td><td>gantt-lib＋本体</td><td>A-1, A-2</td><td>1 回の lib 改修に集約</td></tr>
+  <tr><td>G-2</td><td>gantt サブタスク表示（折り畳み・期間なし行・DnD 予定化）</td><td><span class="pill p-lib">lib</span></td><td>gantt-lib＋本体</td><td>003-001 と仕様共通化</td><td>今回最大</td></tr>
+  <tr><td>C-2</td><td>calendar イベント種別の描き分け（形で区別）</td><td><span class="pill p-host">host</span></td><td>本体＋calendar-lib</td><td>ics 連携の判断</td><td>§9 参照</td></tr>
+  <tr><td>E-1</td><td>エディタ装飾強化（メタバッジ・見出し・表示圧縮）</td><td><span class="pill p-host">editor</span></td><td>本体</td><td>A-1, A-2（装飾対象）</td><td>モック先行</td></tr>
+  <tr><td>E-2</td><td>期間デートピッカー（003-008 拡張）</td><td><span class="pill p-host">editor</span></td><td>本体</td><td>003-008</td><td>省略形のまま挿入</td></tr>
+  <tr><td>K-2</td><td>kanban カードの breadcrumb 表示（親カード・ユニット）</td><td><span class="pill p-lib">lib</span></td><td>kanban-lib＋本体</td><td>003-012 決着後</td><td>①②を 1 実装に一般化</td></tr>
+</table>
+
+<h2 id="s9">9. チームで決めたい論点（未決事項リスト）</h2>
+
+<ul class="clean">
+  <li><b>Q1（A-3）：</b>schedule 短縮は「入力補完で展開（ファイルは正規形のまま）」で足りるか、ファイル上もエイリアスを許すか。<span class="muted">→ 推奨は前者。後者は lint・可読性の恒久コスト。</span></li>
+  <li><b>Q2（A-1/A-2）：</b>「仮置き <code>?</code>」と「<code>@plan</code> のみ」の使い分けを運用としてこの定義で良いか — <code>?</code>＝日時はあるが自信なし／<code>@plan</code> のみ＝週・期間は決めたが日時未定。</li>
+  <li><b>Q3（A-2）：</b>@plan は日単位精度で良いか（時刻不要か）。グループ（親タスク）にも @plan を許すか。</li>
+  <li><b>Q4（A-4）：</b>メタ位置規約に違反する既存ファイルの扱い — 警告のみか、一括クイックフィックス提供か。</li>
+  <li><b>Q5（G-2）：</b>サブタスク DnD で生成する期間のデフォルト長。ネスト 3 段以上の表示方針。</li>
+  <li><b>Q6（C-2）：</b>「打合せ」「単純な予定」の記法 — チェックボックスなし＋@schedule を「予定」、タグで「打合せ」と判定する案で良いか。それとも ics 連携（外部予定はすべてグレー表示）を先にやり、Vault 内記法は最小限に留めるか。</li>
+  <li><b>Q7（B-1）：</b>祝日リストの持ち方 — 設定画面での入力か、Vault 内ファイル参照か（推奨：ファイル参照＋2026 年版テンプレ同梱）。</li>
+  <li><b>Q8（全般）：</b>ライブラリ 3 リポジトリの改修が今回多い。ライブラリ側の Issue 管理を本体の governance に載せるか、各リポジトリ独立か。</li>
+</ul>
+
+<p class="footnote">
+本レポートは 2026-07-03 のオーナーフィードバックの整理であり、ソースコードへの変更は行っていない。
+実装着手時は本プロジェクトのガバナンス（Issue 駆動・Spec 先行・BR 番号の恒久性）に従うこと。特に §1 の記法変更 4 件は Spec 起票が必須。
+関連資料：<a href="completeness-review-and-third-party-comparison.html">完成度評価と第三者比較（2026-07-03）</a> ／
+<a href="feature-gap-analysis-and-roadmap.html">機能ギャップ分析とロードマップ（2026-06-28）</a>
+</p>
+
+</div>
+</body>
+</html>

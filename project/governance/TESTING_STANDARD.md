@@ -34,6 +34,7 @@ No confirmation step allowed.
 
 Reproduce real user interaction only.
 Validate outcomes, never mechanics.
+If use obsidian, see "project/knowledge/obsidian-plugin-testing.md".
 
 ---
 

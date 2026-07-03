@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>確定仕様：時間メタ3層モデルと実装計画 — md-ast-editor</title>
+<style>
+  :root{
+    --bg:#fbfbfd; --panel:#ffffff; --ink:#1c2333; --muted:#5f6b7d; --line:#dfe4ec;
+    --accent:#2563eb; --accent-soft:#eff4ff;
+    --green:#15803d; --green-soft:#ecfdf3;
+    --amber:#b45309; --amber-soft:#fffaeb;
+    --red:#b91c1c; --red-soft:#fef2f2;
+    --purple:#7c3aed; --purple-soft:#f5f0ff;
+    --mono:"SF Mono",Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Roboto,sans-serif;
+    line-height:1.85;font-size:15px}
+  .wrap{max-width:1060px;margin:0 auto;padding:48px 30px 100px}
+  header.cover{border-bottom:3px solid var(--green);padding-bottom:26px;margin-bottom:36px}
+  .eyebrow{color:var(--green);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+  h1{font-size:28px;margin:.3em 0 .15em;line-height:1.35}
+  .sub{color:var(--muted);font-size:13.5px}
+  h2{font-size:22px;margin:60px 0 14px;padding:6px 0 6px 14px;border-left:5px solid var(--accent)}
+  h3{font-size:17px;margin:34px 0 10px}
+  h4{font-size:15px;margin:22px 0 6px;color:var(--accent)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-size:13px;font-family:var(--mono);color:#0f3b8c}
+  .muted{color:var(--muted)}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px;background:var(--panel)}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f4f6fb;font-weight:700}
+  .pill{display:inline-block;border-radius:999px;padding:1px 11px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .p-host{background:var(--accent-soft);color:var(--accent);border:1px solid #c5d7f7}
+  .p-lib{background:var(--purple-soft);color:var(--purple);border:1px solid #ddd0f5}
+  .p-nota{background:var(--amber-soft);color:var(--amber);border:1px solid #f4dfb0}
+  .p-bug{background:var(--red-soft);color:var(--red);border:1px solid #f3c6c6}
+  .p-fix{background:var(--green-soft);color:var(--green);border:1px solid #bbe5c8}
+  .p-open{background:#f1f4f9;color:var(--muted);border:1px solid var(--line)}
+  .decided{border:1px solid #bbe5c8;border-left:5px solid #22c55e;border-radius:0 12px 12px 0;
+    background:var(--panel);padding:12px 20px;margin:14px 0}
+  .decided .q{font-weight:700;font-size:14px}
+  .decided .a{margin-top:4px;font-size:14px}
+  .decided .a b:first-child{color:var(--green)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;
+    box-shadow:0 1px 3px rgba(20,30,60,.05);margin:14px 0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 28px}
+  .toc ol{margin:8px 0;padding-left:22px}
+  .toc a{text-decoration:none}
+  .flow{background:#0f1420;color:#d6deea;border-radius:10px;padding:14px 18px;margin:14px 0;
+    font-family:var(--mono);font-size:12.5px;white-space:pre;overflow-x:auto;line-height:1.6}
+  .flow .hi{color:#c4a5ff} .flow .g{color:#6ee7a0} .flow .y{color:#fcd34d} .flow .c{color:#67e8f9} .flow .d{color:#6b7684} .flow .r{color:#fb8f8f}
+  blockquote{margin:14px 0;padding:10px 18px;border-left:4px solid var(--purple);
+    background:var(--purple-soft);border-radius:0 8px 8px 0;color:#3d3355;font-size:14px}
+  ul.clean{margin:8px 0;padding-left:22px}
+  ul.clean li{margin:5px 0}
+  .warn{background:var(--amber-soft);border:1px solid #f4dfb0;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13.5px}
+  .warn b:first-child{color:var(--amber)}
+  .footnote{color:var(--muted);font-size:12.5px;margin-top:64px;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">Decided Spec · Implementation Plan</div>
+  <h1>確定仕様：時間メタ 3 層モデル（@plan / @schedule / @due）と実装計画</h1>
+  <p class="sub">
+    <a href="ux-improvement-proposals-2026-07-03.html">UX 改善提案レポート</a>の論点 Q1〜Q8 に対するオーナー回答（2026-07-03）を反映した確定版。<br>
+    本書の §1〜§3 はそのまま Spec 起票（<code>project/specs/</code>・日本語）の下書きとして使えることを意図している。
+  </p>
+</header>
+
+<div class="toc">
+  <b>目次</b>
+  <ol>
+    <li><a href="#s1">確定の核心 — 時間メタ 3 層モデル</a></li>
+    <li><a href="#s2">各ビューの描画仕様（確定）</a></li>
+    <li><a href="#s3">バリデーションと継承の仕様（確定）</a></li>
+    <li><a href="#s4">Q1〜Q8 決定一覧</a></li>
+    <li><a href="#s5">決定を反映した実装計画（リポジトリ別）</a></li>
+    <li><a href="#s6">Issue 化リスト（確定版）</a></li>
+    <li><a href="#s7">残っている論点（少数）</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. 確定の核心 — 時間メタ 3 層モデル</h2>
+
+<p>Q2 の回答により、時間に関するメタは<b>「拘束の強さが異なる 3 層」＋横断修飾子「仮置き <code>?</code>」</b>として体系化された。これが本アプリの時間表現の基本モデルとなる。</p>
+
+<table>
+  <tr><th style="width:110px">メタ</th><th>意味（宣言）</th><th>値の形式</th><th>主な表示先</th></tr>
+  <tr>
+    <td><code>@plan</code></td>
+    <td><b>「この期間の中でタスクを実施しなければならない」</b>。バッファを含めた予定枠（WBS のイメージ）</td>
+    <td>期間。日時精度は任意。日付のみの場合は<b>終日（00:00〜23:59）</b>と解釈</td>
+    <td>Gantt（点線枠）。Calendar はデータを受け取るが<b>表示しない</b>（将来検討）</td>
+  </tr>
+  <tr>
+    <td><code>@schedule</code></td>
+    <td><b>「ここでタスクをやる」</b>。予定というより「この時間に私はこの作業をする」という<b>意思表示</b>（時間ブロック）</td>
+    <td>期間（開始/終了）。既存仕様どおり</td>
+    <td>Gantt（バー）・Calendar（イベント）</td>
+  </tr>
+  <tr>
+    <td><code>@due</code></td>
+    <td><b>「ここまでにタスクを終わらせる」</b>。期限・締め切り・デッドライン</td>
+    <td>基本は日付一点。<b>期間指定も可</b>（例：受入期間の締め）</td>
+    <td>Gantt（マイルストン◆。期間なら両端◆＋間を塗り）・Calendar（太い横線＋左端矢印で「ここまで」感）</td>
+  </tr>
+  <tr>
+    <td><code>?</code> 修飾子</td>
+    <td><b>仮置き</b>。上記 3 メタすべてに適用可（<code>@plan?:</code> <code>@schedule?:</code> <code>@due?:</code>）</td>
+    <td>キー末尾に <code>?</code></td>
+    <td>全ビューで「仮」であることを文字・見た目で明示（半透明＋?バッジ等）</td>
+  </tr>
+</table>
+
+<div class="card">
+<b>制約（確定）</b>
+<ul class="clean">
+  <li>タスクは <code>@plan</code> / <code>@schedule</code> / <code>@due</code> の<b>いずれか 1 つ以上が必須</b>（どれも無い＝Health の undated 対象）。</li>
+  <li>時間軸上の整合：<code>plan.start ≤ schedule ≤ plan.end ≤ due(end)</code>。<b>違反しても入力は禁止しない</b>が、バリデーション結果は<b>エラー</b>として提示する。</li>
+  <li>グループ（親タスク）にも 3 メタすべて付与可（Q3）。</li>
+  <li><code>@plan</code> が無いタスクは、<b>祖先に @plan があれば内部的に引き継ぐ</b>。Markdown への自動追記は行わず、バリデーション等の内部利用に限る（Q2）。</li>
+</ul>
+</div>
+
+<div class="flow"><span class="d">3 層の関係（1 タスクの時間表現）</span>
+<span class="c">|-------------------- @plan（この間でやる・WBS 枠）--------------------|</span>
+<span class="c">|</span>          <span class="g">■■■■ @schedule（ここでやる・意思表示）■■■■</span>              <span class="c">|</span>
+<span class="c">|----------------------------------------------------------------------|</span>   <span class="y">◆ @due（ここまでに終わらせる）</span>
+
+<span class="d">バリデーション：plan.start ≤ schedule ≤ plan.end ≤ due(end)　※違反＝エラー表示（入力自体は許可）</span></div>
+
+<div class="warn"><b>命名の保留：</b>「schedule」という名前は意味（意思表示・時間ブロック）に対して適切か、オーナー自身が再考中。参考案：<code>@do</code>（やる宣言・最短）／<code>@work</code>／<code>@slot</code>（時間ブロック感）／<code>@focus</code>。<b>Q1 の決定（ファイルは正規形・入力は補完で短縮）により、改名してもファイル互換の一括変換は lint クイックフィックスで可能</b>なため、Spec 起票時までに決めれば十分。ただし決めた後の再改名はコストが高いので、Spec 化の時点で確定させること。</div>
+
+<h2 id="s2">2. 各ビューの描画仕様（確定）</h2>
+
+<h3>2.1 Gantt</h3>
+<div class="flow"><span class="c">|- - - - - - - - - - @plan：点線枠 - - - - - - - - - -|</span>
+<span class="c">|</span>        <span class="g">■■■■■■ @schedule：バー ■■■■■■</span>              <span class="c">|</span>
+<span class="c">|- - - - - - - - - - - - - - - - - - - - - - - - - - -|</span>      <span class="y">◆</span> <span class="d">@due（一点）</span>
+
+<span class="d">@due が期間の場合：</span>   <span class="y">◆■■■■■■■■◆</span>   <span class="d">両端マイルストン＋間を塗りつぶし</span>
+<span class="d">仮置き（?）：</span>        <span class="d">░░ 半透明バー ░░ ?</span>   <span class="d">「?」バッジ付き</span>
+<span class="d">done：</span>              <span class="d">彩度を落とし ✓（バーは実績として残す）</span></div>
+<ul class="clean">
+  <li>plan のみのタスク：点線枠だけを描画（バーなし）。「期間は決めたが日時未定」の状態。</li>
+  <li>due のみのタスク：◆ 単独表示。</li>
+  <li>バリデーションエラー（§3）のタスクは行にエラー印（例：左端に赤ドット）。詳細は Health パネルへ。</li>
+</ul>
+
+<h3>2.2 Calendar</h3>
+<div class="flow"><span class="d">@schedule：</span>  <span class="g">通常イベント（タスク=左ボーダー＋チェック余白／予定=枠線／打合せ=塗り）</span>
+<span class="d">@due：</span>       <span class="y">━━━━━━━━━━◄</span>   <span class="d">太い横線＋左端に短い矢印終点（「ここまで」感）</span>
+<span class="d">@plan：</span>      <span class="d">データは受け取るが描画しない（将来検討・prop 予約のみ）</span>
+<span class="d">仮置き（?）：</span> <span class="d">半透明＋?バッジ（種別問わず）</span></div>
+<ul class="clean">
+  <li>イベント種別（Q6 確定）：<b>チェックボックスなし＋@schedule ＝「予定」</b>。予定のうち<b>タグが「打合せ」または「meeting」（設定で追加・変更可）＝「打合せ」</b>。チェックボックス付き＝タスク。</li>
+  <li>calendar-lib は <code>plan</code> prop を受け取るインターフェースだけ先に定義しておく（描画は実装しない）。後から表示を足すときにホスト側の変更が不要になる。</li>
+</ul>
+
+<h3>2.3 Editor（装飾）</h3>
+<ul class="clean">
+  <li>3 メタと <code>?</code> をハイライトで区別（例：plan=点線下線、schedule=実線、due=強調色、?=黄系）。</li>
+  <li>Q1 確定：ファイル上は正規形のみ。<b>入力補完で <code>@s</code>→<code>@schedule: </code> 等に展開</b>（issue-phase003-008 に統合）。表示上の圧縮（アイコン化）は E-1 のモック段階で判断。</li>
+</ul>
+
+<h2 id="s3">3. バリデーションと継承の仕様（確定）</h2>
+
+<table>
+  <tr><th style="width:60px">規則</th><th>内容</th><th>重さ</th><th>提示先</th></tr>
+  <tr><td>V-1</td><td><code>plan.start ≤ schedule.start</code> かつ <code>schedule.end ≤ plan.end</code>（schedule が plan 枠に収まる）</td><td><b>エラー</b></td><td rowspan="4">Health パネル（新ルール群）＋エディタ lint 印＋ガント行の印</td></tr>
+  <tr><td>V-2</td><td><code>plan.end ≤ due(end)</code>（枠の終わりが期限を超えない）</td><td><b>エラー</b></td></tr>
+  <tr><td>V-3</td><td><code>schedule.end ≤ due(end)</code>（作業予定が期限を超えない）</td><td><b>エラー</b></td></tr>
+  <tr><td>V-4</td><td>3 メタのいずれも無い未完タスク</td><td>警告（既存 undated ルールを継続）</td></tr>
+</table>
+
+<ul class="clean">
+  <li><b>入力は禁止しない</b>：エディタで自由に書ける。違反は保存データとして許容し、検知・提示のみ行う（Q2）。</li>
+  <li><b>plan の継承</b>：自身に @plan が無い場合、最も近い祖先（親タスク／グループ）の @plan を内部値として引き継ぎ、V-1/V-2 の判定に用いる。<b>Markdown へは書き込まない</b>。ビュー上で継承値を使っていることが分かる表示（例：点線枠を薄く）にするかは実装時判断。</li>
+  <li><b>メタ位置（Q4 確定）</b>：タスク行直下は「推奨＋アプリの正規位置」。<b>自動生成（upsert-meta・ピッカー挿入）は必ず直下に書く</b>。ただし直下でなくても子要素内にあれば正しいメタとして解釈する（パーサーは位置に寛容、ライターは厳格）。位置ずれの一括整形は<b>ユーザーがコマンドで明示的に呼んだときのみ</b>実行。lint は「推奨位置でない」を情報レベルで出す程度に留める。</li>
+</ul>
+
+<h2 id="s4">4. Q1〜Q8 決定一覧</h2>
+
+<div class="decided"><div class="q">Q1　schedule 短縮の方式</div>
+<div class="a"><b>決定：</b>入力補完で展開（案 1）。ファイルに残るのは正規形のみ。エイリアスの正式採用はしない。→ issue-phase003-008 のメタ補完に統合。</div></div>
+
+<div class="decided"><div class="q">Q2　時間メタの意味論</div>
+<div class="a"><b>決定：</b>§1 の 3 層モデル＋<code>?</code> 修飾子（全メタ適用可）。3 メタのいずれか 1 つ必須。順序制約 <code>plan.start ≤ schedule ≤ plan.end ≤ due(end)</code> はエラー提示（入力禁止はしない）。plan は祖先から内部継承（Markdown 自動追記なし）。due は期間も可。plan は calendar 非表示（データは受領）。<span class="muted">※ schedule の名称は再考中（§7）。</span></div></div>
+
+<div class="decided"><div class="q">Q3　@plan の精度・グループ付与</div>
+<div class="a"><b>決定：</b>日時精度は任意（日付のみ＝終日解釈）。グループにも 3 メタすべて付与可。</div></div>
+
+<div class="decided"><div class="q">Q4　メタ位置規約</div>
+<div class="a"><b>決定：</b>直下は推奨＋自動生成の正規位置。子要素内なら位置を問わず有効。 一括フィックスはユーザーがコマンドを呼んだときのみ。</div></div>
+
+<div class="decided"><div class="q">Q5　gantt サブタスク DnD の詳細</div>
+<div class="a"><b>決定：</b>提案どおりで OK（デフォルト期間長・ネスト表示は実装時にエンジニア裁量。初期案：デフォルト 1 時間＋その場リサイズ、ネストは全展開）。</div></div>
+
+<div class="decided"><div class="q">Q6　予定・打合せの判定</div>
+<div class="a"><b>決定：</b>チェックボックスなし＋@schedule＝「予定」。タグ「打合せ」「meeting」（設定で追加・変更可）＝「打合せ」。</div></div>
+
+<div class="decided"><div class="q">Q7　祝日リストの持ち方</div>
+<div class="a"><b>決定：</b>設定画面で設定ファイルのパスを指定する方式。デフォルトパスは main.js と同じディレクトリ（プラグインフォルダ）。<span class="muted">※ 2026 年版の祝日テンプレ同梱は引き続き推奨。</span></div></div>
+
+<div class="decided"><div class="q">Q8　ライブラリ 3 リポジトリの Issue 管理</div>
+<div class="a"><b>決定：</b>独立管理。<b>本リポジトリで Issue をとりまとめ（要件を確定）→ 各ライブラリリポジトリで個別に実装 Issue 化</b>する 2 段構え。</div></div>
+
+<h2 id="s5">5. 決定を反映した実装計画（リポジトリ別）</h2>
+
+<p>Q8 の決定により、<b>本体リポジトリの Issue には「ライブラリへ渡すインターフェース（prop/コールバック）仕様の確定」まで</b>を含め、描画実装は各ライブラリの Issue に切り出す。境界を明確にするため、リポジトリ別に整理する。</p>
+
+<h3>5.1 本体（markdownEditor-for-mywork）</h3>
+<div class="flow"><span class="hi">Step 1：記法 Spec 起票＋パーサー</span>
+  ├ 時間メタ 3 層モデル Spec（§1〜§3 を元に日本語で起票。schedule 名称もここで確定）
+  ├ remark-meta-fields：@plan 追加・? 修飾子・due 期間対応
+  ├ schedule-normalize：plan/due への省略記法適用
+  ├ viewmodel：plan 継承の解決（祖先探索）
+  └ Health：V-1〜V-3 エラールール＋ tentative-near ルール追加
+<span class="hi">Step 2：ast-to-* とライブラリ IF 確定</span>
+  ├ ast-to-gantt / ast-to-calendar / ast-to-kanban に新 prop を追加
+  │   gantt item:    { plan?, tentative?, milestone?(due), status, trailingLabels[] }
+  │   calendar item: { kind: task|event|meeting, due?, plan?(予約のみ), tentative? }
+  │   kanban card:   { breadcrumb: string[] }
+  ├ 共通設定：祝日ファイル参照（デフォ＝プラグインフォルダ）・weekend・表示パラメータ・meeting タグ
+  └ ライブラリへの要件 Issue をここで確定 → 各 lib リポジトリへ
+<span class="hi">Step 3：エディタ</span>
+  ├ 003-008 拡張：メタ補完（@s→@schedule）＋期間デートピッカー（挿入は省略形・正規位置）
+  ├ 装飾強化：3 メタ・?・見出しのハイライト（モック先行）
+  └ lint：? 位置検査／メタ推奨位置（情報レベル）／一括整形コマンド（明示呼び出しのみ）</div>
+
+<h3>5.2 gantt-lib（../ganttchart-for-mywork）— 改修が最多</h3>
+<ul class="clean">
+  <li>plan 点線枠／due ◆（期間は ◆〜◆ 塗り）／tentative 半透明＋?／done 彩度落とし＋✓</li>
+  <li>trailingLabels（バー右の汎用ラベル配列）</li>
+  <li>weekend/holidays prop によるヘッダ・列の色替え</li>
+  <li>左パネル：indentWidth / panelWidth の prop 化＋縮小デフォ＋リサイズ記憶</li>
+  <li>サブタスク表示（折り畳み・期間なし行・行 DnD→<code>onSchedule</code> コールバック）※ Unscheduled Tray（003-001）とコールバック仕様共通化</li>
+</ul>
+
+<h3>5.3 calendar-lib（../calendar-for-mywork）</h3>
+<ul class="clean">
+  <li>kind（task/event/meeting）の描き分け：左ボーダー／枠線ゴースト／塗り</li>
+  <li>due の「太い横線＋左端矢印」描画</li>
+  <li>plan prop の受け口だけ定義（描画なし）</li>
+  <li>tentative 半透明＋?／weekend・holidays の色替え</li>
+</ul>
+
+<h3>5.4 kanban-lib（../kanban-for-mywork）</h3>
+<ul class="clean">
+  <li><span class="pill p-bug">最優先</span> サブカードグループ DnD ドロップ位置バグ（issue-phase003-012 差し戻し分）</li>
+  <li>breadcrumb 表示（カード下部に <code>セクション › 親カード › ユニット</code>、表示粒度は prop）</li>
+</ul>
+
+<h2 id="s6">6. Issue 化リスト（確定版）</h2>
+
+<table>
+  <tr><th>#</th><th>タイトル案</th><th>リポジトリ</th><th>依存</th><th>状態</th></tr>
+  <tr><td>1</td><td>【Spec】時間メタ 3 層モデル（plan/schedule/due・?・バリデーション・継承）</td><td>本体</td><td>schedule 名称の確定（§7）</td><td><span class="pill p-nota">Spec 起票</span></td></tr>
+  <tr><td>2</td><td>パーサー拡張：@plan・? 修飾子・due 期間・normalize 適用</td><td>本体</td><td>#1</td><td><span class="pill p-open">新規</span></td></tr>
+  <tr><td>3</td><td>plan 継承解決と Health バリデーション（V-1〜V-3・tentative-near）</td><td>本体</td><td>#2</td><td><span class="pill p-open">新規</span></td></tr>
+  <tr><td>4</td><td>ast-to-* 新 prop（gantt/calendar/kanban IF 確定）＋共通設定（祝日ファイル・meeting タグ・表示パラメータ）</td><td>本体</td><td>#2</td><td><span class="pill p-open">新規</span></td></tr>
+  <tr><td>5</td><td>メタ補完＋期間デートピッカー（正規位置挿入・省略形）</td><td>本体</td><td>既存 003-008 拡張</td><td><span class="pill p-open">既存拡張</span></td></tr>
+  <tr><td>6</td><td>エディタ装飾強化（3 メタ・?・見出し／モック先行）＋lint（? 検査・推奨位置・一括整形コマンド）</td><td>本体</td><td>#2</td><td><span class="pill p-open">新規</span></td></tr>
+  <tr><td>7</td><td>gantt：plan 枠・due ◆・tentative・done・trailingLabels・祝日色</td><td>gantt-lib</td><td>#4 の IF</td><td><span class="pill p-lib">lib 個別</span></td></tr>
+  <tr><td>8</td><td>gantt：左パネルスリム化（prop 化・リサイズ）</td><td>gantt-lib</td><td>なし（先行可）</td><td><span class="pill p-lib">lib 個別</span></td></tr>
+  <tr><td>9</td><td>gantt：サブタスク表示＋行 DnD 予定化（onSchedule）</td><td>gantt-lib＋本体</td><td>#4、003-001 と仕様共通化</td><td><span class="pill p-lib">lib 個別</span></td></tr>
+  <tr><td>10</td><td>calendar：kind 描き分け・due 横線矢印・tentative・祝日色・plan 受け口</td><td>calendar-lib</td><td>#4 の IF</td><td><span class="pill p-lib">lib 個別</span></td></tr>
+  <tr><td>11</td><td>kanban：DnD ドロップ位置バグ修正</td><td>kanban-lib</td><td>なし（<b>最優先</b>）</td><td><span class="pill p-bug">003-012 差し戻し</span></td></tr>
+  <tr><td>12</td><td>kanban：breadcrumb 表示</td><td>kanban-lib＋本体</td><td>#11 決着後</td><td><span class="pill p-lib">lib 個別</span></td></tr>
+</table>
+
+<p><b>並行の目安：</b>#11（バグ）と #8（左パネル）は今すぐ独立着手可。#1〜#3（記法）は 1 人が直列で。#4 の IF 確定後は #7・#10 と #5・#6 が別担当で完全並行できる。</p>
+
+<h2 id="s7">7. 残っている論点（少数）</h2>
+
+<ul class="clean">
+  <li><b>R-1（唯一のブロッカー）：<code>@schedule</code> の名称</b> — 「意思表示・時間ブロック」の意味に合う名前に変えるか、現状維持か。候補：<code>@do</code> / <code>@work</code> / <code>@slot</code> / <code>@focus</code> / 現状維持。<b>Spec 起票（Issue #1）までに確定が必要</b>。既存ファイルの移行は lint 一括変換で対応可能。</li>
+  <li><b>R-2：</b>plan 継承値のビュー上の見せ方（継承した点線枠を薄く表示するか、非表示か）— 実装時判断で可。</li>
+  <li><b>R-3：</b>calendar での @plan 表示 — 将来検討（今回は prop 予約のみ）と決定済み。検討再開のトリガー（例：週ビュー実装時）だけ決めておくと忘れない。</li>
+  <li><b>R-4：</b>Q5 詳細（DnD デフォルト期間長・ネスト表示）はエンジニア裁量と決定。初期案（1 時間・全展開）で実装し、使用感で調整。</li>
+</ul>
+
+<p class="footnote">
+本レポートは 2026-07-03 のオーナー回答（Q1〜Q8）を反映した確定版であり、ソースコードへの変更は行っていない。
+着手時はガバナンスに従い、まず Issue #1（時間メタ 3 層モデル Spec）を起票すること。§1〜§3 は Spec の下書きとしてそのまま流用可。<br>
+関連資料：<a href="ux-improvement-proposals-2026-07-03.html">UX 改善提案（論点版）</a> ／
+<a href="completeness-review-and-third-party-comparison.html">完成度評価と第三者比較</a> ／
+<a href="feature-gap-analysis-and-roadmap.html">機能ギャップ分析とロードマップ（2026-06-28）</a>
+</p>
+
+</div>
+</body>
+</html>

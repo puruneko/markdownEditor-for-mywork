@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>完成度評価と第三者比較レポート — md-ast-editor</title>
+<style>
+  :root{
+    --bg:#fbfbfd; --panel:#ffffff; --ink:#1c2333; --muted:#5f6b7d; --line:#dfe4ec;
+    --accent:#2563eb; --accent-soft:#eff4ff;
+    --green:#15803d; --green-soft:#ecfdf3;
+    --amber:#b45309; --amber-soft:#fffaeb;
+    --red:#b91c1c; --red-soft:#fef2f2;
+    --purple:#7c3aed; --purple-soft:#f5f0ff;
+    --mono:"SF Mono",Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Roboto,sans-serif;
+    line-height:1.85;font-size:15px}
+  .wrap{max-width:1060px;margin:0 auto;padding:48px 30px 100px}
+  header.cover{border-bottom:3px solid var(--accent);padding-bottom:26px;margin-bottom:36px}
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+  h1{font-size:29px;margin:.3em 0 .15em;line-height:1.35}
+  .sub{color:var(--muted);font-size:13.5px}
+  h2{font-size:22px;margin:60px 0 14px;padding:6px 0 6px 14px;border-left:5px solid var(--accent)}
+  h3{font-size:17px;margin:34px 0 10px}
+  h4{font-size:15px;margin:22px 0 6px;color:var(--accent)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-size:13px;font-family:var(--mono);color:#0f3b8c}
+  .muted{color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;
+    box-shadow:0 1px 3px rgba(20,30,60,.05)}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 28px}
+  .toc ol{margin:8px 0;padding-left:22px}
+  .toc a{text-decoration:none}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px;background:var(--panel)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f4f6fb;font-weight:700}
+  .pill{display:inline-block;border-radius:999px;padding:1px 11px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .p-done{background:var(--green-soft);color:var(--green);border:1px solid #bbe5c8}
+  .p-part{background:var(--amber-soft);color:var(--amber);border:1px solid #f4dfb0}
+  .p-gap{background:var(--red-soft);color:var(--red);border:1px solid #f3c6c6}
+  .p-issue{background:var(--purple-soft);color:var(--purple);border:1px solid #ddd0f5}
+  .p-new{background:var(--accent-soft);color:var(--accent);border:1px solid #c5d7f7}
+  .score{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0}
+  .score .box{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;text-align:center}
+  .score .num{font-size:30px;font-weight:800;line-height:1.2}
+  .score .lbl{font-size:12px;color:var(--muted)}
+  .num.g{color:var(--green)} .num.a{color:var(--amber)} .num.r{color:var(--red)}
+  .pain{border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden;background:var(--panel)}
+  .pain .hd{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:#f4f6fb;padding:11px 18px;border-bottom:1px solid var(--line)}
+  .pain .hd .t{font-weight:700;font-size:15px}
+  .pain .bd{padding:6px 18px 14px}
+  .bar{height:9px;background:#e8ecf3;border-radius:6px;overflow:hidden;margin:8px 0 4px}
+  .bar i{display:block;height:100%;border-radius:6px}
+  .bar i.g{background:#22c55e} .bar i.a{background:#f59e0b} .bar i.r{background:#ef4444}
+  .feat{border-left:4px solid var(--accent);background:var(--panel);border:1px solid var(--line);
+    border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0}
+  .feat h4{margin:0 0 4px;color:var(--ink)}
+  .feat .why{color:var(--muted);font-size:13.5px;margin:4px 0}
+  .feat .how{background:#f6f8fc;border:1px solid var(--line);border-radius:8px;padding:10px 14px;
+    margin-top:10px;font-size:13.5px}
+  .vs{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;background:var(--panel)}
+  .vs .hd{display:flex;align-items:baseline;gap:10px;background:#f4f6fb;padding:10px 18px;border-bottom:1px solid var(--line)}
+  .vs .hd .name{font-weight:700;font-size:15px}
+  .vs .hd .meta{color:var(--muted);font-size:12px}
+  .vs .bd{padding:12px 18px 14px}
+  .vs .adopt{background:var(--purple-soft);border:1px solid #ddd0f5;border-radius:8px;
+    padding:9px 13px;margin-top:10px;font-size:13.5px}
+  .vs .adopt b{color:var(--purple)}
+  blockquote{margin:14px 0;padding:10px 18px;border-left:4px solid var(--purple);
+    background:var(--purple-soft);border-radius:0 8px 8px 0;color:#3d3355;font-size:14px}
+  ul.clean{margin:8px 0;padding-left:22px}
+  ul.clean li{margin:5px 0}
+  .flow{background:#0f1420;color:#d6deea;border-radius:10px;padding:14px 18px;margin:14px 0;
+    font-family:var(--mono);font-size:12.5px;white-space:pre;overflow-x:auto;line-height:1.6}
+  .flow .hi{color:#c4a5ff} .flow .g{color:#6ee7a0} .flow .y{color:#fcd34d} .flow .c{color:#67e8f9}
+  .footnote{color:var(--muted);font-size:12.5px;margin-top:64px;border-top:1px solid var(--line);padding-top:16px}
+  .ok{color:var(--green);font-weight:700}.no{color:var(--red);font-weight:700}.part{color:var(--amber);font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">Product Review · Completeness &amp; Third-Party Comparison</div>
+  <h1>md-ast-editor 完成度評価と第三者比較レポート</h1>
+  <p class="sub">
+    「Markdown でメモ・タスク・スケジュールを集約し、集中してタスク管理できる仕組み」に対する現在地の評価<br>
+    作成日：2026-07-03 ・ 対象：main ブランチ（phase002 完了・phase003 進行中）・
+    前回資料：<a href="feature-gap-analysis-and-roadmap.html">機能ギャップ分析と開発ロードマップ（2026-06-28）</a>の更新版
+  </p>
+</header>
+
+<div class="toc">
+  <b>目次</b>
+  <ol>
+    <li><a href="#s1">エグゼクティブサマリー — 完成度の結論</a></li>
+    <li><a href="#s2">評価軸：オーナーの「困りごと」7項目</a></li>
+    <li><a href="#s3">困りごと別スコアカード（現状実装の評価）</a></li>
+    <li><a href="#s4">前回レポート（6/28）からの進捗差分</a></li>
+    <li><a href="#s5">第三者比較①：同種アプリとの比較</a></li>
+    <li><a href="#s6">第三者比較②：コミュニティの Markdown タスク管理実践</a></li>
+    <li><a href="#s7">不足機能の提案（優先度・既存 Issue 対応つき）</a></li>
+    <li><a href="#s8">ロードマップ提案（phase004 以降）</a></li>
+    <li><a href="#s9">参考情報源</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. エグゼクティブサマリー — 完成度の結論</h2>
+
+<p>本プロダクトは「素の Markdown を唯一の正とし、AST を介して 7 つのビュー（AST / Calendar / Gantt / Kanban / Agenda / Health / Unscheduled Tray）へ双方向同期する」Obsidian プラグインである。前回レポート（6/28）時点で MUST とされた <b>複数ファイル横断集約・クエリ／フィルタ・繰り返しタスク・Agenda ビュー</b> はすべて実装済みとなり、土台としての完成度は大きく前進した。</p>
+
+<div class="score">
+  <div class="box"><div class="num g">85%</div><div class="lbl">基盤（記法・パーサー・双方向同期）</div></div>
+  <div class="box"><div class="num g">75%</div><div class="lbl">「見る」機能（ビュー・集約・検索）</div></div>
+  <div class="box"><div class="num a">50%</div><div class="lbl">「書く・操作する」機能（入力体験）</div></div>
+  <div class="box"><div class="num r">20%</div><div class="lbl">「報告する・振り返る」機能</div></div>
+</div>
+
+<p><b>結論：</b>「情報の散在」「一覧と経緯の分離」「Excel 管理の限界」という悩みは<span class="ok">設計レベルで解決済み</span>。「期限と予定の管理」「ステータス把握」は<span class="part">7割方カバー</span>しているが仕上げが残る。一方、<b>「進捗をさっと報告できない」に対応する機能はほぼ未着手</b>であり、上司への報告という当初の動機に照らすと、ここが現時点の最大のギャップである。またステータス把握については、競合（org-mode、Obsidian Tasks）が持つ<b>「完了日・状態変更のタイムスタンプ記録」</b>が欠けており、これが無いと報告機能も作れないため、次フェーズの最優先候補と評価する。</p>
+
+<blockquote>チームへの要点：土台は完成に近い。次に作るべきは「記録の自動化（いつ何をしたかを Markdown に残す）」→「そこからの報告生成」という縦のライン。これは競合にも無い差別化になり得る（§7.1〜7.2）。</blockquote>
+
+<h2 id="s2">2. 評価軸：オーナーの「困りごと」7項目</h2>
+
+<p>本レポートは機能の網羅性ではなく、<b>プロダクトオーナー自身が解決したかった悩み</b>を評価軸とする。悩みは以下の 7 項目に整理した。</p>
+
+<table>
+  <tr><th style="width:44px">#</th><th>困りごと</th><th>求められる能力</th></tr>
+  <tr><td>P1</td><td>情報がいろんなところに散らばる</td><td>メモ・タスク・予定を 1 つの Markdown に集約し、複数ファイルでも横断して見られること</td></tr>
+  <tr><td>P2</td><td>いつまでに終わらせるか／いつやるかが分からず、上司に怒られる</td><td>期限（@due）と実施予定（@schedule）を別概念として管理し、抜けを検知できること</td></tr>
+  <tr><td>P3</td><td>細かいタスクのスイッチが多く、何をどこまでやったか分からなくなる</td><td>ステータスの一目把握と、「中断時点の状態」を記録・復元できること</td></tr>
+  <tr><td>P4</td><td>タスク一覧と経緯・詳細がばらばらで確認に時間がかかる</td><td>タスクの直下にメモ・経緯を持ち、一覧からワンクリックで詳細へ飛べること</td></tr>
+  <tr><td>P5</td><td>進捗をさっと報告できない・把握できない</td><td>「今週やったこと／進行中／遅延」を集計し、報告に使える形で出力できること</td></tr>
+  <tr><td>P6</td><td>管理自体の作業が多くて続かない（手動の書き換え・色付け・罫線）</td><td>記法の入力補助・ドラッグ操作・自動lint など、管理コストを最小化すること</td></tr>
+  <tr><td>P7</td><td>Excel は自由に文字を書けず、予定とメモを両立できない</td><td>自由記述（Markdown）と構造化データ（日付・ステータス）の両立</td></tr>
+</table>
+
+<h2 id="s3">3. 困りごと別スコアカード（現状実装の評価）</h2>
+
+<div class="pain">
+  <div class="hd"><span class="t">P1 情報の散在 — 集約</span><span class="pill p-done">解決済み 90%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="g" style="width:90%"></i></div>
+    <p><span class="ok">できている：</span>タスク・予定・メモが 1 つの Markdown で共存（demo が実証）。phase001 で <b>複数ファイル横断の AST インデックス</b>（現在ファイル／フォルダ／Vault スコープ切替、ホットリロード）と <b>クエリ言語＋FilterBar＋埋め込みクエリブロック</b> が実装済み。ファイル横断の identity（globalKey）も確立。</p>
+    <p><span class="part">残り：</span>「思いついた瞬間に放り込む」入口が無い。散在の根本原因は<b>記入先を探す手間</b>なので、クイックキャプチャ→インボックス→仕分け（issue-phase003-006、open）が最後のピース。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P2 期限と実施予定の管理</span><span class="pill p-part">概ね対応 70%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="a" style="width:70%"></i></div>
+    <p><span class="ok">できている：</span><code>@due</code>（期限）と <code>@schedule</code>（開始〜終了の実施予定）を別メタとして一級で扱う設計は、まさに「いつまで」と「いつやるか」の分離。競合の多くは due しか持たない（§5）。Agenda ビューが期限超過／今日／今週を束ね、Health パネルが <b>undated（日付なし）・overdue（期限超過）・stale（放置）</b> を検知する。これは「怒られる前に気づく」仕組みとして直接効く。</p>
+    <p><span class="part">残り：</span>①期限が来ても<b>通知が出ない</b>（issue-phase002-005、open）。②未予定タスクをカレンダーへドラッグして予定化する動線（Unscheduled Tray はビュー実装済みだが issue-phase003-001 は open、ドラッグ割付の仕上げ待ち）。③会議など<b>外部カレンダーの予定</b>が見えないため、「空いている時間にタスクを置く」計画が立てにくい（§7.4）。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P3 タスクスイッチとステータス把握</span><span class="pill p-part">部分対応 55%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="a" style="width:55%"></i></div>
+    <p><span class="ok">できている：</span>5 ステータス（todo/doing/blocked/hold/done）は「進行中」「待ち」を区別でき、demo のように <code>[&gt;]</code>＋直下メモで「どこまでやったか」を書ける。Kanban・Agenda・Health でステータスの俯瞰も可能。</p>
+    <p><span class="no">欠けている：</span>「どこまでやったか」の記録が<b>全部手書き</b>である点。org-mode はステータス変更時に自動でタイムスタンプとメモ（LOGBOOK）を残し、Obsidian Tasks は完了時に完了日 <code>✅ 2026-07-03</code> を自記入する。本アプリはチェックを付けても<b>いつ完了したかが残らない</b>ため、後から「今週何をしたか」を復元できない。スイッチが多い働き方では、この自動記録の有無が体験を分ける（§7.1）。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P4 一覧と経緯の分離</span><span class="pill p-done">解決済み 85%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="g" style="width:85%"></i></div>
+    <p><span class="ok">できている：</span>タスク直下に引用（QuoteNode）・メモを構造として保持し、「〜。信用しきれない。」のような経緯・感情まで書ける（Excel では不可能な芸当）。全ビューからクリックでエディタの該当行へジャンプでき、「一覧で見る→詳細を確認」の往復が数秒で済む。これは競合比較でも独自の強み。</p>
+    <p><span class="part">残り：</span>逆方向（エディタ→ビュー）のハイライト（issue-phase003-009、open）と、Kanban カード上でのメモ量プレビューなど微調整。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P5 進捗報告・進捗把握</span><span class="pill p-gap">最大のギャップ 20%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="r" style="width:20%"></i></div>
+    <p><span class="part">できている：</span>Agenda／Health／クエリで「今の状態」は把握できる。グループ進捗ロールアップ（3/5 完了・60%）は issue-phase003-002 で計画済み（open）。</p>
+    <p><span class="no">欠けている：</span>「先週何を終えた／今週何をやる／何が遅れている」を<b>報告できる形に集計・出力する機能がゼロ</b>。上司への報告が当初の動機である以上、ここは意図的に投資すべき領域。前提として P3 の完了日記録が必要（記録が無いものは集計できない）。世間では Geekbot や Range のような「タスクデータから status report を自動生成する」ツールが独立ジャンルとして成立しており、需要の強さの証左（§7.2）。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P6 管理コストの最小化（続けられるか）</span><span class="pill p-part">部分対応 50%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="a" style="width:50%"></i></div>
+    <p><span class="ok">できている：</span>ドラッグ→Markdown 書き戻し（色付け・罫線引きが一切不要）、記法 lint＋クイックフィックス、エディタ内ハイライト。「見た目の管理作業」はゼロに近い。</p>
+    <p><span class="no">欠けている：</span><b>入力側の補助がまだ手打ち</b>。日付・メタキーの補完（issue-phase003-008）、クイック追加モーダル（003-004）、チェックボックスのクリックサイクル（003-007）、選択→ビューへドラッグでメタ付与（002-004）がいずれも open。「使わなくなる」リスクは入力の摩擦から始まるため、phase003 の入力系 Issue 群は完成度観点で重要。</p>
+  </div>
+</div>
+
+<div class="pain">
+  <div class="hd"><span class="t">P7 自由記述と構造化の両立（脱 Excel）</span><span class="pill p-done">解決済み 95%</span></div>
+  <div class="bd">
+    <div class="bar"><i class="g" style="width:95%"></i></div>
+    <p><span class="ok">できている：</span>Markdown の自由記述の中に <code>@schedule</code>／<code>@due</code>／ステータス記法を埋め込み、そこからカレンダー・ガント・カンバンを「導出」する設計そのものが解。Excel の「予定とメモを両立できない」問題は構造的に発生しない。Git 差分も取れ、可搬性・耐ロックイン性も高い。</p>
+  </div>
+</div>
+
+<h2 id="s4">4. 前回レポート（6/28）からの進捗差分</h2>
+
+<p>前回 MUST とした 5 項目のうち 4 項目が実装完了。開発速度は良好。</p>
+
+<table>
+  <tr><th>前回の MUST／SHOULD</th><th>現状</th><th>根拠</th></tr>
+  <tr><td>複数ファイル／Vault 横断の集約</td><td><span class="ok">実装済み</span></td><td>issue-phase001-001/005/006 closed。<code>viewmodel/</code>・<code>ast-index</code></td></tr>
+  <tr><td>クエリ／フィルタ言語と保存フィルタ</td><td><span class="ok">実装済み</span>（保存スマートリストは open）</td><td>issue-phase001-002/003/004 closed。002-007 open</td></tr>
+  <tr><td>繰り返しタスク（RRULE）</td><td><span class="ok">実装済み</span></td><td>issue-phase002-001 closed。<code>@repeat</code>＋rrule 展開</td></tr>
+  <tr><td>Today／Agenda ビュー</td><td><span class="ok">実装済み</span></td><td>issue-phase002-002 closed。overdue/today/thisWeek/undated バケット</td></tr>
+  <tr><td>リマインド通知</td><td><span class="no">未実装</span></td><td>issue-phase002-005 open</td></tr>
+  <tr><td>（前回になかった追加）Health チェックパネル</td><td><span class="ok">実装済み</span></td><td>undated/overdue/stale/unresolved-deps/ready/malformed の 6 ルール</td></tr>
+</table>
+
+<p>phase003（入力体験・Kanban 強化）は 12 Issue 中、カードグループ（003-012）が実装済み（動作確認待ち）で、残りは open。<b>「見る」系は揃い、「書く・操作する」系が進行中</b>という現在地である。</p>
+
+<h2 id="s5">5. 第三者比較①：同種アプリとの比較</h2>
+
+<p>比較対象は「Markdown／プレーンテキストでタスク管理を成立させている」代表格 5 つ。<b>各ツールが本アプリより優れている点</b>と、そこから<b>採用すべき要素</b>を示す。</p>
+
+<h3>5.1 機能マトリクス</h3>
+<table>
+  <tr><th>機能</th><th>本アプリ</th><th>Obsidian Tasks</th><th>org-mode</th><th>NotePlan</th><th>Todoist</th></tr>
+  <tr><td>正データが素の Markdown（本文インライン）</td><td>◎</td><td>◎</td><td>◎（org記法）</td><td>◯</td><td>×（クラウドDB）</td></tr>
+  <tr><td>期限と実施予定の分離（due / schedule）</td><td>◎ 時間幅つき</td><td>◯ due/scheduled/start</td><td>◎ DEADLINE/SCHEDULED</td><td>◯</td><td>△</td></tr>
+  <tr><td>カレンダー・ガント・カンバンの複数ビュー</td><td>◎ 7ビュー</td><td>×</td><td>△（agenda中心）</td><td>◯（カレンダー）</td><td>△（ボード）</td></tr>
+  <tr><td>ドラッグ→本文書き戻し</td><td>◎ 強み</td><td>×</td><td>×</td><td>◯（タイムライン）</td><td>—</td></tr>
+  <tr><td>横断クエリ・保存検索</td><td>◯（保存は未）</td><td>◎ 中核機能</td><td>◎ custom agenda</td><td>△</td><td>◎ フィルタ</td></tr>
+  <tr><td>繰り返しタスク</td><td>◎ RRULE</td><td>◎</td><td>◎</td><td>◯</td><td>◎ 自然言語</td></tr>
+  <tr><td><b>完了日・状態変更の自動記録</b></td><td><b>× なし</b></td><td>◎ ✅完了日ほか</td><td>◎ LOGBOOK</td><td>△</td><td>◯（履歴）</td></tr>
+  <tr><td><b>作業時間の記録（clocking）</b></td><td><b>× なし</b></td><td>×</td><td>◎ clock-in/out</td><td>×</td><td>×</td></tr>
+  <tr><td>通知・リマインド</td><td>× open</td><td>△ 他プラグイン依存</td><td>△</td><td>◎</td><td>◎</td></tr>
+  <tr><td>外部カレンダー統合（会議予定の表示）</td><td>×</td><td>×</td><td>△</td><td>◎ OS カレンダー</td><td>◯</td></tr>
+  <tr><td>自然言語での素早い入力</td><td>× 手打ち</td><td>△ モーダル補助</td><td>△ capture</td><td>◯</td><td>◎ 最高峰</td></tr>
+  <tr><td>デイリーノート連動（今日のページ）</td><td>×</td><td>—</td><td>◯ journal</td><td>◎ 中核機能</td><td>—</td></tr>
+</table>
+<p class="muted">◎ 優れている／◯ 対応／△ 部分的／× なし。太字行が「競合は標準装備なのに本アプリに無い」要注意領域。</p>
+
+<h3>5.2 各ツールから採用すべきもの</h3>
+
+<div class="vs">
+  <div class="hd"><span class="name">Obsidian Tasks</span><span class="meta">Obsidian で最も使われるタスクプラグイン・インライン記法の事実上の標準</span></div>
+  <div class="bd">
+    <p>強みは「Vault 横断クエリ」と「タスクのライフサイクル日付」。完了時に <code>✅ 2026-07-03</code>、作成日 <code>➕</code>、開始可能日 <code>🛫</code> をタスク行へ自動記録し、<b>done 日でのクエリ（「今週完了したもの」）</b>を可能にしている。繰り返しタスクは完了と同時に次回インスタンスを本文へ生成する方式。</p>
+    <div class="adopt"><b>採用候補：</b>① 完了日の自動記録（本アプリなら <code>@done: 2026-07-03</code> メタが記法体系に自然に収まる）。② 「done 日クエリ」をクエリ言語に追加。③ ステータス変更日 <code>@updated</code> は stale 検知（Health）の精度向上にも直結する。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Emacs org-mode</span><span class="meta">プレーンテキストタスク管理の 40 年級の到達点</span></div>
+  <div class="bd">
+    <p>本アプリの Agenda はすでに org-agenda に相当。org が今なお上を行くのは <b>①clocking（タスクへの clock-in/out で実働時間をテキストに記録）</b>、<b>②LOGBOOK（状態変更のたびにタイムスタンプ＋理由を自動追記。WAITING にした瞬間「誰待ちか」を促す）</b>、<b>③custom agenda（保存済みクエリをダッシュボード化）</b>。P3（スイッチで状態を見失う）と P5（報告）への org の回答がまさに ①② である。</p>
+    <div class="adopt"><b>採用候補：</b>① <code>[&gt;]</code>（doing）へ切替時に現在時刻を自動追記し、離脱時（別タスクを doing にした時）に自動でメモ行を促す「軽量 clocking」。② blocked へ変更時に「何待ちか」の 1 行入力を促す（demo の運用を機能化）。③ 保存スマートリスト（issue-phase002-007）は org custom agenda の方向で。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">NotePlan</span><span class="meta">Markdown＋カレンダーの商用最有力（Mac/iOS）・時間ブロッキングの代表</span></div>
+  <div class="bd">
+    <p>「自動生成されるデイリーノート」を軸に、その日のタスク・会議メモ・時間ブロックを 1 ページで扱う。タスクを右側のタイムラインへ<b>ドラッグして時間ブロック化</b>する UX と、<b>OS カレンダー統合（会議とタスクを同じタイムラインで見る）</b>が高評価の源泉。本アプリのドラッグ書き戻し基盤はこれと同等以上の素質があるが、「会議」が見えない点で日次計画ツールとしては NotePlan に劣る。</p>
+    <div class="adopt"><b>採用候補：</b>① 外部カレンダー（ics 購読）の読み取り専用レイヤーをカレンダー／ガントに重ねる。② Unscheduled Tray→カレンダーへのドラッグ割付（issue-phase003-001）は NotePlan の時間ブロッキング UX をベンチマークに。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Todoist</span><span class="meta">非 Markdown 系の王者・入力体験の最高峰</span></div>
+  <div class="bd">
+    <p>思想は真逆（クラウド DB・サブスク依存）だが、「あす10時 見積送付 #総務 p1」と打つだけで全メタが付く<b>自然言語クイック追加</b>と、確実な<b>リマインド通知</b>は入力・想起コストの基準値。P6（続けられるか）を左右するのはこのレベルの摩擦の低さ。</p>
+    <div class="adopt"><b>採用候補：</b>クイック追加モーダル（issue-phase003-004）に日本語日付の自然言語解釈（「明日10時」「来週金曜」）を載せる。通知（issue-phase002-005）は Obsidian Notice＋OS Notification で十分実用になる。</div>
+  </div>
+</div>
+
+<div class="vs">
+  <div class="hd"><span class="name">Logseq / TaskForge ほか</span><span class="meta">アウトライナー系・新興 Markdown タスク専業</span></div>
+  <div class="bd">
+    <p>Logseq はブロック単位のアウトライン＋ジャーナル（デイリーノート）でタスクと経緯を同居させる思想が近い。2026 年時点でも「Markdown タスク管理はソロのナレッジワーカーに最適、チーム共有には不向き」というのが市場の一般的評価であり、<b>本アプリの「個人の業務管理に全振り」という割り切りは市場評価とも整合している</b>。</p>
+    <div class="adopt"><b>採用候補：</b>デイリーノート連携（「今日のページ」に today クエリブロックを自動挿入するテンプレート）。新規機能というよりテンプレート＋既存クエリブロックの組み合わせで実現可能。</div>
+  </div>
+</div>
+
+<h2 id="s6">6. 第三者比較②：コミュニティの Markdown タスク管理実践</h2>
+
+<p>ブログ・Reddit・Obsidian フォーラム等で公開されている個人のプレーンテキストタスク管理には、ツール機能ではなく<b>運用パターン</b>としての知見が蓄積している。本アプリの設計に取り込めるものを 3 つ挙げる。</p>
+
+<h3>6.1 Interstitial Journaling（合間ジャーナル）— P3 への直接回答</h3>
+<p>タスクを切り替えるたびに「時刻＋いまの状態＋次にやること」を 1〜2 行書き残す手法（Tony Stubblebine 提唱、Ness Labs 等で普及）。<b>「タスクの最終状態がログに残るので、戻ったときに即再開できる」</b>効果が知られており、タスク切替時の attention residue（注意の残滓）を減らす研究的裏付けも紹介されている。まさに P3（スイッチで見失う）への世間の回答。</p>
+<div class="feat">
+  <h4>本アプリへの示唆</h4>
+  <p class="why">demo の「電話で催促済み（6/19）」のような経緯メモは、すでに interstitial journaling を手動でやっている状態。これを機能で支援できる。</p>
+  <div class="how">ステータス変更（特に doing→他）をトリガーに、タスク直下へ <code>- 2026-07-03 14:20 —（カーソル）</code> のタイムスタンプ付きメモ行を自動挿入するオプション。書くか書かないかは自由、行の用意だけ自動化する。</div>
+</div>
+
+<h3>6.2 Bullet Journal 的「デイリーログ＋移送（migration）」— P1/P2 への回答</h3>
+<p>コミュニティで安定して支持されるのは「まず今日のページに書き殴る→あとで然るべき場所へ移す」二段構え。Obsidian 界隈のワークフロー記事でもデイリーノート起点が主流。<b>「書く場所を考えない入口」があるから散在しない</b>、という逆説が実践知。</p>
+<div class="feat">
+  <h4>本アプリへの示唆</h4>
+  <p class="why">issue-phase003-006（クイックキャプチャ・インボックス・リファイル）はこの実践の機能化であり、方向性は正しい。優先度を上げる価値がある。</p>
+  <div class="how">キャプチャ先を固定の inbox.md にし、Agenda/Health に「Inbox 未仕分け n 件」バッジを出して移送を習慣化させる（issue-phase002-007 のバッジ機構と統合）。</div>
+</div>
+
+<h3>6.3 「週次レビューを書ける形で残す」— P5 への回答</h3>
+<p>プレーンテキスト派の報告術は「完了タスクに日付が残っているから、週末に done を日付でフィルタして貼り付けるだけ」という運用が定番（Obsidian Tasks の done クエリ、org-mode の clock report）。ツール側に必要なのは<b>集計より先に「日付の記録」</b>という点で各実践が一致している。ClickUp や Geekbot 等の商用ツールが「タスクデータからの status report 自動生成」を看板機能にしていることも、この需要の強さを示す。</p>
+
+<h2 id="s7">7. 不足機能の提案（優先度・既存 Issue 対応つき）</h2>
+
+<p>評価を踏まえた提案。<span class="pill p-issue">既存Issue</span> は open Issue の優先度付けの参考、<span class="pill p-new">新規候補</span> はガバナンスに従い Issue 化してから着手すること。</p>
+
+<h3>7.1 タスクライフサイクルの自動記録 <span class="pill p-new">新規候補</span> — 最優先</h3>
+<div class="feat">
+  <p class="why"><b>なぜ最優先か：</b>P3（どこまでやったか）と P5（報告）の両方の前提。競合（Tasks の ✅、org の LOGBOOK）は標準装備で、本アプリだけが「チェックしたら過去が消える」状態。後から遡って付けられないデータなので、早く入れるほど資産が貯まる。</p>
+  <div class="how">
+    <b>実装方針：</b>① メタに <code>@done: YYYY-MM-DD</code>（完了日）を追加し、ビュー／エディタ経由の完了操作時に既存の <code>upsert-meta</code> 基盤で自動書き込み。② オプションで doing/blocked への遷移時にタイムスタンプ付きメモ行を自動挿入（§6.1）。③ クエリ言語に <code>done:&gt;=2026-06-30</code> を追加。手書き完了（エディタで直接 x にする）を検知する場合は差分ベースの補完が必要な点は設計論点。
+  </div>
+</div>
+
+<h3>7.2 進捗レポート生成（週報・日報ドラフト） <span class="pill p-new">新規候補</span></h3>
+<div class="feat">
+  <p class="why"><b>なぜ：</b>P5 の直接解であり、当初動機（上司への報告）の回収。7.1 のデータが揃えば「先週完了／進行中＋現況メモ／期限超過・リスク」を集計するだけで作れる。<b>タスクの直下に経緯メモを持つ本アプリの構造は、報告文生成において競合より有利</b>（Tasks や Todoist は経緯を持たない）。</p>
+  <div class="how">
+    <b>実装方針：</b>コマンド「進捗レポート生成」→ 期間（今週／先週／任意）とスコープを指定 → <code>done ／doing＋最新メモ／overdue</code> をセクション別に Markdown で新規ノートへ出力。まずは静的生成で十分。既存の query＋viewmodel を再利用でき、新規はテンプレート整形のみ。
+  </div>
+</div>
+
+<h3>7.3 リマインド通知 <span class="pill p-issue">issue-phase002-005（open）</span></h3>
+<div class="feat">
+  <p class="why"><b>なぜ：</b>P2 の残り。「気づく」を Agenda/Health（受動）から通知（能動）へ。前回レポートから継続の宿題であり、競合ではタスク管理の当然の底線。</p>
+  <div class="how">既存 Issue の方針どおり（常駐タイマー＋Obsidian Notice／OS Notification、リードタイム設定）。7.4 より先に安価に効く。</div>
+</div>
+
+<h3>7.4 外部カレンダー読み取り（ics 購読） <span class="pill p-new">新規候補</span></h3>
+<div class="feat">
+  <p class="why"><b>なぜ：</b>会議が見えないと「空き時間にタスクを置く」計画が組めず、時間ブロッキング（Unscheduled Tray→ドラッグ割付）の価値が半減する。NotePlan の高評価はカレンダー統合による部分が大きい。</p>
+  <div class="how">読み取り専用レイヤーに限定（書き戻しの競合問題を回避）。ics URL を設定に登録→カレンダー／ガントに別色で重畳表示。Markdown へは書き込まない。</div>
+</div>
+
+<h3>7.5 入力摩擦の解消（phase003 の完遂） <span class="pill p-issue">issue-phase003-004 / 006 / 007 / 008、issue-phase002-004</span></h3>
+<div class="feat">
+  <p class="why"><b>なぜ：</b>P6（続けられるか）の核心。「見る」機能が揃った今、離脱リスクは入力の手間に集中する。クイック追加（自然言語日付つき）・メタ補完／日付ピッカー・チェックボックスサイクル・キャプチャ→インボックスの 4 点セットで、Todoist 級の入力体験に近づく。</p>
+  <div class="how">既存 open Issue の消化。優先順は 003-008（補完：毎回使う）→ 003-007（クリック操作）→ 003-004／006（追加動線）を提案。</div>
+</div>
+
+<h3>7.6 その他（前回から継続の open 項目）</h3>
+<ul class="clean">
+  <li><b>保存スマートリスト＋バッジ</b>（002-007）— 7.2 のレポートスコープ定義と設計を揃えると二度手間がない。</li>
+  <li><b>グループ進捗ロールアップ</b>（003-002）— 報告時の「案件単位の進捗率」に直結。7.2 と同フェーズが効率的。</li>
+  <li><b>依存矢印と安定 ID</b>（003-003）— 価値はあるが個人業務管理では優先度中。安定 ID は 7.1 の履歴機能とも関わるため設計だけ先行を推奨。</li>
+  <li><b>編集可能テーブルビュー</b>（003-005）— Excel からの移行者向け。P7 は解決済みのため優先度は低め。</li>
+</ul>
+
+<h2 id="s8">8. ロードマップ提案（phase004 以降）</h2>
+
+<div class="flow">現在        <span class="g">phase001–002 完了</span>（横断集約・クエリ・繰り返し・Agenda・Health）
+進行中      <span class="y">phase003</span> 入力体験・Kanban 強化（12 Issue 中 1 実装済み）
+            └ 推奨：003-008 → 003-007 → 003-004/006 の順で「入力摩擦」から潰す
+
+phase004    <span class="hi">記録と報告（本レポートの中核提案）</span>
+            ├ 7.1 @done・状態変更タイムスタンプの自動記録   ← 早いほどデータが貯まる
+            ├ 7.2 進捗レポート生成（週報ドラフト）
+            └ 7.3 リマインド通知（002-005 消化）
+
+phase005    <span class="c">計画の完成（時間ブロッキング）</span>
+            ├ 003-001 Unscheduled Tray → カレンダードラッグ割付の仕上げ
+            ├ 7.4 外部カレンダー ics 読み取りレイヤー
+            └ 003-002 進捗ロールアップ／002-007 スマートリスト</div>
+
+<p><b>判断基準の提案：</b>「その機能が無いと、6 つの悩みのどれかが再発するか？」で優先度を測る。この基準では、phase004（記録と報告）は P3・P5 の再発防止に直結する一方、テーブルビューや依存矢印は再発を招かないため後回しにできる。</p>
+
+<h2 id="s9">9. 参考情報源</h2>
+<ul class="clean">
+  <li><a href="https://github.com/obsidian-tasks-group/obsidian-tasks">Obsidian Tasks（GitHub）</a> — 横断クエリ・繰り返し・完了日記録の仕様</li>
+  <li><a href="https://orgmode.org/features.html">Org mode Features</a> / <a href="https://orgmode.org/guide/Clocking-Work-Time.html">Clocking Work Time</a> / <a href="https://orgmode.org/manual/Agenda-Commands.html">Agenda Commands</a> — clocking・LOGBOOK・agenda</li>
+  <li><a href="https://cachestocaches.com/2016/9/my-workflow-org-agenda/">My Workflow with Org-Agenda</a> / <a href="https://systemcrafters.net/org-mode-productivity/custom-org-agenda-views/">5 Custom Org Agenda Views（System Crafters）</a> / <a href="https://www.philnewton.net/blog/how-i-get-work-done-with-emacs/">How I get work done with Emacs</a> — org 実践者のワークフロー</li>
+  <li><a href="https://noteplan.co/time-blocking">NotePlan — Time Blocking</a> / <a href="https://help.noteplan.co/article/52-part-2-tasks-events-and-reminders">Tasks, Events and Reminders</a> / <a href="https://toolradar.com/tools/noteplan">NotePlan Reviews（Toolradar）</a> — カレンダー統合・時間ブロッキング UX</li>
+  <li><a href="https://quik.md/markdown-task-management">Markdown Task Management: Why Plain Text Wins in 2026（quik.md）</a> / <a href="https://taskforge.md/alternatives/">Best Obsidian Task App Alternatives 2026（TaskForge）</a> — 2026 年時点の市場整理</li>
+  <li><a href="https://nesslabs.com/interstitial-journaling">Interstitial journaling（Ness Labs）</a> / <a href="https://medium.com/better-humans/replace-your-to-do-list-with-interstitial-journaling-to-increase-productivity-4e43109d15ef">Tony Stubblebine（Better Humans）</a> / <a href="https://paperarrow.com/notes/interstitial-journaling">Paper Arrow</a> — タスク切替時の記録手法</li>
+  <li><a href="https://blog.jethro.dev/posts/processing_inbox/">Org-mode Workflow: Processing the Inbox（Jethro Kuan）</a> — インボックス／リファイル運用</li>
+  <li><a href="https://www.range.co/blog/status-report-tools">Status Report Tools（Range）</a> / <a href="https://geekbot.com/blog/weekly-status-update/">Weekly Status Updates（Geekbot）</a> / <a href="https://clickup.com/blog/how-to-automate-weekly-status-report-with-ai/">Automate Weekly Status Report（ClickUp）</a> — タスクデータからの報告自動生成の市場</li>
+  <li><a href="https://forum.obsidian.md/t/two-way-sync-with-obsidian-and-todoist/31639">Obsidian Forum — Todoist 双方向同期の議論</a> — 同期需要と課題</li>
+</ul>
+
+<p class="footnote">
+本レポートはコードベース（src/・project/issues/・project/specs/・demo/）の読解と上記公開情報に基づく評価であり、ソースコードへの変更は一切行っていない。
+実装に着手する場合は本プロジェクトのガバナンス（Issue 駆動・Spec 先行）に従い、§7 の「新規候補」は Issue／Spec を起票してから進めること。
+前回資料：<a href="feature-gap-analysis-and-roadmap.html">feature-gap-analysis-and-roadmap.html（2026-06-28）</a>
+</p>
+
+</div>
+</body>
+</html>

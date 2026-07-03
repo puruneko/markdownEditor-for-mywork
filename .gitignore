@@ -13,3 +13,4 @@ tmp_rovodev_*
 playwright-report
 test-results
 .obsidian-cache
+tests/obs-e2e/screenshots

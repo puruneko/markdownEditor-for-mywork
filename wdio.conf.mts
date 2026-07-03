@@ -1,7 +1,11 @@
 import * as path from 'path'
+import * as fs from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// OBS_E2E_HEADED=1 でヘッドレスを解除し、WSLg 上に Obsidian ウィンドウを表示する（目視デバッグ用）
+const headed = !!process.env.OBS_E2E_HEADED
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -18,7 +22,9 @@ export const config: WebdriverIO.Config = {
       vault: path.resolve(__dirname, 'test/vaults/simple'),
     },
     'goog:chromeOptions': {
-      args: ['--headless=new', '--disable-gpu', '--no-sandbox'],
+      args: headed
+        ? ['--no-sandbox']
+        : ['--headless=new', '--disable-gpu', '--no-sandbox'],
     },
   }],
 
@@ -36,9 +42,17 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
 
-  afterTest: async function (_test: unknown, _context: unknown, result: { passed: boolean }) {
-    // テスト自体がパスした場合でも、コンソールにエラーがあればテスト失敗にする
-    if (!result.passed) return
+  afterTest: async function (test: { title?: string }, _context: unknown, result: { passed: boolean }) {
+    // 失敗時はスクリーンショットを保存する（目視確認の証跡）
+    if (!result.passed) {
+      const dir = path.resolve(__dirname, 'tests/obs-e2e/screenshots')
+      fs.mkdirSync(dir, { recursive: true })
+      const name = (test?.title ?? 'unknown').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 80)
+      try {
+        await (globalThis as any).browser.saveScreenshot(path.join(dir, `FAILED_${name}.png`))
+      } catch { /* スクリーンショット失敗はテスト結果に影響させない */ }
+      return
+    }
 
     const logs = await (globalThis as any).browser.getLogs('browser')
     const WARNING_PATTERNS = [
