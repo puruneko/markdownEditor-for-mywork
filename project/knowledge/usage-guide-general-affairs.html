@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>md-ast-editor 使いこなしガイド — 総務業務編</title>
+<style>
+  :root{
+    --bg:#fbfbfd; --panel:#ffffff; --ink:#1c2333; --muted:#5f6b7d; --line:#dfe4ec;
+    --accent:#2563eb; --accent-soft:#eff4ff;
+    --green:#15803d; --green-soft:#ecfdf3;
+    --amber:#b45309; --amber-soft:#fffaeb;
+    --red:#b91c1c; --red-soft:#fef2f2;
+    --purple:#7c3aed; --purple-soft:#f5f0ff;
+    --mono:"SF Mono",Consolas,"Roboto Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Roboto,sans-serif;
+    line-height:1.9;font-size:15px}
+  .wrap{max-width:1020px;margin:0 auto;padding:48px 30px 100px}
+  header.cover{border-bottom:3px solid var(--accent);padding-bottom:24px;margin-bottom:32px}
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+  h1{font-size:28px;margin:.3em 0 .15em;line-height:1.35}
+  .sub{color:var(--muted);font-size:13.5px}
+  h2{font-size:22px;margin:60px 0 14px;padding:6px 0 6px 14px;border-left:5px solid var(--accent)}
+  h3{font-size:17.5px;margin:34px 0 10px}
+  h4{font-size:15px;margin:22px 0 6px;color:var(--accent)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-size:13px;font-family:var(--mono);color:#0f3b8c}
+  pre{background:#0f1420;color:#d6deea;border-radius:10px;padding:14px 18px;margin:12px 0;
+    font-family:var(--mono);font-size:12.5px;overflow-x:auto;line-height:1.7}
+  pre .c{color:#6b7684}
+  pre .g{color:#6ee7a0} pre .y{color:#fcd34d} pre .b{color:#7fb3ff} pre .r{color:#fb8f8f} pre .p{color:#c4a5ff}
+  pre .hl{background:rgba(124,58,237,.25);display:inline-block;width:100%}
+  .muted{color:var(--muted)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:var(--panel)}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f4f6fb;font-weight:700;white-space:nowrap}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 22px;
+    box-shadow:0 1px 3px rgba(20,30,60,.05);margin:14px 0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 26px}
+  .toc ol{margin:8px 0;padding-left:22px}
+  .toc a{text-decoration:none}
+  .recipe{border:1px solid var(--line);border-left:5px solid var(--purple);border-radius:0 12px 12px 0;
+    background:var(--panel);padding:14px 22px;margin:18px 0}
+  .recipe h3{margin:4px 0 8px}
+  .recipe .goal{color:var(--muted);font-size:13.5px;margin:0 0 8px}
+  .pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .p-now{background:var(--green-soft);color:var(--green);border:1px solid #bbe5c8}
+  .p-soon{background:var(--amber-soft);color:var(--amber);border:1px solid #f4dfb0}
+  .p-idea{background:var(--purple-soft);color:var(--purple);border:1px solid #ddd0f5}
+  .p-impl{background:var(--accent-soft);color:var(--accent);border:1px solid #c5d7f7}
+  blockquote{margin:12px 0;padding:8px 16px;border-left:4px solid var(--purple);
+    background:var(--purple-soft);border-radius:0 8px 8px 0;color:#3d3355;font-size:13.5px}
+  ul.clean{margin:8px 0;padding-left:22px}
+  ul.clean li{margin:5px 0}
+  .kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;
+    padding:0 6px;font-size:12px;background:#fff;font-family:var(--mono)}
+  .footnote{color:var(--muted);font-size:12.5px;margin-top:60px;border-top:1px solid var(--line);padding-top:16px}
+  .status{font-family:var(--mono);font-weight:700}
+
+  /* ---------- 画面モックアップ ---------- */
+  .mock{border:1px solid #c8cfdb;border-radius:10px;overflow:hidden;margin:14px 0;
+    box-shadow:0 4px 14px rgba(20,30,60,.10);font-size:12.5px;background:#fff}
+  .mock .titlebar{background:#ececf1;padding:5px 12px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid #d8dce4;color:#555;font-size:12px}
+  .mock .dot{width:10px;height:10px;border-radius:50%;background:#c9ced8}
+  .mock .cap{background:#f4f6fb;color:var(--muted);font-size:12px;padding:6px 12px;border-top:1px solid var(--line)}
+  .mock-cols{display:flex;min-height:150px}
+  .mock-note{flex:1.2;padding:12px 16px;border-right:1px solid #e2e6ee;background:#fff;line-height:1.75}
+  .mock-view{flex:1;background:#fff}
+  .m-h1{font-weight:800;font-size:15px;margin:0 0 6px}
+  .m-h2{font-weight:700;font-size:13.5px;margin:8px 0 4px}
+  .m-task{margin-left:6px}
+  .m-meta{color:#5b6da8;margin-left:34px;font-family:var(--mono);font-size:11.5px}
+  .m-memo{color:#8a94a5;margin-left:34px;font-size:11.5px}
+  .cb{display:inline-block;width:13px;height:13px;border:1.5px solid #9aa4b2;border-radius:3px;
+    margin-right:6px;vertical-align:-2px;text-align:center;line-height:11px;font-size:10px;font-weight:800}
+  .cb.doing{border-color:#2563eb;color:#2563eb}
+  .cb.blocked{border-color:#dc2626;color:#dc2626}
+  .cb.done{border-color:#16a34a;background:#16a34a;color:#fff}
+  /* kanban mock (dark) */
+  .kb{background:#171a21;color:#d7dde6;padding:10px;display:flex;gap:8px;overflow-x:auto}
+  .kb-toolbar{background:#171a21;color:#c6cdd8;padding:8px 10px;display:flex;gap:10px;align-items:center;
+    border-bottom:1px solid #2a2f3a;font-size:12px}
+  .kb-select{background:#232836;border:1px solid #39404f;border-radius:5px;padding:1px 8px;color:#d7dde6}
+  .kb-chip{background:#232836;border:1px solid #39404f;border-radius:999px;padding:1px 10px}
+  .lane{background:#1e232e;border:1px solid #2a2f3a;border-radius:8px;min-width:150px;flex:1;padding:8px}
+  .lane .lh{display:flex;justify-content:space-between;font-weight:700;font-size:12.5px;margin-bottom:8px}
+  .lane .cnt{background:#2c3342;border-radius:999px;padding:0 8px;font-size:11px;color:#9aa4b2}
+  .kcard{background:#141821;border:1px solid #2c3342;border-radius:6px;padding:7px 9px;margin-bottom:7px}
+  .kcard .aff{color:#7b87a0;font-size:10px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kcard .kt{font-size:12px;color:#e3e8f0}
+  .kcard .kd{color:#8a94a5;font-size:10.5px;margin-top:3px}
+  .kcard.ghosting{opacity:.5;border-style:dashed}
+  /* agenda / health mock (light) */
+  .ag{padding:10px 14px}
+  .ag .agh{display:flex;justify-content:space-between;font-weight:800;border-bottom:1px solid var(--line);
+    padding-bottom:6px;margin-bottom:8px}
+  .ag .sec{color:var(--red);font-weight:700;font-size:12px;margin:8px 0 4px}
+  .ag .sec.gray{color:var(--muted)}
+  .ag .row{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:12.5px}
+  .ag .date{color:var(--red);font-family:var(--mono);font-weight:700;font-size:11.5px}
+  .badge{background:#eef1f6;border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:10.5px;color:var(--muted)}
+  /* calendar mock */
+  .cal{padding:8px 10px}
+  .cal .calbar{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:1px 12px;font-size:12px}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .calgrid{display:grid;grid-template-columns:34px repeat(5,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .calgrid .hd{background:#f4f6fb;text-align:center;font-size:11px;padding:3px 0;border-left:1px solid var(--line)}
+  .calgrid .tm{font-size:10px;color:var(--muted);text-align:right;padding:2px 4px;border-top:1px solid var(--line)}
+  .calgrid .cell{border-left:1px solid var(--line);border-top:1px solid var(--line);height:34px;position:relative}
+  .ev{position:absolute;left:2px;right:2px;border-radius:4px;font-size:10px;padding:1px 4px;color:#fff;overflow:hidden;white-space:nowrap}
+  .ev.a{background:#5b7bd5} .ev.b{background:#5aa77a} .ev.ghost{background:transparent;border:1.5px dashed #5b7bd5;color:#5b7bd5}
+  .arrow-note{color:var(--muted);font-size:12px;margin:4px 0 0}
+  /* palette mock */
+  .pal{max-width:460px;margin:10px auto;background:#fff;border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 10px 30px rgba(20,30,60,.18);overflow:hidden}
+  .pal .in{padding:8px 12px;border-bottom:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:13px}
+  .pal .it{padding:6px 12px;font-size:13px;border-bottom:1px solid #f1f3f8}
+  .pal .it.sel{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  /* day flow */
+  .flowday{display:grid;grid-template-columns:92px 1fr;gap:0 14px;margin:12px 0}
+  .flowday .t{color:var(--accent);font-weight:700;font-family:var(--mono);font-size:13px;padding-top:2px}
+  .flowday .d{border-left:2px solid var(--line);padding:0 0 18px 14px;margin-left:6px}
+  .scene{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px 22px;margin:20px 0;
+    box-shadow:0 1px 3px rgba(20,30,60,.05)}
+  .scene h3{margin:2px 0 2px}
+  .scene .when{color:var(--purple);font-size:12.5px;font-weight:700;letter-spacing:.06em}
+  .voice{background:var(--accent-soft);border-radius:8px;padding:8px 14px;margin:10px 0;font-size:13.5px}
+  .voice b:first-child{color:var(--accent)}
+  .gap{border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:0 12px 12px 0;
+    background:var(--panel);padding:12px 20px;margin:16px 0}
+  .gap h4{color:var(--ink);margin:2px 0 4px;font-size:15px}
+  .gap .why{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">User Guide · General Affairs Edition · v2</div>
+  <h1>md-ast-editor 使いこなしガイド — 総務業務編</h1>
+  <p class="sub">
+    契約・オフィス管理・工事監督・イベント・派遣管理・事業計画を、Markdown 1 枚に集約して回すための手引き。<br>
+    新しく総務に来た方へ：このガイドは「操作手順書」ではなく、先輩の仕事の回し方ごと引き継ぐためのノートです。<br>
+    作成日：2026-07-05 ・ 実例はすべて <code>demo/demo_markdown.md</code> にあります（開きながら読むのがおすすめ）
+  </p>
+</header>
+
+<div class="toc">
+  <b>目次</b>
+  <ol>
+    <li><a href="#s1">このアプリの考え方と、推奨の使い方</a></li>
+    <li><a href="#s2">Markdown の書き方（詳細リファレンス）</a></li>
+    <li><a href="#s3">画面と操作（Obsidian 上でどう動かすか）</a></li>
+    <li><a href="#s4">仕事スタイル別レシピ 6 選</a></li>
+    <li><a href="#s5">1 日の回し方 — 場面別ウォークスルー</a></li>
+    <li><a href="#s6">検索・フィルタ（task-query）</a></li>
+    <li><a href="#s7">まだ実装されていない機能・概念（開発向け詳細）</a></li>
+    <li><a href="#s8">この文書について（メタ情報）</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1">1. このアプリの考え方と、推奨の使い方</h2>
+
+<h3>1.1 なぜ Excel でも市販タスクアプリでもないのか</h3>
+<p>総務の仕事は「タスク」だけでできていません。契約更新には交渉の経緯があり、工事には先輩の助言があり、督促には「何回目か」という文脈があります。Excel の管理表はセルに収まる情報しか持てず、市販のタスクアプリはタスクとメモが別画面に分かれます。<b>結果、情報が散らばり、探す時間が増え、管理表そのものが更新されなくなる</b> — これがこのアプリが解決しようとした出発点です。</p>
+<p>このアプリの答えはシンプルです：<b>すべてを 1 つの Markdown ファイルに、文章として書く</b>。タスクも、締切も、作業予定も、経緯メモも、上司の一言も、同じ場所に。そしてアプリがその文章を読み取って、カレンダー・ガントチャート・カンバン・期限一覧という「別の眺め方」を自動で作ります。</p>
+
+<pre><span class="c">┌─ あなたが書く（1つのMarkdown）─────────────┐      ┌─ アプリが描く（7つのビュー）──────┐</span>
+<span class="g">- [&gt;] 施工計画書のレビュー</span>                          <span class="b">Calendar</span>  週の時間割（今日どう動くか）
+<span class="g">  - @schedule: 7/7 13:00-15:00</span>   <span class="p">──読み取り──▶</span>   <span class="b">Gantt</span>     工程と期限の俯瞰（間に合うか）
+<span class="g">  - @due: 7/10</span>                                     <span class="b">Kanban</span>    状態の分布（何が詰まってるか）
+<span class="g">  - 養生範囲に通路が入ってない。要指摘</span>              <span class="b">Agenda</span>    期限超過・今日・今週（朝いち）
+                                 <span class="p">◀──ドラッグで──</span>   <span class="b">Health</span>    記入漏れ・放置の検知（週次）
+<span class="c">  カレンダー上で予定を動かすと、</span>                     <span class="b">Tray</span>      日時未定タスクの在庫
+<span class="c">  Markdown の @schedule が書き換わる（双方向）</span>       <span class="b">AST</span>       構造確認（普段は使わない）</pre>
+
+<h3>1.2 3 つの約束（このアプリの設計思想）</h3>
+<ul class="clean">
+  <li><b>① あなたの文章が唯一の正。</b>アプリは専用データベースを持ちません。ビューで行った操作（ドラッグ・チェック）はすべて Markdown 本文への書き換えとして反映され、エディタでいつでも確認・修正できます。アプリを捨てても文章は残ります。</li>
+  <li><b>② 管理のための作業をさせない。</b>色を塗る・罫線を引く・ステータス列を選ぶ、といった「管理の管理」は不要です。文章に <code>[&gt;]</code> や <code>@due:</code> と書けば、見た目はビューが勝手に整えます。</li>
+  <li><b>③ 抜け漏れは機械に見張らせる。</b>日付のないタスク、期限切れ、7 日放置、記法ミス — 人間が気合いで見張るのではなく、Health パネルと Agenda が検知します。あなたの仕事は「検知されたものに対処する」ことだけです。</li>
+</ul>
+
+<h3>1.3 推奨の使い方 — 4 拍子のループ</h3>
+<p>このアプリの使い方は、突き詰めると次の 4 拍子の繰り返しです。この後の全セクションは、この 4 拍子を総務の各場面に当てはめたものです。</p>
+<table>
+  <tr><th style="width:110px">拍子</th><th>やること</th><th>使う場所</th></tr>
+  <tr><td><b>① 書く</b></td><td>依頼・思いつき・経緯を、考えずにまず文章にする。整理はあと</td><td>エディタ（インボックス）</td></tr>
+  <tr><td><b>② 割り付ける</b></td><td>「いつまでに（@due）」と「いつやるか（@schedule）」を決める</td><td>エディタ＋カレンダー</td></tr>
+  <tr><td><b>③ 眺める</b></td><td>目的に合うビューで見る。朝は Agenda、計画は Calendar、工程は Gantt</td><td>各ビュー</td></tr>
+  <tr><td><b>④ 検知に応える</b></td><td>期限超過・放置・記入漏れの警告に対処する（週次で棚卸）</td><td>Agenda・Health</td></tr>
+</table>
+<blockquote><b>いちばん大事な習慣を 1 つだけ挙げるなら：</b>「締切（@due）を書いたら、やる時間（@schedule）も必ず確保する」。締切だけのタスクは"願望"です。時間を割り付けた瞬間に"予定"になります。カレンダーに置けない量のタスクを抱えていることに気づけるのも、この習慣の効能です。</blockquote>
+
+<h3>1.4 最初のセットアップ（着任初日にやること）</h3>
+<ol>
+  <li>Obsidian で総務用フォルダ（Vault）を開き、<code>総務メイン.md</code> を 1 つ作る。<b>最初はファイル 1 枚で十分</b>。</li>
+  <li>冒頭に引用ブロック（<code>&gt;</code>）で「連絡先・自分ルール」を書く（サンプルの冒頭を丸写しして書き換えるのが早い）。</li>
+  <li>セクション（<code>##</code>）を業務の柱で切る：インボックス／契約管理／工事／イベント／備品／派遣／事業計画／後輩フォロー／年間イベント俯瞰。</li>
+  <li>まず「年間イベント俯瞰」から書く（去年のカレンダーや前任者の記録から拾う）。<b>未来の自分への貯金として一番利回りが良い</b>。</li>
+  <li>あとは日々の依頼を 4 拍子で回すだけ。ファイルが 500 行を超えて重く感じたら案件ごとに分割（設定が vault スコープなら分割しても全ビューに自動集約される）。</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="s2">2. Markdown の書き方（詳細リファレンス）</h2>
+
+<h3>2.1 タスクとステータス — 5 つの記号で仕事の状態を表す</h3>
+<pre><span class="c">## 【契約管理】委託・共通契約          ← ## 見出し＝案件の区切り</span>
+
+- 清掃委託契約 更新（8/31満了）        <span class="c">← チェックの無い行＝タスクを束ねる「グループ」</span>
+  - [x] 現行契約の確認（単価・解約条項）      <span class="c">← done：完了</span>
+  - [&gt;] 変更覚書のドラフト作成               <span class="c">← doing：いま自分が着手中</span>
+  - [!] 新単価の見積書待ち → ボール：松田さん <span class="c">← blocked：相手ボール（待ち）</span>
+  - [ ] 法務レビュー依頼                     <span class="c">← todo：未着手（自分ボール）</span>
+  - [-] 旧契約書の廃棄（更新完了後でよい）    <span class="c">← hold：保留・いまは動かさない</span></pre>
+<p>覚え方：<b>「x 終わった / &gt; 進んでる / ! 止まってる（人待ち） / 空欄 これから / - 寝かせてる」</b>。特に <code>[!]</code>（blocked）は総務の生命線です — 「私は待っているだけで、ボールは相手にある」を明示できるので、督促漏れと「自分がやってない感」の両方から解放されます。</p>
+
+<h3>2.2 時間のメタ情報 — @due と @schedule は別物</h3>
+<pre>- [&gt;] 施工計画書のレビュー（安全計画・養生範囲）
+  - @schedule: 2026-07-07T13:00/2026-07-07T15:00   <span class="c">← 「7/7 の 13〜15 時にやる」＝作業の時間ブロック</span>
+  - @due: 2026-07-10                                <span class="c">← 「7/10 までに終わらせる」＝締切</span>
+  - @priority: 1                                    <span class="c">← 優先度（1 が最高。付けるのは 1 と 2 だけで十分）</span>
+  - 養生範囲にサーバーラック前の通路が含まれていない。村井さんへ指摘予定   <span class="c">← 経緯メモ</span></pre>
+<p><b>@due（期限）と @schedule（実施予定）を分けて書く</b>のがこのアプリの核心です。上の例は「10 日締切だが、7 日の午後に片付ける」という<b>意思</b>まで表現しています。カレンダーには @schedule が時間ブロックとして載り、Agenda には @due が期限として載ります。</p>
+<p>日付は省略記法が使えます（保存時もそのまま。アプリが解釈します）：</p>
+<pre>- @schedule: 26-07-07T13:00/15:00      <span class="c">→ 2026-07-07T13:00 〜 同日 15:00 と解釈（年2桁・終了側の日付省略）</span>
+- @schedule: 2026-07-22/24             <span class="c">→ 7/22〜7/24 の日単位（終日）レンジ。工事の工期などに</span>
+- @schedule: 2026-07-07T13/15          <span class="c">→ 分を省略すると :00 扱い</span></pre>
+<p><b>間違えるとどうなるか：</b>形式が不正な行（例：終了時刻の書き忘れ、区切りに「〜」を使う）は<b>ビューから静かに消えます</b>。ただしエディタが波線で警告し、直せるものはワンクリック修正（クイックフィックス）が出ます。<b>波線を放置しないこと</b> — Health パネルの「記法ミス」検知にも同じものが出ます。</p>
+
+<h3>2.3 その他のメタ情報 — 文脈つきの実例で</h3>
+<pre><span class="c">▼ タグ：横串の検索軸。「ボール待ち」「突発」「派遣」など、セクションを跨いで集めたい語を付ける</span>
+- [!] 第2会議室モニターの修理見積 → ボール：購買・鈴木さん
+  - @due: 2026-07-09
+  - @tags: ボール待ち, 備品
+
+<span class="c">▼ 依存：先行タスクが終わらないと始められない関係。ガントで意識でき、順番の間違いを防ぐ</span>
+- [ ] ケータリング発注（人数確定後3営業日以内）
+  - @dependsOn: 参加人数の取りまとめ（各部幹事へ依頼済み・7/10〆）
+  - @due: 2026-07-15
+
+<span class="c">▼ 繰り返し：RRULE 形式。本文は 1 行のまま、カレンダー・ガント上で毎回展開される</span>
+- [ ] 備品棚卸（毎月第1金曜）
+  - @schedule: 2026-07-03T14:00/2026-07-03T16:00   <span class="c">← 起点。この曜日・時刻パターンで繰り返す</span>
+  - @repeat: FREQ=MONTHLY;BYDAY=1FR                <span class="c">← 毎月第1金曜。FREQ=YEARLY なら毎年</span>
+  - @tags: 定例</pre>
+
+<h3>2.4 メモ・引用 — このアプリの「文章力」を使い切る</h3>
+<pre>- [!] 新単価の見積書待ち → ボール：松田さん（7/3督促済み）
+  - @due: 2026-07-10
+  - @tags: ボール待ち, 契約
+  - 7/1 依頼。「本社から回答する」とのこと                <span class="c">← ただの行＝経緯メモ。日付を頭に付ける習慣を</span>
+  - 7/3 電話督促。「週明けには」。次は本社窓口へ直接      <span class="c">← 督促履歴とエスカレーション判断も残す</span>
+  &gt; 先輩・田島さん「更新契約こそ解約条項を読め。         <span class="c">← 引用（&gt;）＝もらったアドバイスの定位置</span>
+  &gt; 自動更新の通知期限を落とすと1年縛られる」</pre>
+<p>経緯メモと引用は<b>タスクの子</b>として保持され、ビューからタスクをクリックすればエディタの該当行へ飛べます。つまり「一覧で気づく → 1 クリックで経緯に戻る」が常に成立します。会議のメモを別ノートに書いてしまうと、この導線が切れます — <b>そのタスクに関する情報は、そのタスクの下へ</b>。</p>
+
+<h3>2.5 やりがちなアンチパターン</h3>
+<table>
+  <tr><th>アンチパターン</th><th>何が起きるか</th><th>正しい形</th></tr>
+  <tr><td>メタをタスクと同じ行に書く<br><code>- [ ] 資料作成 @due: 7/10</code></td><td>メタとして認識されない（ビューに日付が載らない）</td><td>タスクの<b>子リスト</b>に 1 行ずつ<br><code>- [ ] 資料作成</code><br><code>&nbsp;&nbsp;- @due: 2026-07-10</code></td></tr>
+  <tr><td>区切りに「〜」や全角コロンを使う</td><td>不正記法としてビューから消える（警告は出る）</td><td>区切りは半角 <code>/</code>、コロンは半角 <code>:</code></td></tr>
+  <tr><td>@due だけ書いて満足する</td><td>締切前日に Agenda で青ざめる</td><td>@due を書いたら @schedule で作業時間も確保（§1.3）</td></tr>
+  <tr><td>doing（[&gt;]）を 5 個も 6 個も作る</td><td>「着手中」の意味が消え、切替コストだけ残る</td><td>doing は常に 1〜2 個。離れるときは「ここまで」メモ＋必要なら [ ] に戻す</td></tr>
+  <tr><td>引用ブロックの中にタスクを書く<br><code>&gt; - [ ] これ</code></td><td>タスクとして扱われない（仕様：引用はメモ）</td><td>タスクは引用の外に。引用は経緯・助言専用</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s3">3. 画面と操作（Obsidian 上でどう動かすか）</h2>
+<p class="muted">以下のモックは実機（Obsidian＋本プラグイン）のスクリーンショットを元に簡略化した再現図です。細部の見た目はテーマにより異なります。</p>
+
+<h3>3.1 画面の全体像 — 「左にノート、右にビュー」</h3>
+<div class="mock">
+  <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Obsidian — 総務メイン.md</div>
+  <div class="mock-cols">
+    <div class="mock-note">
+      <div class="m-h1">総務メイン</div>
+      <div class="m-h2">【契約管理】</div>
+      <div class="m-task"><span class="cb done">✓</span>現行契約の確認（単価・解約条項）</div>
+      <div class="m-task"><span class="cb blocked">!</span>新単価の見積書待ち → ボール：松田さん</div>
+      <div class="m-meta">- @due: 2026-07-07　- @tags: ボール待ち, 契約</div>
+      <div class="m-memo">- 7/3 電話督促。「週明けには」との回答</div>
+      <div class="m-task"><span class="cb doing">›</span>変更覚書のドラフト作成</div>
+      <div class="m-meta">- @schedule: 2026-07-06T15:00/17:00</div>
+      <div class="m-memo">- 16:50 ここまで：5契約中3契約分ドラフト済み</div>
+    </div>
+    <div class="mock-view">
+      <div class="ag">
+        <div class="agh"><span>Agenda</span><span>2026/07/05 (日)</span></div>
+        <div class="sec">⚠ 期限超過 (2)</div>
+        <div class="row"><span class="date">2026-07-04</span><span class="badge">未着手</span>防災訓練 開催日確定…</div>
+        <div class="row"><span class="date">2026-07-04</span><span class="badge">未着手</span>備品棚卸（毎月第…</div>
+        <div class="sec gray">— 日付なし (1)</div>
+        <div class="row"><span class="badge">未着手</span>郵便受付ルール改定…</div>
+      </div>
+    </div>
+  </div>
+  <div class="cap">左：Markdown ノート（編集する場所）／右：ビュー（眺める場所）。右の行をクリックすると左の該当行へカーソルが飛ぶ。</div>
+</div>
+<p>基本形は<b>「左にノート、右にビューを 1 枚」の 2 画面</b>です。ビューはタブとして複数開けますが、まずは Agenda を右に置きっぱなしにする運用から始めてください。</p>
+
+<h3>3.2 ビューを開く — コマンドパレット</h3>
+<div class="mock">
+  <div class="pal">
+    <div class="in">md-ast|</div>
+    <div class="it sel">md-ast-editor: Agenda ビューを開く（open-agenda-view）</div>
+    <div class="it">md-ast-editor: カレンダービューを開く（open-calendar-view）</div>
+    <div class="it">md-ast-editor: ガントビューを開く（open-gantt-view）</div>
+    <div class="it">md-ast-editor: カンバンビューを開く（open-kanban-view）</div>
+    <div class="it">md-ast-editor: Health Check を開く（open-health-view）</div>
+    <div class="it">md-ast-editor: 未予定トレイを開く（open-unscheduled-tray）</div>
+  </div>
+  <div class="cap"><span class="kbd">Ctrl/Cmd + P</span> でコマンドパレットを開き、「md-ast」と打つと全ビューが並ぶ。リボン（左端のアイコン列）からも開ける。</div>
+</div>
+
+<h3>3.3 カレンダー — 週の時間割と「ドラッグで玉突き調整」</h3>
+<div class="mock">
+  <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Calendar ビュー</div>
+  <div class="cal">
+    <div class="calbar"><span class="btn on">週表示</span><span class="btn">月表示</span><span class="btn">◀</span><span class="btn">▶</span><span class="muted" style="font-size:11px">⛃ フィルタ</span></div>
+    <div class="calgrid">
+      <div></div><div class="hd">月 6</div><div class="hd">火 7</div><div class="hd">水 8</div><div class="hd">木 9</div><div class="hd">金 10</div>
+      <div class="tm">13:00</div><div class="cell"><div class="ev a" style="top:2px;height:28px">覚書ドラフト</div></div><div class="cell"><div class="ev b" style="top:2px;height:28px">施工計画レビュー</div></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="tm">14:00</div><div class="cell"></div><div class="cell"><div class="ev b" style="top:0;height:14px"></div></div><div class="cell"><div class="ev ghost" style="top:2px;height:28px">← ドラッグ先</div></div><div class="cell"></div><div class="cell"></div>
+      <div class="tm">15:00</div><div class="cell"><div class="ev a" style="top:2px;height:14px">覚書つづき</div></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"><div class="ev a" style="top:2px;height:28px">懇親会 人数〆</div></div>
+    </div>
+    <div class="arrow-note">予定ブロックを掴んで別の日時へドロップ → <b>Markdown の @schedule がその場で書き換わる</b>。ブロックの端を掴めば長さ（所要時間）の変更。ダブルクリックで編集ダイアログ。</div>
+  </div>
+  <div class="cap">突発対応で午後が潰れたら、押し出されるブロックをドラッグで明日へ。頭の中でやりくりせず、画面上で玉突きを見える化する。</div>
+</div>
+
+<h3>3.4 カンバン — 状態の分布と、カードのドラッグでステータス変更</h3>
+<div class="mock">
+  <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Kanban ビュー</div>
+  <div class="kb-toolbar"><span class="kb-chip">⛃ フィルタ</span>　グループ <select class="kb-select"><option>なし</option><option>階層</option><option>ステータス以外の項目…</option></select>　<span class="kb-chip">☑ カードグループ</span></div>
+  <div class="kb">
+    <div class="lane"><div class="lh">Todo <span class="cnt">6</span></div>
+      <div class="kcard"><div class="aff">…›【工事】5F空調更新</div><div class="kt">着工日の立会い（鍵開け・入館証）</div></div>
+      <div class="kcard"><div class="aff">…›【イベント】</div><div class="kt">防災訓練 開催日確定・消防署連絡</div><div class="kd">期限: 2026-07-04</div></div>
+    </div>
+    <div class="lane"><div class="lh">Doing <span class="cnt">2</span></div>
+      <div class="kcard"><div class="aff">…›【契約管理】</div><div class="kt">変更覚書のドラフト作成</div><div class="kd">期限: 2026-07-10</div></div>
+      <div class="kcard ghosting"><div class="aff">…›【工事】5F空調更新</div><div class="kt">施工計画書のレビュー ← ドラッグ中</div></div>
+    </div>
+    <div class="lane"><div class="lh">Blocked <span class="cnt">2</span></div>
+      <div class="kcard"><div class="aff">…›【契約管理】</div><div class="kt">新単価の見積書待ち → ボール：松田さん</div><div class="kd">期限: 2026-07-07</div></div>
+    </div>
+  </div>
+  <div class="cap">ツールバーの「グループ」で列の切り方を変える：<b>なし＝ステータス列</b>（Todo/Doing/Blocked/Hold/Done）／<b>階層＝見出し（案件）ごと</b>。カードを隣の列へドラッグすると Markdown のチェック記号が書き換わる。カード上部の小さな文字は所属（どの案件のタスクか）。</div>
+</div>
+
+<h3>3.5 ガント — 工程・期限の俯瞰とズーム</h3>
+<div class="mock">
+  <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Gantt ビュー</div>
+  <div style="display:flex;font-size:11.5px">
+    <div style="flex:0 0 190px;border-right:1px solid var(--line);padding:6px 8px;background:#fafbfd">
+      <div style="font-weight:700">▾ 総務メイン</div>
+      <div style="padding-left:10px;font-weight:700">▾ 【工事】5F空調更新</div>
+      <div style="padding-left:20px">施工計画書のレビュー</div>
+      <div style="padding-left:20px">着工日の立会い</div>
+      <div style="padding-left:20px">完了検収</div>
+      <div style="padding-left:10px;font-weight:700">▸ 【契約管理】</div>
+    </div>
+    <div style="flex:1;padding:6px 8px;position:relative">
+      <div style="display:flex;gap:0;color:var(--muted);font-size:10px;border-bottom:1px solid var(--line)"><span style="flex:1">7/7</span><span style="flex:1">7/14</span><span style="flex:1">7/22</span><span style="flex:1">7/30</span><span style="flex:1">8/7</span></div>
+      <div style="height:14px;margin-top:6px"><div style="width:12%;height:12px;background:#5b7bd5;border-radius:3px"></div></div>
+      <div style="height:14px;margin-top:4px"><div style="width:8%;margin-left:42%;height:12px;background:#5b7bd5;border-radius:3px"></div></div>
+      <div style="height:14px;margin-top:4px"><div style="width:8%;margin-left:88%;height:12px;background:#5b7bd5;border-radius:3px"></div></div>
+      <div style="color:var(--muted);font-size:10.5px;margin-top:6px">ツールバー：ズーム − 3 ＋（日→週→月と粗くなる）／バーをドラッグで日程変更（@schedule 書き戻し）</div>
+    </div>
+  </div>
+  <div class="cap">工事のように「準備 → 着工 → 中間 → 検収」と数週間にわたる案件はガントで。ズームを粗くすれば年間イベントの俯瞰にも使える（レシピ②）。</div>
+</div>
+
+<h3>3.6 Health と 未予定トレイ — 週次の棚卸コンビ</h3>
+<div class="mock">
+  <div class="mock-cols">
+    <div class="mock-view" style="border-right:1px solid var(--line)">
+      <div class="ag">
+        <div class="agh"><span>Health Check</span><span>3 件</span></div>
+        <div class="sec">⚠ 期限超過 (2)</div>
+        <div class="row"><span class="muted" style="font-family:var(--mono);font-size:11px">総務メイン.md :35</span> 期限超過（2026-07-04…）</div>
+        <div class="sec gray">□ 日付なし (1)</div>
+        <div class="row"><span class="muted" style="font-family:var(--mono);font-size:11px">総務メイン.md :42</span> 日付（@schedule / @due）なし</div>
+      </div>
+    </div>
+    <div class="mock-view">
+      <div class="ag">
+        <div class="agh"><span>未予定トレイ</span><span>2 件</span></div>
+        <div class="row"><span class="badge">総務メイン.md</span>郵便受付ルール改定の問題点整理</div>
+        <div class="row"><span class="badge">総務メイン.md</span>フリーアドレス化 他社事例ヒアリング</div>
+      </div>
+    </div>
+  </div>
+  <div class="cap">Health＝記入漏れ・期限切れ・放置・記法ミスの検知結果（行番号つき、クリックでジャンプ）。トレイ＝「やる時間を決めていない」タスクの在庫。金曜にこの 2 枚をゼロに近づけるのが週次の棚卸。</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4">4. 仕事スタイル別レシピ 6 選</h2>
+
+<div class="recipe">
+  <h3>レシピ① 突発依頼（数時間後締切）が来たら</h3>
+  <p class="goal">「15時までにお願いします」メールを Markdown で受け止める</p>
+  <ol>
+    <li>ファイル先頭の<b>「今日のインボックス」セクション</b>に 1 行で書く（考えない。書くだけ）。</li>
+    <li><code>@due:</code> に今日、<code>@schedule:</code> に<b>今から作業する時間ブロック</b>、<code>@priority: 1</code>、<code>@tags: 突発</code>。</li>
+    <li>カレンダー（週表示）を開き、押し出された既存ブロックをドラッグで夕方や明日へ退避。<b>玉突きを見える化する</b>。</li>
+    <li>作業中の確認事項・判断はタスク直下にメモ（「会議室Cの扱い→戸田さん確認→除外でOK」）。</li>
+    <li>片付いたら <code>[x]</code>。後日、経緯ごと該当案件セクションへ移す。</li>
+  </ol>
+</div>
+
+<div class="recipe">
+  <h3>レシピ② 年間イベントを忘れない・早めに動く</h3>
+  <p class="goal">防災訓練・健康診断・大掃除・点検立会い…の「気づいたら直前」を根絶する</p>
+  <ol>
+    <li><b>「年間イベント俯瞰」セクション</b>に本番タスクを置き、<code>@repeat: FREQ=YEARLY</code> を付ける。毎年カレンダー・ガントに自動で現れる。</li>
+    <li><b>本番と別に「準備開始」タスクを 1〜2 ヶ月前の日付で置く</b>。9/1 防災訓練なら「7/14 開催日確定・消防署連絡（@due: 7/31）」。</li>
+    <li>月に 1 回、ガントをズームアウトして年間俯瞰（毎月第 1 金曜の棚卸とセット）。</li>
+  </ol>
+</div>
+
+<div class="recipe">
+  <h3>レシピ③ タスクスイッチが多くても「どこまでやったか」を失わない</h3>
+  <p class="goal">10 案件並行・割り込み多数でも、戻ってきた瞬間に再開できる</p>
+  <ol>
+    <li>着手したら <code>[&gt;]</code>。<b>doing は常に 1〜2 個まで</b>。</li>
+    <li><b>中断する瞬間に、タスク直下へ 1 行</b>：<code>- 7/3 16:50 ここまで：5契約中3契約分ドラフト済み。残りは富士ゼロ系2件</code>。時刻＋ここまで＋次やること。書くのに 20 秒、思い出すのに 20 分、の交換。</li>
+    <li>先輩・上司の助言は<b>その場で引用（&gt;）でタスク直下に</b>。</li>
+    <li>再開はビューからタスクをクリック → 該当行へジャンプ → 直下のメモを読む → 続きから。</li>
+  </ol>
+</div>
+
+<div class="recipe">
+  <h3>レシピ④ ボールの持ち合い管理（いま待ちなのは私か相手か）</h3>
+  <p class="goal">「見積待ち」「回答待ち」の督促漏れをなくす</p>
+  <ol>
+    <li>相手にボールが渡った瞬間 <code>[!]</code> にし、<b>タスク名末尾に「→ ボール：松田さん（7/3督促済み）」</b>、<code>@tags: ボール待ち</code>。</li>
+    <li><b>回答期限を @due に切る</b>。「待ち」にも期限。期限が来たら督促、が機械的に回る。</li>
+    <li>毎朝、保存クエリ（<code>status: blocked</code>）を見る。督促したら日付つきで経緯に追記（エスカレーション判断も：「2 回目なので次は本社窓口へ」）。</li>
+    <li>ボールが返ってきたら <code>[ ]</code> か <code>[&gt;]</code> へ戻す。Health の stale 検知（7 日更新なし）が保険。</li>
+  </ol>
+</div>
+
+<div class="recipe">
+  <h3>レシピ⑤ 後輩の心配なタスクを軽くウォッチする</h3>
+  <p class="goal">マイクロマネジメントせず、詰まりと期限だけ見る</p>
+  <ol>
+    <li><b>「後輩フォロー」セクション</b>（または後輩ごとのファイル）に本人の案件をサブタスク粒度で置く。</li>
+    <li>見るのは<b>期限（@due）と「手が止まっていないか」だけ</b>。作業指示は書かず、観察と次の一手を書く（「手が止まっている様子。金曜に最初の一歩を一緒に決める」）。</li>
+    <li>週 1 回、本人と一緒にセクションを開いてチェック。相談と自分の回答も直下に残す（言った言わない防止＋本人の記録）。</li>
+  </ol>
+</div>
+
+<div class="recipe">
+  <h3>レシピ⑥ 多案件並行のファイル構成</h3>
+  <p class="goal">「どこに書いたか分からない」を構造で防ぐ</p>
+  <ul class="clean">
+    <li><b>最初は 1 ファイル</b>（インボックス → 案件セクション群 → 後輩 → 年間俯瞰 → 保存クエリ）。セクション＝案件が基本単位。</li>
+    <li>500 行を超えて重く感じたら分割：<code>総務メイン.md</code>／<code>年間イベント.md</code>／<code>工事-5F空調.md</code>。<b>indexScope が vault なら分割後も全ビューに自動集約</b>される。</li>
+    <li>冒頭の引用ブロックに<b>連絡先と自分ルール</b>（未来の自分への申し送り）。</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5">5. 1 日の回し方 — 場面別ウォークスルー</h2>
+<p>ここからは「新しく総務に来たあなた」への引き継ぎのつもりで書きます。総務の 1 日は予定どおりに進みません — だからこそ、<b>崩れたときに立て直せる型</b>を持っておくことが、この仕事を楽にします。</p>
+
+<div class="scene">
+  <div class="when">SCENE 1 ── 月曜 8:50「今日と今週を 15 分で組み立てる」</div>
+  <h3>朝イチのルーティン</h3>
+  <p>出社してメールを開く前に、まず <b>Agenda</b> を開いてください。メールから始めると他人の優先順位で 1 日が始まります。Agenda から始めると自分の約束から始まります。</p>
+  <ol>
+    <li><b>「期限超過」から見る。</b>ここにあるものは今日の最優先です。対処は 3 択 — ①今日やる（@schedule を今日に置く）、②期限を正直に延ばして関係者に一報（@due を書き換え、経緯メモに「7/6 ○○さんへ延期連絡済み」）、③実は完了していた（[x] にする）。<b>期限超過を「見なかったこと」にだけはしない</b>。</li>
+    <li><b>保存クエリ「ボール待ち一覧」（status: blocked）を開く。</b>@due が来ているものに督促。督促したら必ず日付つきで経緯メモに残す — 上司に「あれ催促した？」と聞かれて 3 秒で答えられるのはこの記録のおかげです。</li>
+    <li><b>カレンダー（週表示）で今日のブロックを現実チェック。</b>月曜は会議で潰れがちです。ブロックが会議と重なっていたらドラッグで移す。<b>今日 15 時以降に「予備の空き」を 1 枠残す</b>のがコツ — 総務の午後には必ず何かが起きます。</li>
+  </ol>
+  <div class="voice"><b>先輩の声：</b>この 15 分をサボった週は、水曜あたりで必ず「あれ忘れてた」が出ます。逆にこの 15 分さえやれば、あとは 1 日崩れても金曜に立て直せます。</div>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 2 ── 火曜 13:05「件名【至急】15時までに、のメールが来た」</div>
+  <h3>突発依頼の 10 分</h3>
+  <p>経営企画から「会議室の稼働率、15 時の役員会で使いたい」。心拍数が上がったら、まず<b>書く</b>。判断はそのあとです。</p>
+  <pre>## 【今日のインボックス】
+- [&gt;] 【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付
+  - @schedule: 2026-07-07T13:10/2026-07-07T14:30
+  - @due: 2026-07-07
+  - @priority: 1
+  - @tags: 突発</pre>
+  <ol>
+    <li>書いた瞬間に <code>[&gt;]</code>（着手中）。カレンダーを一瞬開き、13〜15 時にいた既存ブロック（覚書ドラフト）を<b>木曜へドラッグ退避</b>。これで「覚書が遅れる」ことも見える化された — 覚書の @due に響くなら、この時点で関係者に一言入れられます。</li>
+    <li>作業中に出た確認事項はタスク直下へ：<code>- 13:40 会議室Cの改装閉鎖期間の扱い → 戸田さんへ確認 → 「除外でOK」</code>。これが 3 ヶ月後、「前回どういう条件で集計したっけ？」への答えになります。</li>
+    <li>14:25 送付完了。<code>[x]</code> にして深呼吸。退避させた覚書ブロックが木曜にいることをカレンダーで確認して、通常運転に戻る。</li>
+  </ol>
+  <div class="voice"><b>先輩の声：</b>突発対応の巧拙は「速く終わらせること」ではなく「<b>何を押し出したかを把握していること</b>」で決まります。それはカレンダーが覚えていてくれます。</div>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 3 ── 水曜 11:00「打合せから席に戻った 5 分」</div>
+  <h3>会議直後の書き残し</h3>
+  <p>ビル管理会社との定例から戻りました。頭の中に 4 つの宿題と 1 つの助言が入っています。<b>次の予定が始まる前の 5 分で全部下ろします</b>。</p>
+  <pre>- 5F空調更新工事 準備フェーズ
+  - [&gt;] 施工計画書のレビュー（安全計画・養生範囲）
+    - @schedule: 2026-07-08T13:00/2026-07-08T15:00
+    - @due: 2026-07-10
+    - 7/8 11:00 定例より：養生範囲にサーバーラック前通路が未記載。村井さんへ指摘する
+  - [ ] 夜間作業の警備員手配の費用負担を契約書で確認     <span class="c">← 定例で発生した新タスク。すぐ追加</span>
+    - @due: 2026-07-15
+    &gt; 部長「費用負担がどちらか、着工前に必ず契約書で確認しておくこと」   <span class="c">← 助言は引用で</span></pre>
+  <p>ポイントは<b>「議事録を書く」のではなく「タスクの下に配る」</b>こと。議事録ファイルは誰も読み返しませんが、タスク直下のメモは作業の瞬間に必ず目に入ります。</p>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 4 ── 7/22（水）8:00「工事の着工立会いの日」</div>
+  <h3>現場立会いデー（委託元監督として）</h3>
+  <p>今日は 5F 空調工事の着工日。あなたは委託元の監督です。前日のうちに <b>Gantt</b> でこの工事の行を眺め、「立会い → 中間 → 検収」の並びと日付を頭に入れておきます。</p>
+  <ol>
+    <li>朝の立会いタスクは前夜から <code>[&gt;]</code>。当日は現場で気づいたことをスマホや帰席後にタスク直下へ：<code>- 7/22 KY実施確認。搬入経路は裏EV使用で合意。入館証3枚発行（村井・佐藤・木下）</code>。</li>
+    <li>現場で約束が発生したら<b>その場でタスク化</b>：「養生の追加は金曜までに写真送付してもらう」→ <code>[!] 養生追加箇所の写真待ち → ボール：村井さん</code>＋<code>@due: 2026-07-24</code>。現場の口約束は 24 時間で蒸発します。</li>
+    <li>立会い完了で <code>[x]</code>。検収（8/7）のタスクに <code>- 7/22 着工時の申し送り：天井内配管ルートは中間立会いで写真確認すること</code> と<b>未来の自分への注意書き</b>を足しておく。</li>
+  </ol>
+  <div class="voice"><b>先輩の声：</b>「検収は必ず写真を残せ。天井を閉じたあとでは何も証明できない」— 私が先輩に言われた言葉です。あなたのファイルの引用欄にも、もう入れてあります。</div>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 5 ── 木曜 16:10「上司から『あの件どうなってる？』」</div>
+  <h3>30 秒で答える</h3>
+  <p>部長が席に来て「クリーンプロの契約、どうなってる？」。慌てる必要はありません。</p>
+  <ol>
+    <li>カンバン（グループ=階層）で【契約管理】列を見る、またはエディタで該当セクションへ。<b>ステータス記号と末尾の「→ ボール：」がそのまま答えです</b>：「見積待ちです。ボールは先方、7/3 に 2 回目の督促済み、期限を 7/10 に切っていて、来なければ本社窓口へ直接いきます」。</li>
+    <li>言えたら、その問答も 1 行残す：<code>- 7/9 部長より状況確認あり。上記方針で了承</code>。</li>
+  </ol>
+  <div class="voice"><b>先輩の声：</b>上司の信頼は「即答できること」と「次の一手まで言えること」で貯まります。どちらも記憶力ではなく、<b>タスク直下に経緯を書く習慣</b>の産物です。</div>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 6 ── 金曜 17:00「週次の棚卸 30 分」</div>
+  <h3>週を閉じて、来週を開ける</h3>
+  <ol>
+    <li><b>Health を開いてゼロに近づける</b>：期限超過→対処（SCENE 1 の 3 択）、日付なし→期日を入れるか hold（[-]）へ、記法ミス→クイックフィックス、7 日放置→「まだやるのか」を自分に問い、やらないなら消す勇気。</li>
+    <li><b>未予定トレイを見る</b>：「やる時間を決めていない」タスクの在庫。来週のカレンダーの空きへ 2〜3 個割り付ける（全部やろうとしない — 来週も突発は来ます）。</li>
+    <li><b>後輩セクションを本人と 10 分</b>（レシピ⑤）：チェックを付けながら「来週の最初の一歩」を 1 つだけ決める。</li>
+    <li>インボックスに残った突発タスクの残骸を、経緯ごと各案件セクションへ移送。</li>
+  </ol>
+</div>
+
+<div class="scene">
+  <div class="when">SCENE 7 ── 月初の第 1 金曜「年間を 15 分だけ俯瞰する」</div>
+  <h3>備品棚卸のついでに、未来を見る</h3>
+  <p>毎月第 1 金曜の備品棚卸（@repeat で自動的に現れます）とセットで、<b>Gantt をズームアウト</b>して 3 ヶ月先まで眺めます。「9 月の防災訓練、7 月中に消防署へ連絡だったな」「10 月の健康診断、人事に声をかけておこう」— 気づいたら準備タスクを今月・来月の日付で置く。<b>年間イベントで慌てない総務は、この 15 分だけで作れます</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6">6. 検索・フィルタ（task-query）</h2>
+<p>各ビュー上部の<b>フィルタバー</b>（⛃ フィルタ → ステータス／タグ／テキスト／優先度／期日まで・から の入力欄が開く）で即席の絞り込みができます。<b>よく使う条件は Markdown 内にコードブロックとして埋め込む</b>と「保存された検索」になり、ノートを開くたびに結果が表示されます。</p>
+<pre><span class="c">```task-query</span>
+status: blocked            <span class="c"># ボール待ち一覧（毎朝見る）</span>
+<span class="c">```</span>
+
+<span class="c">```task-query</span>
+status: todo,doing,blocked
+due: &lt;=2026-07-10          <span class="c"># 今週締切（未完のみ）</span>
+tag: 契約                   <span class="c"># タグ絞り込み（行を重ねると AND）</span>
+scope: vault               <span class="c"># vault（全体）/ folder / current（このファイルだけ）</span>
+<span class="c">```</span></pre>
+<p>使えるキー：<code>status</code>／<code>tag</code>／<code>due:（&lt;= または &gt;= 日付）</code>／<code>priority:（&lt;= 数値）</code>／<code>text:（本文部分一致）</code>／<code>scope</code>。不正な行は無視されるだけなので、気軽に書いて試してください。</p>
+
+<!-- ============================================================ -->
+<h2 id="s7">7. まだ実装されていない機能・概念（開発向け詳細）</h2>
+<p class="muted">ここから先は新人向けではありません。オーナーと開発チームのための「実装すべきだが未実装」の全体像です。凡例：<span class="pill p-impl">Issue起票済み</span> <span class="pill p-soon">仕様確定済み・未実装</span> <span class="pill p-idea">構想段階</span></p>
+
+<h3>7.1 時間メタ 3 層モデル（Phase 004 の中核）<span class="pill p-soon">仕様確定済み</span></h3>
+<p>2026-07-03 に確定した、本アプリの時間表現の完成形。現在の @schedule / @due の 2 メタに <b>@plan</b> を加えた 3 層＋仮置き修飾子で、「枠を切る → 時間を割り付ける → 期限を守る」の全段階を表現する。詳細仕様は <code>project/plan/time-meta-spec-and-implementation-plan-2026-07-03.html</code>、実装 Issue は <code>issue-phase004-001〜005</code>＋各ライブラリ Issue（計 23 件、起票済み）。</p>
+<ul class="clean">
+  <li><b>@plan</b> — 「この期間の中でやらねばならない」バッファ込みの枠（WBS 的概念）。Gantt では schedule バーを包む点線枠。日付のみは終日解釈。<b>祖先タスクから内部継承</b>（親案件に @plan を書けば子タスクの検証に効く。Markdown へ自動追記はしない）。</li>
+  <li><b>仮置き <code>?</code></b> — <code>@schedule?:</code> のようにキー末尾に付けると「仮」。全ビューで半透明＋?バッジ。総務的には「会議室を仮押さえした状態」の表現。確定操作（? を外す UI）と、仮のまま直前に迫ったら警告する Health ルール（tentative-near）までがワンセット。</li>
+  <li><b>@due の期間対応</b> — 「受入期間の締め」等を <code>2026-07-10/07-15</code> で表現。Gantt はマイルストン◆（期間は ◆〜◆ 塗り）、Calendar は太線＋左端 ◄ の「ここまで」描画。</li>
+  <li><b>バリデーション</b> — <code>plan.start ≤ schedule ≤ plan.end ≤ due(end)</code> 違反をエラー提示（入力は禁止しない）。「工事の検収予定が契約期限を超えている」類の矛盾を機械が拾う。</li>
+  <li><b>残論点 R-1</b> — 「schedule」という名前が意味（意思表示・時間ブロック）に合っているか再考中。候補: @do / @work / @slot / @focus。Spec 起票（issue-phase004-001）までに要決定。</li>
+</ul>
+
+<h3>7.2 ビュー描画の拡張（Phase 004・ライブラリ側）<span class="pill p-impl">Issue起票済み</span></h3>
+<ul class="clean">
+  <li><b>週末・祝日の色分け</b>（gantt/calendar 共通）— 祝日はプラグインフォルダの JSON を設定で参照。「あと何営業日か」の誤認を防ぐ。<code>issue-gantt-phase004-006</code> / <code>issue-calendar-phase004-004</code></li>
+  <li><b>カレンダーの種別描き分け</b> — タスク（左ボーダー）／予定（枠線ゴースト）／打合せ（塗り）。判定は「チェックなし＋@schedule＝予定」「タグ 打合せ/meeting＝打合せ」。<code>issue-calendar-phase004-001</code></li>
+  <li><b>Gantt サブタスク展開＋期間なし行の DnD 予定化</b> — 親バーの下に子を行表示し、日時未定の子をタイムラインへドラッグすると @schedule が書かれる。時間ブロッキングの中核操作。<code>issue-gantt-phase004-007/008</code></li>
+  <li><b>Gantt バー横ラベル・done/仮置きの描き分け・左パネルスリム化</b> — <code>issue-gantt-phase004-001/004/005</code></li>
+  <li><b>Kanban breadcrumb</b> — グルーピング解除時もカードに「セクション › 親カード › ユニット」を表示。<code>issue-kanban-phase004-002</code></li>
+  <li><b>Kanban サブカードグループ DnD 表示位置バグ</b> — 書き戻しは成功するが表示が動かない既知バグ。E2E で機械的再現済み（skip テストが再現手順）。<code>issue-kanban-phase004-001</code>（＝<code>issue-phase000-003</code>）<b>最優先</b></li>
+</ul>
+
+<h3>7.3 入力体験（Phase 003 の未消化分）<span class="pill p-impl">Issue起票済み</span></h3>
+<ul class="clean">
+  <li><b>リマインド通知</b>（<code>issue-phase002-005</code>）— 期限・開始時刻が来ても現状何も起きない。<b>この仕事スタイルで最も痛い欠落</b>（突発・督促・時限のすべてに効く）。@due の時刻対応（現状は日付単位で「15 時締切」を構造化できない）も同時に解決したい。</li>
+  <li><b>クイック追加モーダル／キャプチャ→インボックス→リファイル</b>（<code>issue-phase003-004/006</code>）— ホットキー 1 発で 1 行追加。レシピ①の摩擦を根本から下げる。</li>
+  <li><b>メタ補完・期間デートピッカー</b>（<code>issue-phase003-008</code>）— @s→@schedule 展開、カレンダーポップオーバーで開始・終了をクリック入力。日付の手打ちミスが消える。</li>
+  <li><b>チェックボックスのクリックサイクル・アクションピル</b>（<code>issue-phase003-007</code>）、<b>選択→ビューへドラッグでメタ付与</b>（<code>issue-phase002-004</code>）、<b>保存スマートリスト＋バッジ</b>（<code>issue-phase002-007</code>）、<b>グループ進捗ロールアップ（3/5・60%）</b>（<code>issue-phase003-002</code>）、<b>依存矢印と安定 ID</b>（<code>issue-phase003-003</code>）、<b>編集可能テーブルビュー</b>（<code>issue-phase003-005</code>）</li>
+</ul>
+
+<h3>7.4 構想段階（Issue 未起票。完成度レポート・本ガイド作成時の提案）<span class="pill p-idea">構想</span></h3>
+<ul class="clean">
+  <li><b>完了日・状態変更の自動記録（@done 等）→ 週報ドラフト生成</b> — チェックを付けた日付が残らないため「今週何をやったか」を機械が答えられない。org-mode の LOGBOOK / Obsidian Tasks の ✅ に相当する記録層と、done/doing/overdue を期間集計して Markdown で吐く報告生成。<b>遡って付けられないデータなので早いほど資産になる</b>。タスク直下に経緯を持つ本アプリは報告文生成で競合優位（完成度レポート §7.1-7.2）。</li>
+  <li><b>@ball（ボール保持者）メタ</b> — 現在は「→ ボール：松田さん」という手書き規約＋タグ。構造化すれば「松田さん待ちの全件」「相手ボールの滞留日数」が引ける。blocked への状態変更時に「誰待ちか」を促す UI（org の WAITING 記録と同発想）とセットが理想。</li>
+  <li><b>@leadTime／年間俯瞰ビュー</b> — 「本番の N 週間前に準備開始」を宣言すると準備タスクの期日が自動導出される仕組みと、12 ヶ月を一望する軽い年ビュー。現状はレシピ②の手動運用で回避。</li>
+  <li><b>外部カレンダー（ics）読み取り</b> — 会議予定が見えないと「空き時間にタスクを置く」計画の精度が上がらない。読み取り専用レイヤーとして calendar/gantt に重畳（書き戻しはしない）。打合せの種別描き分け（7.2）とも合流する。</li>
+  <li><b>表示上の記法圧縮</b> — <code>@schedule:</code> をエディタ表示上だけアイコン化（データは正規形のまま）。Obsidian の Live Preview 的アプローチ。</li>
+  <li><b>doing 切替時のタイムスタンプ自動挿入</b> — レシピ③の「ここまでメモ」の行頭（日時）を自動で用意する軽量クロッキング。interstitial journaling の機能化。</li>
+</ul>
+
+<blockquote><b>優先順位の提案（オーナーの仕事スタイル基準）：</b>①通知＋@due 時刻（毎日痛い）→ ②Kanban DnD バグ（信頼回復）→ ③完了記録→週報（上司報告の負荷）→ ④Phase004 時間メタ 3 層（計画力の底上げ）→ ⑤クイックキャプチャ → その他。</blockquote>
+
+<!-- ============================================================ -->
+<h2 id="s8">8. この文書について（メタ情報）</h2>
+<div class="card">
+  <p><b>作成の経緯と成果物一覧（2026-07-05 のセッションで作成されたもの）</b></p>
+  <ul class="clean">
+    <li><b>本ガイド</b> <code>project/knowledge/usage-guide-general-affairs.html</code> — オーナー（総務担当）の仕事スタイル（契約・オフィス管理・工事監督・イベント・派遣・事業計画／突発依頼・年間イベント・多案件並行・ボール持ち合い・後輩フォロー）に合わせて構成。v1（レシピ・1日の回し方・不足機能）→ v2 で「コンセプト重視の第 1 章」「記法の文脈つき詳細化」「実機スクリーンショットに基づく画面モックアップ」「場面別ウォークスルー 7 シーン」「未実装機能の開発向け詳細」を追加。</li>
+    <li><b>サンプル Markdown</b> <code>demo/demo_markdown.md</code> — 全面刷新。総務業務の実例（清掃委託契約更新＝ボール持ち合い、5F 空調工事＝現場監督、防災訓練・懇親会、備品棚卸 @repeat、派遣契約、事業計画、後輩フォロー、年間イベント俯瞰 @repeat FREQ=YEARLY、task-query 保存クエリ 3 種）。本ガイドの全レシピ・全シーンと対応。</li>
+    <li><b>検証</b> — サンプル刷新後に Playwright E2E 14/14 全通過（開発アプリの表示・JS エラーなしを確認）。画面モックアップは実機 Obsidian（wdio-obsidian-service・ヘッドレス）で撮影した 8 枚のスクリーンショット（editor / calendar / gantt / kanban / agenda / health / tray / filter panel）を元に作図。撮影用の一時スペックは実行後に削除済み。</li>
+  </ul>
+  <p><b>関連文書</b></p>
+  <ul class="clean">
+    <li><code>project/plan/completeness-review-and-third-party-comparison.html</code> — 完成度評価と競合比較（2026-07-03）</li>
+    <li><code>project/plan/time-meta-spec-and-implementation-plan-2026-07-03.html</code> — 時間メタ 3 層モデル確定仕様</li>
+    <li><code>project/plan/ux-improvement-proposals-2026-07-03.html</code> — UX 改善提案（論点版）</li>
+    <li><code>project/knowledge/obsidian-plugin-testing.md</code> — 実機 E2E テスト手法（開発者向け）</li>
+    <li>Phase 004 Issue 群 — <code>project/issues/issue-phase004-000__phase-overview.md</code> ほか計 23 件</li>
+  </ul>
+  <p><b>更新履歴</b></p>
+  <ul class="clean">
+    <li>2026-07-05 v1 — 初版（レシピ 6 選・1 日の回し方・不足機能）</li>
+    <li>2026-07-05 v2 — 本版。§1 コンセプト拡充／§2 記法詳細化／§3 画面モックアップ新設／§5 場面別ウォークスルー化／§7 未実装機能の開発向け詳細／§8 メタ情報。</li>
+  </ul>
+  <p class="muted">本ガイドは 2026-07-05 時点の実装（Phase 003 途中）に基づく。Phase 004 機能（@plan・仮置き ?・祝日色分け等）は §7 に「未実装」として記載しており、実装後は §2〜§3 へ移動させること。</p>
+</div>
+
+<p class="footnote">md-ast-editor 使いこなしガイド — 総務業務編 v2（2026-07-05）／実例：<code>demo/demo_markdown.md</code></p>
+
+</div>
+</body>
+</html>
