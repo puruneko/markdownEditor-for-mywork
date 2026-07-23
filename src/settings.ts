@@ -19,6 +19,8 @@ export interface MdAstEditorSettings {
   healthRules: HealthRuleConfig
   /** DnD でタスクをカレンダー時間グリッドにドロップしたときの既定所要時間（分）。 */
   defaultDurationMin: number
+  /** Gantt View: サブタスクを個別行として展開表示するかどうか（既定 true）。 */
+  ganttExpandSubtasks: boolean
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   indexScopeFolder: '',
   healthStaleDays: 7,
   defaultDurationMin: 60,
+  ganttExpandSubtasks: true,
   healthRules: {
     undated: true,
     overdue: true,
@@ -139,6 +142,20 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
             this.plugin.settings.indexScopeFolder = value.trim()
             await this.plugin.saveSettings()
             await this.plugin.astIndex.setScope(this.plugin.settings.indexScope, value.trim())
+          }),
+      )
+
+    containerEl.createEl('h3', { text: 'Gantt View' })
+
+    new Setting(containerEl)
+      .setName('サブタスク展開')
+      .setDesc('ONにすると、期間未設定のサブタスクも親タスクの下にテキスト行として表示します（既定 ON。OFFにすると従来どおり集約表示。反映には Gantt View の再オープンが必要）。')
+      .addToggle(toggle =>
+        toggle
+          .setValue(this.plugin.settings.ganttExpandSubtasks)
+          .onChange(async (value) => {
+            this.plugin.settings.ganttExpandSubtasks = value
+            await this.plugin.saveSettings()
           }),
       )
 

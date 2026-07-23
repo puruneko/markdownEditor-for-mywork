@@ -98,6 +98,18 @@ describe('extractGanttNodes', () => {
     expect(task.metadata?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
   })
 
+  it('sets completed=true on the GanttNode when task status is done', () => {
+    const nodes = extractGanttNodes(src('- [x] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n'))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.completed).toBe(true)
+  })
+
+  it('sets completed=false on the GanttNode when task status is not done', () => {
+    const nodes = extractGanttNodes(src('- [ ] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n'))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.completed).toBe(false)
+  })
+
   it('does not set start/end for invalid schedule (GR-016)', () => {
     const nodes = extractGanttNodes(src('- [ ] タスク\n  - @schedule: invalid\n'))
     const task = nodes.find(n => n.type === 'task')
@@ -130,6 +142,64 @@ describe('extractGanttNodes', () => {
       const { filePath } = parseGlobalKey(node.id)
       expect(filePath).toBe('test.md')
     }
+  })
+})
+
+describe('extractGanttNodes — サブタスク展開（issue-gantt-phase004-007）', () => {
+  const md = '- 親タスク\n  - [ ] 子タスクA\n    - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n  - [ ] 子タスクB（未予定）\n'
+
+  it('expandSubtasks 未指定（既定）: 期間未設定の子タスクは出力されない（完全回帰）', () => {
+    const nodes = extractGanttNodes(src(md))
+    expect(nodes.some(n => n.name === '子タスクB（未予定）')).toBe(false)
+  })
+
+  it('expandSubtasks: false を明示: 期間未設定の子タスクは出力されない', () => {
+    const nodes = extractGanttNodes(src(md), undefined, { expandSubtasks: false })
+    expect(nodes.some(n => n.name === '子タスクB（未予定）')).toBe(false)
+  })
+
+  it('expandSubtasks: false でも、期間ありの子タスクは従来どおり出力される（回帰確認）', () => {
+    const nodes = extractGanttNodes(src(md), undefined, { expandSubtasks: false })
+    const child = nodes.find(n => n.name === '子タスクA')
+    expect(child).toBeDefined()
+    expect(child!.type).toBe('task')
+    expect(child!.start).toBeDefined()
+  })
+
+  it('expandSubtasks: true: 期間未設定の子タスクも type=task・start/end 未設定で出力される', () => {
+    const nodes = extractGanttNodes(src(md), undefined, { expandSubtasks: true })
+    const child = nodes.find(n => n.name === '子タスクB（未予定）')
+    expect(child).toBeDefined()
+    expect(child!.type).toBe('task')
+    expect(child!.start).toBeUndefined()
+    expect(child!.end).toBeUndefined()
+  })
+
+  it('expandSubtasks: true: 期間未設定の子タスクの parentId は親タスクの globalKey を指す', () => {
+    const nodes = extractGanttNodes(src(md), undefined, { expandSubtasks: true })
+    const parent = nodes.find(n => n.name === '親タスク')!
+    const child = nodes.find(n => n.name === '子タスクB（未予定）')!
+    expect(child.parentId).toBe(parent.id)
+  })
+
+  it('expandSubtasks: true でも、@schedule を持たずスケジュール済み子孫も持たないセクションは従来どおり非表示（回帰）', () => {
+    const noScheduleMd = '# 予定なし\n\n- [ ] メモ\n'
+    const nodes = extractGanttNodes(src(noScheduleMd), undefined, { expandSubtasks: true })
+    expect(nodes).toEqual([])
+  })
+
+  it('expandSubtasks: true でも @repeat 展開の挙動は変わらない（回帰）', () => {
+    const viewRange = {
+      start: DateTime.fromISO('2026-04-01T00:00'),
+      end: DateTime.fromISO('2026-04-30T23:59'),
+    }
+    const repeatMd = [
+      '- [ ] 毎週金曜',
+      '  - @schedule: 2026-04-03T10:00/2026-04-03T11:00',
+      '  - @repeat: FREQ=WEEKLY;BYDAY=FR',
+    ].join('\n') + '\n'
+    const nodes = extractGanttNodes(src(repeatMd), viewRange, { expandSubtasks: true })
+    expect(nodes.filter(n => n.type === 'task')).toHaveLength(4)
   })
 })
 
@@ -173,6 +243,18 @@ describe('extractGanttNodes — @repeat 展開', () => {
     nodes.forEach(n => {
       const durationMs = n.end!.toMillis() - n.start!.toMillis()
       expect(durationMs).toBe(2 * 60 * 60 * 1000) // 2時間
+    })
+  })
+
+  it('@repeat あり: 各オカレンスに completed が親タスクの status から設定される', () => {
+    const md = [
+      '- [x] 毎週金曜',
+      '  - @schedule: 2026-04-03T10:00/2026-04-03T11:00',
+      '  - @repeat: FREQ=WEEKLY;BYDAY=FR',
+    ].join('\n') + '\n'
+    const nodes = extractGanttNodes(src(md), viewRange).filter(n => n.type === 'task')
+    nodes.forEach(n => {
+      expect(n.completed).toBe(true)
     })
   })
 

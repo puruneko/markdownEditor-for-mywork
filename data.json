@@ -7,10 +7,11 @@
   "indexScopeFolder": "",
   "healthStaleDays": 7,
   "defaultDurationMin": 60,
+  "ganttExpandSubtasks": true,
   "healthRules": {
     "undated": true,
     "overdue": true,
-    "stale": true,
+    "stale": false,
     "unresolvedDeps": true,
     "readyTasks": true,
     "malformed": true

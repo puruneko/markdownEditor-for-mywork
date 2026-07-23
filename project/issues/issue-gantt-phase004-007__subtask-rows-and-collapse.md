@@ -33,7 +33,7 @@
 - 本体: `src/lib/gantt/ast-to-gantt.ts`（descendantDateRange による集約）と `src/views/GanttViewMount.svelte`（モード切替 UI の置き場）。
 
 ### 仕様
-1. **モード**: 本体側に表示トグル「サブタスク展開」（デフォルト OFF）。OFF: 従来どおり集約。ON: 子タスクを個別 GanttNode として parentId 付きで渡す。
+1. **モード**: 本体側に表示トグル「サブタスク展開」（デフォルト OFF。※2026-07-23 にデフォルト ON へ変更、履歴参照）。OFF: 従来どおり集約。ON: 子タスクを個別 GanttNode として parentId 付きで渡す。
 2. **期間なし行**: start/end が undefined の GanttNode を「タイムライン上に左寄せのテキスト行（・タスク名）」として描画する。バーは描かない。既存実装が undefined をどう扱っているか（スキップ？エラー？）を最初に確認し、スキップしているなら描画分岐を追加。
 3. **折り畳み**: 親行のツリー側に ▸/▾ トグル。折り畳んだ親は従来の集約バー（min/max）で表示（＝OFF モードの見た目と同じ）。既存 `isCollapsed` 機構が使えるなら流用。
 4. **折り畳み状態の保持**: ライブラリ内部状態＋`onCollapseChange?: (id, collapsed) => void` コールバック（永続化はホスト責務 — 汎用性維持）。
@@ -63,6 +63,23 @@
 
 ### 履歴（追記のみ）
 - 2026-07-04 — 起票。
+
+### 2026-07-23 14:00
+
+- User Instruction:
+  - ビルドして Obsidian に読ませても期限無しサブタスクが表示されないため、原因調査を依頼。データの渡し方を制限しているなら本来のデータをフルに渡すよう修正、それ以外が原因なら特定して修正するよう指示。
+
+- 調査結果:
+  - `ast-to-gantt.ts` の抽出ロジック、`GanttTab.svelte`/`GanttViewMount.svelte`/`GanttView.ts` の props 配線、lib 側 `data-manager.ts`、実際に `GanttChart` コンポーネントを `@testing-library/svelte` でマウントして DOM を確認する再現テストまで通しで検証。`expandSubtasks: true` の場合、単階層・多階層（3段以上）・親自身も日時なしのケースいずれも、期間未設定のサブタスクがツリー行・タイムラインのテキスト行として正しく描画されることを確認。データを取りこぼしているコード上の欠陥は見つからなかった。
+  - オーナーが Obsidian 側で設定「サブタスク展開」トグルを ON にしたところ表示された。原因はコード欠陥ではなく、既定 OFF（本 Issue の元々の仕様どおり）のままトグルを ON にしていなかったこと。
+
+- Change:
+  - オーナー指示によりデフォルト値を OFF → ON に変更（`src/settings.ts` の `DEFAULT_SETTINGS.ganttExpandSubtasks`）。
+  - 設定画面の説明文を「既定 ON。OFFにすると従来どおり集約表示」に更新。
+  - `ExtractOptions.expandSubtasks` / 各コンポーネント props の関数レベル既定値（`false`）はライブラリ API の安全側デフォルトとして維持し変更していない。アプリの実挙動は `settings.ts` の `DEFAULT_SETTINGS` が決める。
+
+- Rationale:
+  - オーナー実機検証により、サブタスク展開表示を常時有効にしたいという意向が確認されたため。
 
 ---
 

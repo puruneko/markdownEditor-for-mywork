@@ -11,9 +11,11 @@
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
     onReload: () => void
+    /** サブタスク展開表示（settings.ganttExpandSubtasks 経由。アプリ既定 true。prop 省略時のみ false）。 */
+    expandSubtasks?: boolean
   }
 
-  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload }: Props = $props()
+  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload, expandSubtasks = false }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -31,7 +33,7 @@
   <div class="filter-bar-row">
     <FilterBar bind:query {onReload} />
   </div>
-  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} />
+  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} {expandSubtasks} />
 </div>
 
 <style>

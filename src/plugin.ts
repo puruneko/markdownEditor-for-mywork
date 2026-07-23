@@ -92,7 +92,7 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       GANTT_VIEW_TYPE,
-      (leaf) => new GanttView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+      (leaf) => new GanttView(leaf, this.settings, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.registerView(

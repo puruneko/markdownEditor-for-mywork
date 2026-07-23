@@ -56,6 +56,22 @@ GanttNode に `tentative?: boolean` と `status?: string` を追加し、描画�
 ### 履歴（追記のみ）
 - 2026-07-04 — 起票。
 
+### 2026-07-22 09:40
+
+- User Instruction:
+  - 「外部ライブラリのganttにdoneの場合グレーアウトする機能を追加したが、本体拡張機能で動かすとdoneでもグレーアウトやチェックアイコンが出ない」という不具合報告への対応を、推奨解決案で実装するよう指示された。
+
+- Change:
+  - 原因を特定した。`../ganttchart-for-mywork` 側は本Issueの成果物とは別に、`GanttNode.completed?: boolean`（トップレベルの真偽値フィールド）によるグレーアウト＋チェックアイコン機構を既に実装済みだった（`GanttTaskBar.svelte`・`GanttTree.svelte` が `node.completed` を参照）。一方、本体側の `src/lib/gantt/ast-to-gantt.ts` は `node.status` を `metadata.status` にのみ格納しており（GR-019 準拠）、トップレベルの `completed` フィールドを一切設定していなかったため、ライブラリの既存グレーアウト機構が発火しなかった。
+  - `src/lib/gantt/ast-to-gantt.ts` の GanttNode 生成箇所（通常タスク・@repeat オカレンス双方）に `completed: node.status === 'done'` を追加し、ライブラリの `completed` フィールドへ橋渡しした。
+  - `src/lib/gantt/ast-to-gantt.test.ts` に completed=true/false の単体テストを追加（@repeat オカレンス分も含む）。
+  - `tests/obs-e2e/gantt-view.e2e.ts` に、完了タスクのバーへ `gantt-bar--completed` クラスが付与されることを確認する E2E テストを追加。実機（Obsidian + wdio）で本修正により正しくグレーアウトされることを確認済み。
+  - 単体テスト（vitest, 448件）・obs E2E（wdio, 8ファイル25件）とも全通過。
+
+- Rationale:
+  - ユーザーが不在のため、報告された不具合（doneタスクのグレーアウト・チェックアイコン欠落）を確認できる最小かつ確実な修正として、既にライブラリ側に実装済みの `completed` フィールドへ本体側の status を橋渡しする方式を選んだ。
+  - **注意（次回作業者へ）**: 本Issueが元々定義していた `status?: string` ベースの設計（バー上への✓バッジ描画、tentativeとの優先順位ロジック、`gantt-bar--done` クラス）は今回のスコープに含まれない。現状ライブラリにあるのは `completed: boolean` による簡易版（グレーアウトのみ、バー上に✓は無し。✓アイコンはツリーペインのみ）であり、本Issue本来の受け入れ基準（バー上✓・tentative半透明+?バッジ・優先順位）は依然未達成のまま open とする。ユーザーの今回の不具合報告（グレーアウト・チェックアイコンが出ない）は解消したが、Issueのクローズには至らない。
+
 ---
 
 ## 3. メタデータ
@@ -65,4 +81,4 @@ GanttNode に `tentative?: boolean` と `status?: string` を追加し、描画�
 - target_repo: ../ganttchart-for-mywork
 - related_issues: issue-phase004-000, issue-phase004-004（prop 型の正）, issue-gantt-phase004-002, issue-gantt-phase004-003
 - created: 2026-07-04
-- updated: 2026-07-04
+- updated: 2026-07-22

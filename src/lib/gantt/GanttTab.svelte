@@ -19,11 +19,13 @@
     onNodeClick?: (globalKey: string) => void
     /** 外部ドロップ時のデフォルト所要時間（分）。settings.defaultDurationMin から渡す。 */
     defaultDurationMin?: number
+    /** サブタスク展開表示。settings.ganttExpandSubtasks から渡す（アプリ既定 true。prop 省略時のみ false）。 */
+    expandSubtasks?: boolean
   }
 
-  let { sources, onNodePatch, onNodeClick, defaultDurationMin = 60 }: Props = $props()
+  let { sources, onNodePatch, onNodeClick, defaultDurationMin = 60, expandSubtasks = false }: Props = $props()
 
-  let ganttNodes: GanttNode[] = $derived(extractGanttNodes(sources))
+  let ganttNodes: GanttNode[] = $derived(extractGanttNodes(sources, undefined, { expandSubtasks }))
 
   const INITIAL_DAY_WIDTH = 30
 
