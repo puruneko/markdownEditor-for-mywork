@@ -54,13 +54,50 @@ Unscheduled Tray（issue-phase003-001、open）の「未予定→ドラッグで
 ### 履歴（追記のみ）
 - 2026-07-04 — 起票。
 
+### 2026-07-23 実装
+
+- Change:
+  - lib（`../ganttchart-for-mywork`）:
+    - `src/utils/unscheduled-schedule.ts` を新設。`computeUnscheduledStart`/`computeUnscheduledRange` で丸めロジック（minorUnit が `'hour'` なら15分単位、それ以外は日単位＋`defaultStartHour`固定）を実装。DOM非依存の純粋関数。
+    - `src/utils/drag-handler.ts` に `createUnscheduledDragHandler` を追加。既存 `createDragHandler` と同じ「mousedown→window の mousemove/mouseup」機構を踏襲しつつ、ノードデータ（start/end）は一切書き換えない設計（`onGhostUpdate`/`onGhostClear` でホスト側の一時的な表示状態のみ更新、`onSchedule` はドロップ確定時に1回だけ発火）。`isWithinTimeline` 判定はコンポーネント側から注入する形にして DOM 非依存を維持。
+    - `GanttTimeline.svelte`: 期間なしサブタスク行の `<text>` に `pointer-events="auto"` と mousedown ハンドラ、`data-node-id` を付与。ドラッグ中は `ghostDrag`（コンポーネント内 `let`、ノードデータには触れない）を更新し、半透明の点線ゴースト（`.gantt-ghost-bar`/`.gantt-ghost-label`）を描画。ドロップ位置がタイムライン表示領域外（`timelineContainer` の bounding rect 外）の場合は `onSchedule` を発火せずゴーストのみ消去する。
+    - `types.ts`: `GanttEventHandlers.onSchedule`、`GanttConfig.defaultDurationMinutes`（既定60）/`defaultStartHour`（既定9）、`GanttUserEventType`/`DetailMap` に `'schedule'` を追加。
+    - `GanttChart.svelte`/`gantt-store.ts`: `handleSchedule` で `handlers.onSchedule` 呼び出し＋`store.events.emit('schedule', ...)`（既存 `barDragEnd` と同一パターン）。`DEFAULT_CONFIG` に新設定のデフォルト値を追加。
+    - テスト: `tests/utils/unscheduled-schedule.test.ts`（9件）、`tests/utils/drag-handler.test.ts` に `createUnscheduledDragHandler` の単体テスト追加（13件、境界外キャンセル含む）、`tests/components/gantt-timeline-schedule.test.ts`（3件、`@testing-library/svelte` で実際に `GanttChart` をマウントしてドラッグ→ゴースト表示→`onSchedule` 発火→ゴースト消去を確認）。
+  - 本体（`markdownEditor-for-mywork`）:
+    - `src/lib/gantt/GanttTab.svelte`: `handlers.onSchedule` を追加し、`formatSchedule` + 既存 `upsertSchedule`（`../patch/upsert-meta`）で `@schedule` を正規形・タスク行直下に書き込む。`ganttConfig` に `defaultDurationMinutes: defaultDurationMin`（既存 `settings.defaultDurationMin` を流用。新設定は追加していない）。
+    - `tests/obs-e2e/gantt-view.e2e.ts` に実機シナリオを追加（期間なしサブタスク行をドラッグ→`@schedule` 書き戻し→バー再描画を両面アサート）。
+  - `defaultStartHour` は lib の汎用性維持のため prop としては存在するが、本体からは明示的に渡さず lib 既定値（9）に委ねている（新規ユーザー設定は追加していない、issue の指示どおり）。
+
+- 検証結果:
+  - lib: `npx vitest run` 179 件成功（既存 zoom-gesture.test.ts の3件失敗は本Issueと無関係の既存不具合。作業前から失敗しており本Issueの変更は影響していないことを `git stash` で比較確認済み）。
+  - 本体: `npx vitest run` 455 件全成功。`npm run build` 成功（新規 a11y warning 1件は同ファイル内の既存パターンと同種、エラーなし）。
+  - 本体 `npm run test:obs:e2e`（実機 Obsidian・wdio）: 新規シナリオは**単独実行では毎回成功**（ドラッグ→ゴースト表示→`@schedule` 書き戻し→バー再描画まで実機で確認済み）。他 7 ファイルの既存 E2E は全て成功、`gantt-view.e2e.ts` 内の既存 7 件も成功。**ただし `gantt-view.e2e.ts` を全件まとめて実行した場合のみ、新規シナリオがまれに失敗する**（Gantt View の leaf 再生成・AstIndex 反映タイミングに関する実行環境依存の非決定性で、ツリーペインとタイムラインの再描画がまれに同期しない事象を観測。本体・ライブラリのロジック自体には要因を見つけられず、`openGanttViewUntilTaskVisible` ヘルパでリトライを入れても解消しないケースがある）。単体テスト・コンポーネント統合テスト・E2E単独実行のいずれも一貫して正しい動作を示しており、機能自体の実装は正しいと判断している。
+
+- Rationale:
+  - 既存のバードラッグ機構（mouse + window リスナー）を再利用し、新しい DnD 機構を増やさない方針（gantt 憲章の実装規約）に従った。
+  - ライブラリはノードデータを自分で書き換えない一方向データフロー原則を厳守するため、ドラッグ中のプレビューは実データを動かす既存バードラッグの手法ではなく、完全に独立した「ゴースト」表示として実装した。
+  - E2E のまれな失敗は本Issueの実装ロジックの欠陥ではなく実行環境（Obsidian leaf ライフサイクル）のタイミング事象と判断し、これ以上の追跡は費用対効果に見合わないと判断して打ち切った。次回このテストが再度不安定になった場合は `project/knowledge/obsidian-plugin-testing.md` への追記を検討すること。
+
+### 2026-07-23（再確認・後始末）
+
+- Change:
+  - 前セッションが残していた調査用の一時ファイル `tests/obs-e2e/__debug008.e2e.ts` / `__debug008b.e2e.ts`（`expect(true).toBe(true)` のみのトレース専用スクリプト、成果物ではない）を削除した。
+  - lib（`../ganttchart-for-mywork`）の同issueファイルには実装内容が履歴反映されておらず `status: open` のままだったため、本エントリと同内容を反映し `status: implemented` へ更新した（issue-gantt-phase004-007 で確立済みのパターンに合わせ、lib側にも本体側と同じ履歴を持たせる）。
+  - lib `npm run test`（180件成功、無関係の既存不具合3件を除く）・本体 `npm run test:unit`（455件成功）を再実行して回帰がないことを再確認した。
+  - `gantt-view.e2e.ts` の新規シナリオを `it.only` で複数回単独実行し、常に成功することを再確認した。ファイル全体を通しで実行すると、実行順によって新規シナリオが失敗する回・無関係な既存2件（バードラッグ／完了タスク）が失敗する回の両方が発生することを診断ログ付きで確認し、前回セッションの結論（実行環境のタイミング事象であり実装欠陥ではない）を追認した。診断用コードは検証後に削除済み。
+
+- Rationale:
+  - WORKFLOW の履歴保存原則に従い、lib・本体の両issueファイルの記録内容を一致させた。
+  - 調査用の一時ファイルは成果物ではなく、コミット対象に含めるべきではないため削除した。
+
 ---
 
 ## 3. メタデータ
 - id: issue-gantt-phase004-008__unscheduled-subtask-dnd
-- status: open
+- status: implemented（ユーザー承認待ち。E2E の稀な非決定性については上記履歴参照）
 - phase: 004
 - target_repo: ../ganttchart-for-mywork（＋本体 src/lib/gantt/ ほか）
 - related_issues: issue-phase004-000, issue-gantt-phase004-007（先行必須）, issue-phase003-001（操作概念の共通化）
 - created: 2026-07-04
-- updated: 2026-07-04
+- updated: 2026-07-23

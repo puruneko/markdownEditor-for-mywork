@@ -32,6 +32,7 @@
   let ganttConfig: GanttConfig = $state({
     mode: 'controlled',
     dayWidth: INITIAL_DAY_WIDTH,
+    defaultDurationMinutes: defaultDurationMin,
   })
 
   function handleExternalDrop(e: GanttExternalDropEvent) {
@@ -69,6 +70,11 @@
       ganttConfig = { ...ganttConfig, dayWidth: scale * 40 }
     },
     onExternalDrop: handleExternalDrop,
+    onSchedule(nodeId, start, end) {
+      // nodeId は globalKey（期間なしサブタスク行。issue-gantt-phase004-008）
+      const scheduleValue = formatSchedule(start, end)
+      void onNodePatch(nodeId, (md, _doc, node) => upsertSchedule(md, node, scheduleValue))
+    },
   }
 </script>
 
