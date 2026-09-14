@@ -22,6 +22,17 @@ function parseSchedule(schedule: string): { start: DateTime; end: DateTime } | n
   return { start, end }
 }
 
+/**
+ * @due を GanttNode.milestone へ変換する（issue-phase005-001 C-2）。
+ * 単一点（"/" を含まない）は一点の DateTime、期間（"start/end"）は {start, end} を返す。
+ * パースに失敗した値は null（呼び出し側はフィールド自体を設定しない）。
+ */
+function parseMilestone(due: string): DateTime | { start: DateTime; end: DateTime } | null {
+  if (due.includes('/')) return parseSchedule(due)
+  const dt = DateTime.fromISO(due)
+  return dt.isValid ? dt : null
+}
+
 // ----------------------------------------------------------------
 // Descendant schedule check + min/max range
 // ----------------------------------------------------------------
@@ -141,6 +152,7 @@ function extractFromNodes(
               start: occ.start,
               end: occ.end,
               completed: node.status === 'done',
+              status: node.status,
               metadata: { status: node.status, schedule: node.meta?.schedule ?? null, sourceNodeId: nodeId },
             })
           })
@@ -158,6 +170,7 @@ function extractFromNodes(
         type,
         name: node.text,
         completed: node.status === 'done',
+        status: node.status,
         metadata: {
           status: node.status,
           schedule: node.meta?.schedule ?? null,
@@ -170,6 +183,20 @@ function extractFromNodes(
           ganttNode.start = parsed.start
           ganttNode.end = parsed.end
         }
+      }
+
+      if (node.meta?.plan) {
+        const plan = parseSchedule(node.meta.plan)
+        if (plan) ganttNode.plan = plan
+      }
+
+      if (node.meta?.due) {
+        const milestone = parseMilestone(node.meta.due)
+        if (milestone) ganttNode.milestone = milestone
+      }
+
+      if (node.meta?.tentative?.schedule === true) {
+        ganttNode.tentative = true
       }
 
       // For group nodes without own schedule, derive range from descendants
@@ -202,6 +229,14 @@ function extractFromNodes(
           schedule: null,
         },
       }
+
+      // list（ListNode）は status を持たないため設定しない。plan のみ対応する
+      // （issue-phase005-001 C-2。@実施日時 はフェーズに設定しない運用ルールのため schedule は追加しない）。
+      if (node.meta?.plan) {
+        const plan = parseSchedule(node.meta.plan)
+        if (plan) ganttNode.plan = plan
+      }
+
       result.push(ganttNode)
 
       if (node.children.length > 0) {

@@ -94,7 +94,7 @@ describe('extractGanttNodes', () => {
   it('stores status and schedule in metadata', () => {
     const nodes = extractGanttNodes(src('- [ ] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n'))
     const task = nodes.find(n => n.type === 'task')!
-    expect(task.metadata?.status).toBe('todo')
+    expect(task.metadata?.status).toBe('ready')
     expect(task.metadata?.schedule).toBe('2026-04-01T10:00/2026-04-01T12:00')
   })
 
@@ -314,5 +314,70 @@ describe('extractGanttNodes — マルチソース', () => {
       // parentId と task.id は同じファイルを指す
       expect(parseGlobalKey(parentId).filePath).toBe(parseGlobalKey(task.id).filePath)
     }
+  })
+})
+
+// ----------------------------------------------------------------
+// issue-phase005-001 C-2: plan・milestone・tentative・status の投影
+// ----------------------------------------------------------------
+
+describe('extractGanttNodes — plan・milestone・tentative・status', () => {
+  it('トップレベル status に node.status が設定される', () => {
+    const nodes = extractGanttNodes(src('- [>] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n'))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.status).toBe('in_progress')
+  })
+
+  it('@想定期間(@plan) を持つタスクの GanttNode.plan が設定される', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @plan: 2026-04-01/2026-04-10\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.plan?.start.toISODate()).toBe('2026-04-01')
+    expect(task.plan?.end.toISODate()).toBe('2026-04-10')
+  })
+
+  it('@期限(@due) を持つタスクの milestone が設定される（単一点）', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @due: 2026-04-15\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(DateTime.isDateTime(task.milestone)).toBe(true)
+    expect((task.milestone as DateTime).toISODate()).toBe('2026-04-15')
+  })
+
+  it('@期限(@due) が期間の場合、milestone は {start, end} になる', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @due: 2026-04-15/2026-04-20\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    const milestone = task.milestone as { start: DateTime; end: DateTime }
+    expect(milestone.start.toISODate()).toBe('2026-04-15')
+    expect(milestone.end.toISODate()).toBe('2026-04-20')
+  })
+
+  it('@実施日時?（仮置き）を持つタスクの tentative が true になる', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @schedule?: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.tentative).toBe(true)
+  })
+
+  it('@schedule に ? が無い場合、tentative は未設定', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.tentative).toBeUndefined()
+  })
+
+  it('list（グループ）に @plan があれば plan が設定される。status は設定されない', () => {
+    const nodes = extractGanttNodes(src(
+      '- グループ\n  - @plan: 2026-04-01/2026-04-10\n  - [ ] タスク\n    - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n',
+    ))
+    const group = nodes.find(n => n.type === 'subsection')!
+    expect(group.plan?.start.toISODate()).toBe('2026-04-01')
+    expect(group.status).toBeUndefined()
   })
 })

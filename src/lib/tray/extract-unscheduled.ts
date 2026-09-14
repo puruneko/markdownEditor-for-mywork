@@ -1,6 +1,7 @@
 import { filterNodes } from '../query/filter'
-import type { Document, Section, TaskNode, Status } from '../parser/types'
+import type { Document, Section, TaskNode } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
+import { INCOMPLETE_STATUSES } from '../contract/canonical'
 
 export interface TrayItem {
   sourcePath: string
@@ -9,7 +10,7 @@ export interface TrayItem {
   text: string
 }
 
-const TRAY_STATUSES: Status[] = ['todo', 'doing', 'blocked', 'hold']
+const TRAY_STATUSES = [...INCOMPLETE_STATUSES]
 
 const TRAY_QUERY = {
   status: TRAY_STATUSES,

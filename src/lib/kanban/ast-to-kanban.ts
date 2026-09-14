@@ -3,6 +3,7 @@ import { resolveHierarchyGroupId, HIERARCHY_GROUP_BY } from 'svelte-kanban-lib'
 import type { Document, Section, Node, TaskNode } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
+import { STATUS_BY_MARKER } from '../contract/canonical'
 
 // ----------------------------------------------------------------
 // KanbanCard — CardData with typed fields
@@ -11,7 +12,7 @@ import { makeGlobalKey } from '../viewmodel/global-key'
 export type KanbanCard = CardData & {
   id: string            // globalKey（{#each} キー・クリック・書き戻しで使用）
   title: string
-  status: string        // 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
+  status: string        // 'planning' | 'ready' | 'in_progress' | 'waiting' | 'deferred' | 'done' | 'cancelled'
   /** 順序付き階層パス。ライブラリの groupBy: HIERARCHY_GROUP_BY（階層グルーピング）と
    *  headingLevel / showUnits で使用する。heading（見出し）は level を持ち、
    *  リスト由来のグループは unit として扱う。 */
@@ -41,39 +42,53 @@ export type KanbanCard = CardData & {
 export const DEFAULT_KANBAN_CONFIG: KanbanBoardConfig = {
   lanes: [
     {
-      id: 'todo',
-      title: 'Todo',
-      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'todo' }] },
-      updateRules: [{ type: 'set', key: 'status', value: 'todo' }],
+      id: 'planning',
+      title: 'Planning',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'planning' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'planning' }],
       order: 0,
     },
     {
-      id: 'doing',
-      title: 'Doing',
-      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'doing' }] },
-      updateRules: [{ type: 'set', key: 'status', value: 'doing' }],
+      id: 'ready',
+      title: 'Ready',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'ready' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'ready' }],
       order: 1,
     },
     {
-      id: 'blocked',
-      title: 'Blocked',
-      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'blocked' }] },
-      updateRules: [{ type: 'set', key: 'status', value: 'blocked' }],
+      id: 'in_progress',
+      title: 'In Progress',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'in_progress' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'in_progress' }],
       order: 2,
     },
     {
-      id: 'hold',
-      title: 'Hold',
-      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'hold' }] },
-      updateRules: [{ type: 'set', key: 'status', value: 'hold' }],
+      id: 'waiting',
+      title: 'Waiting',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'waiting' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'waiting' }],
       order: 3,
+    },
+    {
+      id: 'deferred',
+      title: 'Deferred',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'deferred' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'deferred' }],
+      order: 4,
     },
     {
       id: 'done',
       title: 'Done',
       filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'done' }] },
       updateRules: [{ type: 'set', key: 'status', value: 'done' }],
-      order: 4,
+      order: 5,
+    },
+    {
+      id: 'cancelled',
+      title: 'Cancelled',
+      filter: { logic: 'and', conditions: [{ key: 'status', operator: 'eq', value: 'cancelled' }] },
+      updateRules: [{ type: 'set', key: 'status', value: 'cancelled' }],
+      order: 6,
     },
   ] satisfies LaneDefinition[],
 }
@@ -83,7 +98,7 @@ export const KANBAN_FIELD_DEFINITIONS: FieldDefinition[] = [
     key: 'status',
     label: 'ステータス',
     type: 'string',
-    options: ['todo', 'doing', 'done', 'blocked', 'hold'],
+    options: Object.values(STATUS_BY_MARKER),
   },
   { key: 'section', label: 'セクション', type: 'array' },
   { key: 'sectionTitle', label: '親セクション', type: 'string' },

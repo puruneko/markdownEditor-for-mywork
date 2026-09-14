@@ -350,24 +350,53 @@ export type Meta = {
 
 ### 2.9 TODO
 
-- [ ] A-1: `src/lib/contract/canonical.ts` を新規作成する
-- [ ] A-2: `src/lib/parser/types.ts:1` を再エクスポートへ置き換える
-- [ ] A-3: `remark-task-status.ts` の正規表現と対応表を変更する
-- [ ] A-4: 状態名を参照している12箇所を移行する
-- [ ] A-5: `task-language.ts:44` の正規表現を変更する
-- [ ] A-6: `META_LINE_RE` を Unicode 対応にし、日本語エイリアス表を追加する
-- [ ] B-1: `Meta`・`META_KEYS` を `contract/canonical.ts` へ移設し4キーを追加する
-- [ ] B-2: 日本語エイリアス4行を追加する
-- [ ] B-3: `applyMetaKey` へ4ケースを追加する
-- [ ] C-1: 4キーの複数行値に対応する
-- [ ] C-2: ガント投影へ `plan`・`milestone`・`tentative`・`status` を追加する
-- [ ] C-3: カレンダー投影へ `plan`・`tentative` を追加する（`calendar-for-mywork` Issue `0018` の完了後）
-- [ ] `2.6 節` のテストをすべて追加し、`npm run test:unit` が成功することを確認する
-- [ ] `documents/external-data-contract.spec.md` を、本 Issue による変更内容へ更新する（データ契約は現行実装の記述であり、実装が変われば同時に更新しなければならない。同文書 `§10`）
+- [x] A-1: `src/lib/contract/canonical.ts` を新規作成する
+- [x] A-2: `src/lib/parser/types.ts:1` を再エクスポートへ置き換える
+- [x] A-3: `remark-task-status.ts` の正規表現と対応表を変更する
+- [x] A-4: 状態名を参照している12箇所を移行する
+- [x] A-5: `task-language.ts:44` の正規表現を変更する
+- [x] A-6: `META_LINE_RE` を Unicode 対応にし、日本語エイリアス表を追加する
+- [x] B-1: `Meta`・`META_KEYS` を `contract/canonical.ts` へ移設し4キーを追加する
+- [x] B-2: 日本語エイリアス4行を追加する
+- [x] B-3: `applyMetaKey` へ4ケースを追加する
+- [x] C-1: 4キーの複数行値に対応する
+- [x] C-2: ガント投影へ `plan`・`milestone`・`tentative`・`status` を追加する
+- [x] C-3: カレンダー投影へ `plan`・`tentative` を追加する（`calendar-for-mywork` Issue `0018` の完了後）
+- [x] `2.6 節` のテストをすべて追加し、`npm run test:unit` が成功することを確認する
+- [x] `documents/external-data-contract.spec.md` を、本 Issue による変更内容へ更新する（データ契約は現行実装の記述であり、実装が変われば同時に更新しなければならない。同文書 `§10`）
 
 ### 履歴（追記のみ）
 
-#### 2026-09-14
+#### 2026-09-14（実装）
+
+- ユーザー指示:
+  - 「最新のissueを実装して」。曖昧な部分は実装者の最善案で判断してよい旨の指示、および各連携ライブラリ側も同様のデータ構造対応を終えているはずなので、単体・E2E・ブラウザ・Obsidianの各テストを含めて実施するよう指示があった。
+
+- 実施内容:
+  - 優先度A・B・C をすべて実装した（`2.9節` の TODO はすべて完了）。
+  - `2.7節` の実施順序を確認: `calendar-for-mywork`（Issue `0018`）・`kanban-for-mywork`（Issue `0029`）・`ganttchart-for-mywork`（Issue `issue-gantt-phase005-001`）の3リポジトリの実コードを確認し、いずれも新語彙（7状態・`plan`・`tentative`・任意の `status` 文字列）を受理できる実装が既に入っていることを確認した（Issue 自体の `status` はガント・かんばんが `closed`/`completed`、カレンダーは `open` のままだが、これは `WORKFLOW §6` により人間の closure 承認待ちであることを示すのみで、コードの実装状況とは独立である）。この確認をもって優先度Aの前提条件（連携アプリ側の先行対応）を満たしていると判断した。
+  - Issue本文に明記の無い箇所で、同一の不整合パターンを持つ2箇所を追加で修正した（Issueの対象ファイルと同一ファイル内、または同一問題領域の姉妹実装であり、範囲外の変更ではないと判断）:
+    - `src/lib/calendar/markdown-patch.ts` の `patchNodeStatus` 内の書き戻し用正規表現（`A-5` と同一の文字クラス不足パターン。`?`・`/` を追加しないと新2状態への書き戻しが失敗するため）。
+    - `src/editor/task-decoration.ts`（Monaco/CodeMirror ではなく CodeMirror ベースの別のエディタ装飾経路。`task-language.ts` の A-5・A-6 と同一の不足パターンを持っていた。修正しない場合、`[?]`・`[/]` タスク行および日本語メタキー行がエディタ上で無装飾のままになる）。
+  - `src/lib/calendar/ast-to-calendar.ts` の `TimeSpan` 型不整合（`plan` 追加に伴い顕在化。`ISODate` ブランド型と平文 `string` の不一致）を、型キャストにより解消した。副次効果として、同ファイルに既存していた同種の `temporal` の型エラーも解消された（`svelte-check` のベースラインエラー数は 85→84 に減少）。
+  - `documents/sample-external-data-{s,m,l}.json` を `npm run gen:samples` で再生成した。
+  - `documents/external-data-contract.spec.md` を実装内容に合わせて更新した（BR-017・BR-025・BR-050 の本文更新、BR-069〜BR-072 の新規追加、§3.2 状態表の更新、§4.7 メタ参照表の更新、注釈 A-09 をかんばんのみの残課題へ縮小、§9.1 実例を実際の再生成出力へ更新）。
+
+- テスト実施結果:
+  - `npm run check`（svelte-check）: 新規エラーなし（ベースライン比較で確認。むしろ1件減少）。
+  - `npm run test:unit`: 529件全て成功（既存テストの状態語彙移行、新規テスト追加を含む）。
+  - `npx playwright test`（ブラウザE2E）: 14件全て成功。
+  - Obsidian E2E（`wdio run wdio.conf.mts`、全8スペック）: 7スペック全項目成功。`gantt-view.e2e.ts` のみ2件失敗（`バードラッグで @schedule が更新される`・`完了タスクのバーが completed 装飾でグレーアウトされる`）。この2件は、本Issueの変更を一切含まない `git stash` 後のベースラインコードでも同一内容・同一箇所で再現することを確認済みであり、本Issueに起因する回帰ではない、既存の未解決事象である。
+  - `kanban-view.e2e.ts` はレーンID変更（7状態化）に追随してテストコードを更新し、全項目成功を確認した。
+
+- 変更しなかったもの（スコープ外の再確認）:
+  - 連携アプリ4リポジトリのソースコード（`2.8節` により対象外）。
+  - `gantt-view.e2e.ts` の2件の既存失敗（本Issue範囲外の既知事象。別途調査が必要）。
+
+- 根拠:
+  - `WORKFLOW §2.4`（Haiku実行可能水準）に基づき記述された Issue 本文の before/after を、実装の唯一の根拠として使用した。
+  - ユーザーの明示指示（本欄冒頭）により、Issue本文に記載の無い判断（連携アプリ側テキストラベルの日英表記、レーンの表示順序、姉妹実装2箇所の追加修正）は実装者の最善案で決定した。
+  - `WORKFLOW §6` により、`status` は引き続き `open` のままとし、クローズはユーザーの明示承認を待つ。
 
 - ユーザー指示:
   - `__workspace/unified-markdown-data-spec-proposal.md`（統一Markdownデータ仕様書・案）を承認した。これを各ライブラリへ適用していく。

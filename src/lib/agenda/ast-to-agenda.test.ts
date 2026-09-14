@@ -108,19 +108,21 @@ describe('buildAgenda — 日付解決', () => {
 // ----------------------------------------------------------------
 
 describe('buildAgenda — ステータスフィルタ', () => {
-  it('todo/doing/blocked/hold はすべて未完として含まれる', () => {
+  it('planning/ready/in_progress/waiting/deferred はすべて未完として含まれる', () => {
     const md = [
-      '- [ ] todo タスク',
+      '- [?] planning タスク',
       '  - @due: 2026-07-07',
-      '- [>] doing タスク',
+      '- [ ] ready タスク',
       '  - @due: 2026-07-07',
-      '- [!] blocked タスク',
+      '- [>] in_progress タスク',
       '  - @due: 2026-07-07',
-      '- [-] hold タスク',
+      '- [!] waiting タスク',
+      '  - @due: 2026-07-07',
+      '- [/] deferred タスク',
       '  - @due: 2026-07-07',
     ].join('\n') + '\n'
     const { today } = agenda(md)
-    expect(today).toHaveLength(4)
+    expect(today).toHaveLength(5)
   })
 
   it('done タスクは除外される', () => {
@@ -168,22 +170,25 @@ describe('buildAgenda — 並び順', () => {
     expect(today[2].text).toBe('優先度3')
   })
 
-  it('同日付・同 priority なら ステータス順 todo < doing < blocked < hold', () => {
+  it('同日付・同 priority なら ステータス順 planning < ready < in_progress < waiting < deferred', () => {
     const md = [
-      '- [-] hold タスク',
+      '- [/] deferred タスク',
       '  - @due: 2026-07-07',
-      '- [ ] todo タスク',
+      '- [ ] ready タスク',
       '  - @due: 2026-07-07',
-      '- [!] blocked タスク',
+      '- [!] waiting タスク',
       '  - @due: 2026-07-07',
-      '- [>] doing タスク',
+      '- [>] in_progress タスク',
+      '  - @due: 2026-07-07',
+      '- [?] planning タスク',
       '  - @due: 2026-07-07',
     ].join('\n') + '\n'
     const { today } = agenda(md)
-    expect(today[0].status).toBe('todo')
-    expect(today[1].status).toBe('doing')
-    expect(today[2].status).toBe('blocked')
-    expect(today[3].status).toBe('hold')
+    expect(today[0].status).toBe('planning')
+    expect(today[1].status).toBe('ready')
+    expect(today[2].status).toBe('in_progress')
+    expect(today[3].status).toBe('waiting')
+    expect(today[4].status).toBe('deferred')
   })
 
   it('priority 未指定は priority 指定済みの後', () => {

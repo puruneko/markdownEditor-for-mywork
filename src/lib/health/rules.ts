@@ -3,6 +3,7 @@ import type { Status, TaskNode, Node, Section, Document } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
 import { lintLine } from '../../editor/notation-lint'
+import { INCOMPLETE_STATUSES } from '../contract/canonical'
 
 // ----------------------------------------------------------------
 // Types
@@ -54,7 +55,7 @@ export const DEFAULT_HEALTH_CONFIG: HealthConfig = {
 // Helpers
 // ----------------------------------------------------------------
 
-const INCOMPLETE: ReadonlySet<Status> = new Set(['todo', 'doing', 'blocked', 'hold'])
+const INCOMPLETE: ReadonlySet<Status> = new Set(INCOMPLETE_STATUSES)
 
 /** @schedule 終了日（YYYY-MM-DD）。スラッシュがなければ null。 */
 function scheduleEndDate(schedule: string): string | null {
@@ -175,7 +176,7 @@ function checkOverdue(node: TaskNode, path: string, todayStr: string): HealthFin
 
 /** Rule 3: [>]（doing）のまま N 日以上放置（停滞） */
 function checkStale(node: TaskNode, path: string, todayStr: string, staleDays: number): HealthFinding | null {
-  if (node.status !== 'doing') return null
+  if (node.status !== 'in_progress') return null
   if (!node.meta?.schedule) return null
   const startDate = scheduleStartDate(node.meta.schedule)
   if (!startDate) return null
@@ -218,8 +219,8 @@ function checkReadyTasks(
   path: string,
   allTexts: Map<string, 'done' | 'incomplete'>,
 ): HealthFinding | null {
-  // todo/blocked のみ対象（doing はすでに着手済み）
-  if (node.status !== 'todo' && node.status !== 'blocked' && node.status !== 'hold') return null
+  // ready/waiting/cancelled のみ対象（in_progress はすでに着手済み）
+  if (node.status !== 'ready' && node.status !== 'waiting' && node.status !== 'cancelled') return null
   const deps = node.meta?.dependsOn
   if (!deps || deps.length === 0) return null
   // 未解決依存があれば ready-tasks 判定をスキップ

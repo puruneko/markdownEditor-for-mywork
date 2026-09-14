@@ -1,13 +1,14 @@
 import type { FilterQuery } from './filter'
 import type { IndexScope } from '../../sync/ast-index'
 import type { Status } from '../parser/types'
+import { STATUS_BY_MARKER } from '../contract/canonical'
 
 export type ParsedQuery = {
   query: FilterQuery
   scope: IndexScope
 }
 
-const VALID_STATUSES = new Set<Status>(['todo', 'doing', 'done', 'blocked', 'hold'])
+const VALID_STATUSES = new Set<Status>(Object.values(STATUS_BY_MARKER))
 
 /**
  * task-query コードブロックの DSL テキストを FilterQuery に変換する。

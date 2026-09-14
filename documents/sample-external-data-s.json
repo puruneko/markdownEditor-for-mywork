@@ -70,7 +70,7 @@
                     "type": "task",
                     "id": "s2.n1",
                     "text": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
-                    "status": "doing",
+                    "status": "in_progress",
                     "children": [
                       {
                         "type": "list",
@@ -138,7 +138,7 @@
                     "type": "task",
                     "id": "s2.n2",
                     "text": "部長会用にプロジェクター2台を7Fへ移設",
-                    "status": "todo",
+                    "status": "ready",
                     "children": [
                       {
                         "type": "list",
@@ -179,7 +179,7 @@
                     "type": "task",
                     "id": "s2.n3",
                     "text": "名刺の発注（営業部5名分）",
-                    "status": "todo",
+                    "status": "ready",
                     "children": [],
                     "meta": {
                       "schedule": "2026-07-08T11:00/2026-07-08T11:30",
@@ -275,7 +275,7 @@
                         "type": "task",
                         "id": "s3.n1.n1",
                         "text": "見積を3社から取得する",
-                        "status": "doing",
+                        "status": "in_progress",
                         "children": [
                           {
                             "type": "list",
@@ -346,7 +346,7 @@
                         "type": "task",
                         "id": "s3.n1.n2",
                         "text": "比較表を課長へ提出して業者を決定する",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-20T10:00/2026-07-20T11:00",
@@ -388,7 +388,7 @@
                         "type": "task",
                         "id": "s3.n2.n0",
                         "text": "契約書ドラフトを法務レビューへ回す",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "due": "2026-08-14",
@@ -413,7 +413,7 @@
                         "type": "task",
                         "id": "s3.n2.n1",
                         "text": "契約締結（押印・製本・原本送付）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "quote",
@@ -611,7 +611,7 @@
                     "type": "task",
                     "id": "s5.n1",
                     "text": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
-                    "status": "doing",
+                    "status": "in_progress",
                     "children": [
                       {
                         "type": "list",
@@ -669,7 +669,7 @@
                     "type": "task",
                     "id": "s5.n2",
                     "text": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
-                    "status": "todo",
+                    "status": "ready",
                     "children": [
                       {
                         "type": "list",
@@ -709,7 +709,7 @@
                     "type": "task",
                     "id": "s5.n3",
                     "text": "受付の来客用スリッパを補充する",
-                    "status": "todo",
+                    "status": "ready",
                     "children": [
                       {
                         "type": "list",
@@ -829,7 +829,7 @@
         "id": "demo/sample-s.md::s2.n1",
         "type": "task",
         "title": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "今週やること"
         ],
@@ -843,7 +843,7 @@
         "id": "demo/sample-s.md::s2.n2",
         "type": "task",
         "title": "部長会用にプロジェクター2台を7Fへ移設",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "今週やること"
         ],
@@ -857,7 +857,7 @@
         "id": "demo/sample-s.md::s2.n3",
         "type": "task",
         "title": "名刺の発注（営業部5名分）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "今週やること"
         ],
@@ -900,7 +900,7 @@
         "id": "demo/sample-s.md::s3.n1.n1",
         "type": "task",
         "title": "見積を3社から取得する",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "清掃業者の契約更新",
           "見積の取得と比較"
@@ -915,7 +915,7 @@
         "id": "demo/sample-s.md::s3.n1.n2",
         "type": "task",
         "title": "比較表を課長へ提出して業者を決定する",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "清掃業者の契約更新",
           "見積の取得と比較"
@@ -930,7 +930,7 @@
         "id": "demo/sample-s.md::s5.n1",
         "type": "task",
         "title": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "備品・修繕の依頼"
         ],
@@ -944,7 +944,7 @@
         "id": "demo/sample-s.md::s5.n2",
         "type": "task",
         "title": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "備品・修繕の依頼"
         ],
@@ -992,12 +992,14 @@
         "type": "task",
         "name": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-06T13:00/2026-07-06T14:30"
         },
         "start": "2026-07-06T13:00:00.000+09:00",
-        "end": "2026-07-06T14:30:00.000+09:00"
+        "end": "2026-07-06T14:30:00.000+09:00",
+        "milestone": "2026-07-06T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::s2.n2",
@@ -1005,12 +1007,14 @@
         "type": "task",
         "name": "部長会用にプロジェクター2台を7Fへ移設",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T17:00/2026-07-06T17:30"
         },
         "start": "2026-07-06T17:00:00.000+09:00",
-        "end": "2026-07-06T17:30:00.000+09:00"
+        "end": "2026-07-06T17:30:00.000+09:00",
+        "milestone": "2026-07-07T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::s2.n3",
@@ -1018,12 +1022,14 @@
         "type": "task",
         "name": "名刺の発注（営業部5名分）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-08T11:00/2026-07-08T11:30"
         },
         "start": "2026-07-08T11:00:00.000+09:00",
-        "end": "2026-07-08T11:30:00.000+09:00"
+        "end": "2026-07-08T11:30:00.000+09:00",
+        "milestone": "2026-07-10T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::s2.n4",
@@ -1031,6 +1037,7 @@
         "type": "task",
         "name": "7月の全社カレンダーを共有ドライブへ掲載",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-06-30T16:00/2026-06-30T17:00"
@@ -1063,6 +1070,7 @@
         "type": "task",
         "name": "現行契約の条件を洗い出して比較表を作成",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-07-01T10:00/2026-07-01T12:00"
@@ -1076,12 +1084,14 @@
         "type": "task",
         "name": "見積を3社から取得する",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-07T14:00/2026-07-07T17:00"
         },
         "start": "2026-07-07T14:00:00.000+09:00",
-        "end": "2026-07-07T17:00:00.000+09:00"
+        "end": "2026-07-07T17:00:00.000+09:00",
+        "milestone": "2026-07-17T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::s3.n1.n2",
@@ -1089,12 +1099,14 @@
         "type": "task",
         "name": "比較表を課長へ提出して業者を決定する",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-20T10:00/2026-07-20T11:00"
         },
         "start": "2026-07-20T10:00:00.000+09:00",
-        "end": "2026-07-20T11:00:00.000+09:00"
+        "end": "2026-07-20T11:00:00.000+09:00",
+        "milestone": "2026-07-22T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::section-5",
@@ -1110,12 +1122,14 @@
         "type": "task",
         "name": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-07T16:00/2026-07-07T16:30"
         },
         "start": "2026-07-07T16:00:00.000+09:00",
-        "end": "2026-07-07T16:30:00.000+09:00"
+        "end": "2026-07-07T16:30:00.000+09:00",
+        "milestone": "2026-07-09T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-s.md::s5.n2",
@@ -1123,8 +1137,9 @@
         "type": "task",
         "name": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-09T11:00/2026-07-09T11:30"
         },
         "start": "2026-07-09T11:00:00.000+09:00",
@@ -1136,6 +1151,7 @@
         "type": "task",
         "name": "エントランスの掲示物を7月分へ差し替え",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-07-01T09:00/2026-07-01T09:30"
@@ -1148,7 +1164,7 @@
       {
         "id": "demo/sample-s.md::s2.n1",
         "title": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -1181,7 +1197,7 @@
       {
         "id": "demo/sample-s.md::s2.n2",
         "title": "部長会用にプロジェクター2台を7Fへ移設",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1212,7 +1228,7 @@
       {
         "id": "demo/sample-s.md::s2.n3",
         "title": "名刺の発注（営業部5名分）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1305,7 +1321,7 @@
       {
         "id": "demo/sample-s.md::s3.n1.n1",
         "title": "見積を3社から取得する",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -1343,7 +1359,7 @@
       {
         "id": "demo/sample-s.md::s3.n1.n2",
         "title": "比較表を課長へ提出して業者を決定する",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1379,7 +1395,7 @@
       {
         "id": "demo/sample-s.md::s3.n2.n0",
         "title": "契約書ドラフトを法務レビューへ回す",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1414,7 +1430,7 @@
       {
         "id": "demo/sample-s.md::s3.n2.n1",
         "title": "契約締結（押印・製本・原本送付）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1450,7 +1466,7 @@
       {
         "id": "demo/sample-s.md::s5.n1",
         "title": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -1482,7 +1498,7 @@
       {
         "id": "demo/sample-s.md::s5.n2",
         "title": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1512,7 +1528,7 @@
       {
         "id": "demo/sample-s.md::s5.n3",
         "title": "受付の来客用スリッパを補充する",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -1574,7 +1590,7 @@
         {
           "globalKey": "demo/sample-s.md::s2.n1",
           "text": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-06",
           "priority": 1,
           "path": "demo/sample-s.md",
@@ -1583,7 +1599,7 @@
         {
           "globalKey": "demo/sample-s.md::s2.n2",
           "text": "部長会用にプロジェクター2台を7Fへ移設",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-06",
           "priority": null,
           "path": "demo/sample-s.md",
@@ -1594,7 +1610,7 @@
         {
           "globalKey": "demo/sample-s.md::s3.n1.n1",
           "text": "見積を3社から取得する",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-07",
           "priority": 1,
           "path": "demo/sample-s.md",
@@ -1603,7 +1619,7 @@
         {
           "globalKey": "demo/sample-s.md::s5.n1",
           "text": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-07",
           "priority": 2,
           "path": "demo/sample-s.md",
@@ -1612,7 +1628,7 @@
         {
           "globalKey": "demo/sample-s.md::s2.n3",
           "text": "名刺の発注（営業部5名分）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-08",
           "priority": null,
           "path": "demo/sample-s.md",
@@ -1621,7 +1637,7 @@
         {
           "globalKey": "demo/sample-s.md::s5.n2",
           "text": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-09",
           "priority": null,
           "path": "demo/sample-s.md",
@@ -1632,7 +1648,7 @@
         {
           "globalKey": "demo/sample-s.md::s5.n3",
           "text": "受付の来客用スリッパを補充する",
-          "status": "todo",
+          "status": "ready",
           "date": null,
           "priority": null,
           "path": "demo/sample-s.md",

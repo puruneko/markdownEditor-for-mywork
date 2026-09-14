@@ -55,11 +55,11 @@ describe('セクション1: 2スペース（標準）', () => {
     const sec = findSection('1. 2スペース（標準）')
     const group = sec.children.find(n => n.type === 'list') as ListNode
     const tasks = group.children as TaskNode[]
-    expect(tasks[0].status).toBe('todo')
+    expect(tasks[0].status).toBe('ready')
     expect(tasks[1].status).toBe('done')
-    expect(tasks[2].status).toBe('doing')
-    expect(tasks[3].status).toBe('blocked')
-    expect(tasks[4].status).toBe('hold')
+    expect(tasks[2].status).toBe('in_progress')
+    expect(tasks[3].status).toBe('waiting')
+    expect(tasks[4].status).toBe('cancelled')
   })
 
   it('@schedule と @due が子から抽出され正規化される', () => {
@@ -100,11 +100,11 @@ describe('セクション2: 4スペース', () => {
     const sec = findSection('2. 4スペース')
     const group = sec.children.find(n => n.type === 'list') as ListNode
     const tasks = group.children as TaskNode[]
-    expect(tasks[0].status).toBe('todo')
+    expect(tasks[0].status).toBe('ready')
     expect(tasks[1].status).toBe('done')
-    expect(tasks[2].status).toBe('doing')
-    expect(tasks[3].status).toBe('blocked')
-    expect(tasks[4].status).toBe('hold')
+    expect(tasks[2].status).toBe('in_progress')
+    expect(tasks[3].status).toBe('waiting')
+    expect(tasks[4].status).toBe('cancelled')
   })
 
   it('@meta が8スペースから抽出・正規化される', () => {

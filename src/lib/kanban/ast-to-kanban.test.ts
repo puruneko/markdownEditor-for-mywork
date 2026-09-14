@@ -62,7 +62,7 @@ describe('extractKanbanCards', () => {
     const cards = extractKanbanCards(src('# プロジェクト\n\n- [ ] タスクA\n- [x] タスクB'))
     expect(cards).toHaveLength(2)
     expect(cards[0].title).toBe('タスクA')
-    expect(cards[0].status).toBe('todo')
+    expect(cards[0].status).toBe('ready')
     expect(cards[0].sectionTitle).toBe('プロジェクト')
     expect(cards[1].title).toBe('タスクB')
     expect(cards[1].status).toBe('done')
@@ -101,9 +101,9 @@ describe('extractKanbanCards', () => {
     const cards = extractKanbanCards(src('# S\n\n- [ ] 親タスク\n  - [>] 子タスク\n    - [!] 孫タスク'))
     expect(cards).toHaveLength(3)
     const statuses = cards.map(c => c.status)
-    expect(statuses).toContain('todo')
-    expect(statuses).toContain('doing')
-    expect(statuses).toContain('blocked')
+    expect(statuses).toContain('ready')
+    expect(statuses).toContain('in_progress')
+    expect(statuses).toContain('waiting')
   })
 
   it('各カードのidはグローバルにユニークなglobalKeyを持つ', () => {
@@ -229,17 +229,19 @@ describe('extractKanbanCards — マルチソース', () => {
 })
 
 describe('DEFAULT_KANBAN_CONFIG', () => {
-  it('5つのレーンを持つ', () => {
-    expect(DEFAULT_KANBAN_CONFIG.lanes).toHaveLength(5)
+  it('7つのレーンを持つ', () => {
+    expect(DEFAULT_KANBAN_CONFIG.lanes).toHaveLength(7)
   })
 
   it('各レーンのidがステータスに対応している', () => {
     const ids = DEFAULT_KANBAN_CONFIG.lanes.map(l => l.id)
-    expect(ids).toContain('todo')
-    expect(ids).toContain('doing')
+    expect(ids).toContain('planning')
+    expect(ids).toContain('ready')
+    expect(ids).toContain('in_progress')
+    expect(ids).toContain('waiting')
+    expect(ids).toContain('deferred')
     expect(ids).toContain('done')
-    expect(ids).toContain('blocked')
-    expect(ids).toContain('hold')
+    expect(ids).toContain('cancelled')
   })
 
   it('各レーンはステータスeqフィルタを持つ', () => {

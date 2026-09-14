@@ -70,7 +70,7 @@
                     "type": "task",
                     "id": "s2.n1",
                     "text": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
-                    "status": "doing",
+                    "status": "in_progress",
                     "children": [
                       {
                         "type": "list",
@@ -138,7 +138,7 @@
                     "type": "task",
                     "id": "s2.n2",
                     "text": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
-                    "status": "blocked",
+                    "status": "waiting",
                     "children": [
                       {
                         "type": "quote",
@@ -174,7 +174,7 @@
                     "type": "task",
                     "id": "s2.n3",
                     "text": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
-                    "status": "todo",
+                    "status": "ready",
                     "children": [
                       {
                         "type": "list",
@@ -265,7 +265,7 @@
                         "type": "task",
                         "id": "s3.n1.n1",
                         "text": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
-                        "status": "doing",
+                        "status": "in_progress",
                         "children": [
                           {
                             "type": "list",
@@ -305,7 +305,7 @@
                             "type": "task",
                             "id": "s3.n1.n1.n2",
                             "text": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
-                            "status": "blocked",
+                            "status": "waiting",
                             "children": [
                               {
                                 "type": "list",
@@ -382,7 +382,7 @@
                         "type": "task",
                         "id": "s3.n1.n2",
                         "text": "比較表を課長へ提出し、業者決定の承認を得る",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-20T10:00/2026-07-20T11:00",
@@ -414,7 +414,7 @@
                         "type": "task",
                         "id": "s3.n1.n3",
                         "text": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "plan": "2026-07-22/2026-08-07",
@@ -441,7 +441,7 @@
                         "type": "task",
                         "id": "s3.n1.n4",
                         "text": "契約締結（押印・製本・原本送付）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "quote",
@@ -498,7 +498,7 @@
                         "type": "task",
                         "id": "s3.n2.n0",
                         "text": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-13T13:00/2026-07-13T16:00",
@@ -523,7 +523,7 @@
                         "type": "task",
                         "id": "s3.n2.n1",
                         "text": "買取への切り替え検討",
-                        "status": "hold",
+                        "status": "cancelled",
                         "children": [
                           {
                             "type": "quote",
@@ -621,7 +621,7 @@
                         "type": "task",
                         "id": "s4.n1.n1",
                         "text": "入居各社への工事告知文を作成",
-                        "status": "doing",
+                        "status": "in_progress",
                         "children": [
                           {
                             "type": "list",
@@ -693,7 +693,7 @@
                         "type": "task",
                         "id": "s4.n1.n2",
                         "text": "掲示板への掲示とエントランス告知",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-13T09:00/2026-07-13T09:30",
@@ -721,7 +721,7 @@
                         "type": "task",
                         "id": "s4.n1.n3",
                         "text": "仮設スポットクーラーの電源容量が足りるか要確認 → ボール：村井さん",
-                        "status": "blocked",
+                        "status": "waiting",
                         "children": [
                           {
                             "type": "quote",
@@ -776,7 +776,7 @@
                         "type": "task",
                         "id": "s4.n2.n0",
                         "text": "3F 空調機交換（1期）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "list",
@@ -819,7 +819,7 @@
                         "type": "task",
                         "id": "s4.n2.n1",
                         "text": "4F 空調機交換（2期）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-08-03/2026-08-07",
@@ -844,7 +844,7 @@
                         "type": "task",
                         "id": "s4.n2.n2",
                         "text": "毎朝の現場立ち会い（作業開始時の確認）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-27T08:30/2026-07-27T09:00",
@@ -870,7 +870,7 @@
                         "type": "task",
                         "id": "s4.n2.n3",
                         "text": "試運転立ち会いと引き渡し確認",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-08-10T13:00/2026-08-10T15:00",
@@ -940,7 +940,7 @@
                         "type": "task",
                         "id": "s5.n1.n0",
                         "text": "部内ミーティング（進捗共有・15分）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-06T09:15/2026-07-06T09:30",
@@ -966,7 +966,7 @@
                         "type": "task",
                         "id": "s5.n1.n1",
                         "text": "郵便物の仕分けと各部配布",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
@@ -992,7 +992,7 @@
                         "type": "task",
                         "id": "s5.n1.n2",
                         "text": "備品在庫チェック（コピー用紙・トナー・文具）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-10T16:00/2026-07-10T17:00",
@@ -1034,7 +1034,7 @@
                         "type": "task",
                         "id": "s5.n2.n0",
                         "text": "請求書の受領確認と経理への回付",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "list",
@@ -1080,7 +1080,7 @@
                         "type": "task",
                         "id": "s5.n2.n1",
                         "text": "定期清掃の立ち会い（第2・第4金曜）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "quote",
@@ -1116,7 +1116,7 @@
                         "type": "task",
                         "id": "s5.n2.n2",
                         "text": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-16T09:00/2026-07-16T11:00",
@@ -1203,7 +1203,7 @@
                         "type": "task",
                         "id": "s6.n1.n1",
                         "text": "書類選考（応募12名）",
-                        "status": "doing",
+                        "status": "in_progress",
                         "children": [
                           {
                             "type": "list",
@@ -1257,7 +1257,7 @@
                         "type": "task",
                         "id": "s6.n1.n2",
                         "text": "一次面接の日程調整（候補5名 × 面接官2名）",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "plan": "2026-07-09/2026-07-17",
@@ -1287,7 +1287,7 @@
                         "type": "task",
                         "id": "s6.n1.n3",
                         "text": "一次面接の実施",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "schedule": "2026-07-21T10:00/2026-07-23T18:00",
@@ -1315,7 +1315,7 @@
                         "type": "task",
                         "id": "s6.n1.n4",
                         "text": "二次面接（役員面接）の設定",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "plan": "2026-07-27/2026-08-07",
@@ -1345,7 +1345,7 @@
                         "type": "task",
                         "id": "s6.n1.n5",
                         "text": "内定通知・条件提示",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "due": "2026-08-14",
@@ -1472,7 +1472,7 @@
                     "type": "task",
                     "id": "s7.n3",
                     "text": "フリーアドレス制の全社導入検討",
-                    "status": "hold",
+                    "status": "cancelled",
                     "children": [
                       {
                         "type": "quote",
@@ -1505,7 +1505,7 @@
                     "type": "task",
                     "id": "s7.n4",
                     "text": "社用車の増車（2台→3台）",
-                    "status": "hold",
+                    "status": "cancelled",
                     "children": [
                       {
                         "type": "quote",
@@ -1568,7 +1568,7 @@
                             "type": "task",
                             "id": "s8.n1.n0.n0",
                             "text": "PC・アカウント発行を情シスへ依頼",
-                            "status": "todo",
+                            "status": "ready",
                             "children": [
                               {
                                 "type": "list",
@@ -1592,7 +1592,7 @@
                                 "type": "task",
                                 "id": "s8.n1.n0.n0.n1",
                                 "text": "発行されたアカウントの動作確認",
-                                "status": "todo",
+                                "status": "ready",
                                 "children": [],
                                 "meta": {
                                   "schedule": "2026-07-31T14:00/2026-07-31T15:00",
@@ -1646,7 +1646,7 @@
                             "type": "task",
                             "id": "s8.n1.n0.n1",
                             "text": "座席とロッカーの割り当て（3F 経理エリア）",
-                            "status": "todo",
+                            "status": "ready",
                             "children": [],
                             "meta": {
                               "due": "2026-07-24",
@@ -1672,7 +1672,7 @@
                             "type": "task",
                             "id": "s8.n1.n0.n2",
                             "text": "入館カードの発行と登録",
-                            "status": "todo",
+                            "status": "ready",
                             "children": [],
                             "meta": {
                               "due": "2026-07-31",
@@ -1715,7 +1715,7 @@
                             "type": "task",
                             "id": "s8.n1.n1.n0",
                             "text": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
-                            "status": "todo",
+                            "status": "ready",
                             "children": [],
                             "meta": {
                               "schedule": "2026-08-03T09:00/2026-08-03T09:30",
@@ -1743,7 +1743,7 @@
                             "type": "task",
                             "id": "s8.n1.n1.n1",
                             "text": "オリエンテーションの実施",
-                            "status": "todo",
+                            "status": "ready",
                             "children": [
                               {
                                 "type": "quote",
@@ -1809,7 +1809,7 @@
                         "type": "task",
                         "id": "s8.n2.n0",
                         "text": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
-                        "status": "blocked",
+                        "status": "waiting",
                         "children": [
                           {
                             "type": "list",
@@ -1853,7 +1853,7 @@
                         "type": "task",
                         "id": "s8.n2.n1",
                         "text": "貸与物返却リストの作成と本人への連絡",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [
                           {
                             "type": "list",
@@ -1896,7 +1896,7 @@
                         "type": "task",
                         "id": "s8.n2.n2",
                         "text": "社会保険・雇用保険の喪失手続き",
-                        "status": "todo",
+                        "status": "ready",
                         "children": [],
                         "meta": {
                           "due": "2026-08-05",
@@ -2044,7 +2044,7 @@
         "id": "demo/sample-m.md::s2.n1",
         "type": "task",
         "title": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "【今日のインボックス】突発・当日締切"
         ],
@@ -2058,7 +2058,7 @@
         "id": "demo/sample-m.md::s2.n3",
         "type": "task",
         "title": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【今日のインボックス】突発・当日締切"
         ],
@@ -2087,7 +2087,7 @@
         "id": "demo/sample-m.md::s3.n1.n1",
         "type": "task",
         "title": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "【契約管理】委託契約・更新期限",
           "清掃業務委託（㈱クリーンプロ）契約更新"
@@ -2096,13 +2096,18 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-07-07T14:00:00.000+09:00",
           "end": "2026-07-07T17:00:00.000+09:00"
+        },
+        "plan": {
+          "kind": "CalendarDateRange",
+          "start": "2026-07-06",
+          "endExclusive": "2026-07-17"
         }
       },
       {
         "id": "demo/sample-m.md::s3.n1.n2",
         "type": "task",
         "title": "比較表を課長へ提出し、業者決定の承認を得る",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【契約管理】委託契約・更新期限",
           "清掃業務委託（㈱クリーンプロ）契約更新"
@@ -2111,13 +2116,14 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-07-20T10:00:00.000+09:00",
           "end": "2026-07-20T11:00:00.000+09:00"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s3.n2.n0",
         "type": "task",
         "title": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【契約管理】委託契約・更新期限",
           "複合機リース契約（富士ビジネス機器）満了対応"
@@ -2147,7 +2153,7 @@
         "id": "demo/sample-m.md::s4.n1.n1",
         "type": "task",
         "title": "入居各社への工事告知文を作成",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事前の準備"
@@ -2162,7 +2168,7 @@
         "id": "demo/sample-m.md::s4.n1.n2",
         "type": "task",
         "title": "掲示板への掲示とエントランス告知",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事前の準備"
@@ -2177,7 +2183,7 @@
         "id": "demo/sample-m.md::s4.n2.n0",
         "type": "task",
         "title": "3F 空調機交換（1期）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2192,7 +2198,7 @@
         "id": "demo/sample-m.md::s4.n2.n1",
         "type": "task",
         "title": "4F 空調機交換（2期）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2207,7 +2213,7 @@
         "id": "demo/sample-m.md::s4.n2.n2__r0",
         "type": "task",
         "title": "毎朝の現場立ち会い（作業開始時の確認）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2222,7 +2228,7 @@
         "id": "demo/sample-m.md::s4.n2.n2__r1",
         "type": "task",
         "title": "毎朝の現場立ち会い（作業開始時の確認）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2237,7 +2243,7 @@
         "id": "demo/sample-m.md::s4.n2.n2__r2",
         "type": "task",
         "title": "毎朝の現場立ち会い（作業開始時の確認）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2252,7 +2258,7 @@
         "id": "demo/sample-m.md::s4.n2.n2__r3",
         "type": "task",
         "title": "毎朝の現場立ち会い（作業開始時の確認）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2267,7 +2273,7 @@
         "id": "demo/sample-m.md::s4.n2.n3",
         "type": "task",
         "title": "試運転立ち会いと引き渡し確認",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【工事】空調更新工事（3F・4F）",
           "工事の実施"
@@ -2276,13 +2282,14 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-08-10T13:00:00.000+09:00",
           "end": "2026-08-10T15:00:00.000+09:00"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s5.n1.n0__r0",
         "type": "task",
         "title": "部内ミーティング（進捗共有・15分）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2297,7 +2304,7 @@
         "id": "demo/sample-m.md::s5.n1.n0__r1",
         "type": "task",
         "title": "部内ミーティング（進捗共有・15分）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2312,7 +2319,7 @@
         "id": "demo/sample-m.md::s5.n1.n0__r2",
         "type": "task",
         "title": "部内ミーティング（進捗共有・15分）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2327,7 +2334,7 @@
         "id": "demo/sample-m.md::s5.n1.n0__r3",
         "type": "task",
         "title": "部内ミーティング（進捗共有・15分）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2342,7 +2349,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r0",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2357,7 +2364,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r1",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2372,7 +2379,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r2",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2387,7 +2394,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r3",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2402,7 +2409,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r4",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2417,7 +2424,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r5",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2432,7 +2439,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r6",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2447,7 +2454,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r7",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2462,7 +2469,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r8",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2477,7 +2484,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r9",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2492,7 +2499,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r10",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2507,7 +2514,7 @@
         "id": "demo/sample-m.md::s5.n1.n1__r11",
         "type": "task",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2522,7 +2529,7 @@
         "id": "demo/sample-m.md::s5.n1.n2__r0",
         "type": "task",
         "title": "備品在庫チェック（コピー用紙・トナー・文具）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2537,7 +2544,7 @@
         "id": "demo/sample-m.md::s5.n1.n2__r1",
         "type": "task",
         "title": "備品在庫チェック（コピー用紙・トナー・文具）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2552,7 +2559,7 @@
         "id": "demo/sample-m.md::s5.n1.n2__r2",
         "type": "task",
         "title": "備品在庫チェック（コピー用紙・トナー・文具）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2567,7 +2574,7 @@
         "id": "demo/sample-m.md::s5.n1.n2__r3",
         "type": "task",
         "title": "備品在庫チェック（コピー用紙・トナー・文具）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "週次"
@@ -2582,7 +2589,7 @@
         "id": "demo/sample-m.md::s5.n2.n0__r0",
         "type": "task",
         "title": "請求書の受領確認と経理への回付",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "月次"
@@ -2597,7 +2604,7 @@
         "id": "demo/sample-m.md::s5.n2.n1__r0",
         "type": "task",
         "title": "定期清掃の立ち会い（第2・第4金曜）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "月次"
@@ -2612,7 +2619,7 @@
         "id": "demo/sample-m.md::s5.n2.n1__r1",
         "type": "task",
         "title": "定期清掃の立ち会い（第2・第4金曜）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "月次"
@@ -2627,7 +2634,7 @@
         "id": "demo/sample-m.md::s5.n2.n2__r0",
         "type": "task",
         "title": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【定例業務】週次・月次",
           "月次"
@@ -2657,7 +2664,7 @@
         "id": "demo/sample-m.md::s6.n1.n1",
         "type": "task",
         "title": "書類選考（応募12名）",
-        "status": "doing",
+        "status": "in_progress",
         "parents": [
           "【採用】中途採用（経理担当1名）",
           "選考プロセス"
@@ -2672,7 +2679,7 @@
         "id": "demo/sample-m.md::s6.n1.n2",
         "type": "task",
         "title": "一次面接の日程調整（候補5名 × 面接官2名）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【採用】中途採用（経理担当1名）",
           "選考プロセス"
@@ -2681,13 +2688,18 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-07-09T13:00:00.000+09:00",
           "end": "2026-07-09T15:00:00.000+09:00"
+        },
+        "plan": {
+          "kind": "CalendarDateRange",
+          "start": "2026-07-09",
+          "endExclusive": "2026-07-17"
         }
       },
       {
         "id": "demo/sample-m.md::s6.n1.n3",
         "type": "task",
         "title": "一次面接の実施",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【採用】中途採用（経理担当1名）",
           "選考プロセス"
@@ -2696,13 +2708,14 @@
           "kind": "CalendarDateRange",
           "start": "2026-07-21",
           "endExclusive": "2026-07-24"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s6.n1.n4",
         "type": "task",
         "title": "二次面接（役員面接）の設定",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【採用】中途採用（経理担当1名）",
           "選考プロセス"
@@ -2711,7 +2724,13 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-08-05T15:00:00.000+09:00",
           "end": "2026-08-05T17:00:00.000+09:00"
-        }
+        },
+        "plan": {
+          "kind": "CalendarDateRange",
+          "start": "2026-07-27",
+          "endExclusive": "2026-08-07"
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s7.n1",
@@ -2745,7 +2764,7 @@
         "id": "demo/sample-m.md::s8.n1.n0.n0",
         "type": "task",
         "title": "PC・アカウント発行を情シスへ依頼",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【入退社手続き】",
           "8月1日入社（1名・経理配属）",
@@ -2761,7 +2780,7 @@
         "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
         "type": "task",
         "title": "発行されたアカウントの動作確認",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【入退社手続き】",
           "8月1日入社（1名・経理配属）",
@@ -2772,13 +2791,14 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-07-31T14:00:00.000+09:00",
           "end": "2026-07-31T15:00:00.000+09:00"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n1.n1.n0",
         "type": "task",
         "title": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【入退社手続き】",
           "8月1日入社（1名・経理配属）",
@@ -2788,13 +2808,14 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-08-03T09:00:00.000+09:00",
           "end": "2026-08-03T09:30:00.000+09:00"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n1.n1.n1",
         "type": "task",
         "title": "オリエンテーションの実施",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【入退社手続き】",
           "8月1日入社（1名・経理配属）",
@@ -2804,13 +2825,14 @@
           "kind": "CalendarDateTimeRange",
           "start": "2026-08-03T09:30:00.000+09:00",
           "end": "2026-08-03T11:00:00.000+09:00"
-        }
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n2.n1",
         "type": "task",
         "title": "貸与物返却リストの作成と本人への連絡",
-        "status": "todo",
+        "status": "ready",
         "parents": [
           "【入退社手続き】",
           "7月31日退職（2名）"
@@ -2845,12 +2867,14 @@
         "type": "task",
         "name": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-06T13:00/2026-07-06T14:30"
         },
         "start": "2026-07-06T13:00:00.000+09:00",
-        "end": "2026-07-06T14:30:00.000+09:00"
+        "end": "2026-07-06T14:30:00.000+09:00",
+        "milestone": "2026-07-06T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s2.n3",
@@ -2858,12 +2882,14 @@
         "type": "task",
         "name": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T17:00/2026-07-06T17:30"
         },
         "start": "2026-07-06T17:00:00.000+09:00",
-        "end": "2026-07-06T17:30:00.000+09:00"
+        "end": "2026-07-06T17:30:00.000+09:00",
+        "milestone": "2026-07-07T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::section-3",
@@ -2882,6 +2908,10 @@
         "end": "2026-07-20T11:00:00.000+09:00",
         "metadata": {
           "schedule": null
+        },
+        "plan": {
+          "start": "2026-07-01T00:00:00.000+09:00",
+          "end": "2026-08-31T00:00:00.000+09:00"
         }
       },
       {
@@ -2890,6 +2920,7 @@
         "type": "task",
         "name": "現行契約書の条件を洗い出して比較表を作成",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-07-01T10:00/2026-07-01T12:00"
@@ -2903,12 +2934,18 @@
         "type": "task",
         "name": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-07T14:00/2026-07-07T17:00"
         },
         "start": "2026-07-07T14:00:00.000+09:00",
-        "end": "2026-07-07T17:00:00.000+09:00"
+        "end": "2026-07-07T17:00:00.000+09:00",
+        "plan": {
+          "start": "2026-07-06T00:00:00.000+09:00",
+          "end": "2026-07-17T00:00:00.000+09:00"
+        },
+        "milestone": "2026-07-17T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s3.n1.n2",
@@ -2916,12 +2953,15 @@
         "type": "task",
         "name": "比較表を課長へ提出し、業者決定の承認を得る",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-20T10:00/2026-07-20T11:00"
         },
         "start": "2026-07-20T10:00:00.000+09:00",
-        "end": "2026-07-20T11:00:00.000+09:00"
+        "end": "2026-07-20T11:00:00.000+09:00",
+        "milestone": "2026-07-22T00:00:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s3.n2",
@@ -2932,6 +2972,10 @@
         "end": "2026-07-13T16:00:00.000+09:00",
         "metadata": {
           "schedule": null
+        },
+        "plan": {
+          "start": "2026-07-13T00:00:00.000+09:00",
+          "end": "2026-09-30T00:00:00.000+09:00"
         }
       },
       {
@@ -2940,8 +2984,9 @@
         "type": "task",
         "name": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-13T13:00/2026-07-13T16:00"
         },
         "start": "2026-07-13T13:00:00.000+09:00",
@@ -2964,6 +3009,10 @@
         "end": "2026-07-13T09:30:00.000+09:00",
         "metadata": {
           "schedule": null
+        },
+        "plan": {
+          "start": "2026-07-06T00:00:00.000+09:00",
+          "end": "2026-07-24T00:00:00.000+09:00"
         }
       },
       {
@@ -2972,6 +3021,7 @@
         "type": "task",
         "name": "工事日程の確定（村井さんと現地調整）",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-07-02T15:00/2026-07-02T16:00"
@@ -2985,12 +3035,14 @@
         "type": "task",
         "name": "入居各社への工事告知文を作成",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-08T09:30/2026-07-08T11:30"
         },
         "start": "2026-07-08T09:30:00.000+09:00",
-        "end": "2026-07-08T11:30:00.000+09:00"
+        "end": "2026-07-08T11:30:00.000+09:00",
+        "milestone": "2026-07-10T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s4.n1.n2",
@@ -2998,8 +3050,9 @@
         "type": "task",
         "name": "掲示板への掲示とエントランス告知",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-13T09:00/2026-07-13T09:30"
         },
         "start": "2026-07-13T09:00:00.000+09:00",
@@ -3014,6 +3067,10 @@
         "end": "2026-08-10T15:00:00.000+09:00",
         "metadata": {
           "schedule": null
+        },
+        "plan": {
+          "start": "2026-07-27T00:00:00.000+09:00",
+          "end": "2026-08-07T00:00:00.000+09:00"
         }
       },
       {
@@ -3022,8 +3079,9 @@
         "type": "task",
         "name": "3F 空調機交換（1期）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-27/2026-07-31"
         },
         "start": "2026-07-27T00:00:00.000+09:00",
@@ -3035,8 +3093,9 @@
         "type": "task",
         "name": "4F 空調機交換（2期）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-08-03/2026-08-07"
         },
         "start": "2026-08-03T00:00:00.000+09:00",
@@ -3050,8 +3109,9 @@
         "start": "2026-07-28T08:30:00.000+09:00",
         "end": "2026-07-28T09:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-27T08:30/2026-07-27T09:00",
           "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
         }
@@ -3064,8 +3124,9 @@
         "start": "2026-07-29T08:30:00.000+09:00",
         "end": "2026-07-29T09:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-27T08:30/2026-07-27T09:00",
           "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
         }
@@ -3078,8 +3139,9 @@
         "start": "2026-07-30T08:30:00.000+09:00",
         "end": "2026-07-30T09:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-27T08:30/2026-07-27T09:00",
           "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
         }
@@ -3092,8 +3154,9 @@
         "start": "2026-07-31T08:30:00.000+09:00",
         "end": "2026-07-31T09:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-27T08:30/2026-07-27T09:00",
           "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
         }
@@ -3104,12 +3167,14 @@
         "type": "task",
         "name": "試運転立ち会いと引き渡し確認",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-08-10T13:00/2026-08-10T15:00"
         },
         "start": "2026-08-10T13:00:00.000+09:00",
-        "end": "2026-08-10T15:00:00.000+09:00"
+        "end": "2026-08-10T15:00:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::section-5",
@@ -3138,8 +3203,9 @@
         "start": "2026-07-06T09:15:00.000+09:00",
         "end": "2026-07-06T09:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T09:15/2026-07-06T09:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
         }
@@ -3152,8 +3218,9 @@
         "start": "2026-07-13T09:15:00.000+09:00",
         "end": "2026-07-13T09:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T09:15/2026-07-06T09:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
         }
@@ -3166,8 +3233,9 @@
         "start": "2026-07-20T09:15:00.000+09:00",
         "end": "2026-07-20T09:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T09:15/2026-07-06T09:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
         }
@@ -3180,8 +3248,9 @@
         "start": "2026-07-27T09:15:00.000+09:00",
         "end": "2026-07-27T09:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T09:15/2026-07-06T09:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
         }
@@ -3194,8 +3263,9 @@
         "start": "2026-07-06T11:00:00.000+09:00",
         "end": "2026-07-06T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3208,8 +3278,9 @@
         "start": "2026-07-08T11:00:00.000+09:00",
         "end": "2026-07-08T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3222,8 +3293,9 @@
         "start": "2026-07-10T11:00:00.000+09:00",
         "end": "2026-07-10T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3236,8 +3308,9 @@
         "start": "2026-07-13T11:00:00.000+09:00",
         "end": "2026-07-13T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3250,8 +3323,9 @@
         "start": "2026-07-15T11:00:00.000+09:00",
         "end": "2026-07-15T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3264,8 +3338,9 @@
         "start": "2026-07-17T11:00:00.000+09:00",
         "end": "2026-07-17T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3278,8 +3353,9 @@
         "start": "2026-07-20T11:00:00.000+09:00",
         "end": "2026-07-20T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3292,8 +3368,9 @@
         "start": "2026-07-22T11:00:00.000+09:00",
         "end": "2026-07-22T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3306,8 +3383,9 @@
         "start": "2026-07-24T11:00:00.000+09:00",
         "end": "2026-07-24T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3320,8 +3398,9 @@
         "start": "2026-07-27T11:00:00.000+09:00",
         "end": "2026-07-27T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3334,8 +3413,9 @@
         "start": "2026-07-29T11:00:00.000+09:00",
         "end": "2026-07-29T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3348,8 +3428,9 @@
         "start": "2026-07-31T11:00:00.000+09:00",
         "end": "2026-07-31T11:30:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-06T11:00/2026-07-06T11:30",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
         }
@@ -3362,8 +3443,9 @@
         "start": "2026-07-10T16:00:00.000+09:00",
         "end": "2026-07-10T17:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T16:00/2026-07-10T17:00",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
         }
@@ -3376,8 +3458,9 @@
         "start": "2026-07-17T16:00:00.000+09:00",
         "end": "2026-07-17T17:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T16:00/2026-07-10T17:00",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
         }
@@ -3390,8 +3473,9 @@
         "start": "2026-07-24T16:00:00.000+09:00",
         "end": "2026-07-24T17:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T16:00/2026-07-10T17:00",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
         }
@@ -3404,8 +3488,9 @@
         "start": "2026-07-31T16:00:00.000+09:00",
         "end": "2026-07-31T17:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T16:00/2026-07-10T17:00",
           "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
         }
@@ -3429,8 +3514,9 @@
         "start": "2026-07-07T09:00:00.000+09:00",
         "end": "2026-07-07T12:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-07T09:00/2026-07-07T12:00",
           "sourceNodeId": "demo/sample-m.md::s5.n2.n0"
         }
@@ -3443,8 +3529,9 @@
         "start": "2026-07-11T08:00:00.000+09:00",
         "end": "2026-07-11T12:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T08:00/2026-07-10T12:00",
           "sourceNodeId": "demo/sample-m.md::s5.n2.n1"
         }
@@ -3457,8 +3544,9 @@
         "start": "2026-07-25T08:00:00.000+09:00",
         "end": "2026-07-25T12:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-10T08:00/2026-07-10T12:00",
           "sourceNodeId": "demo/sample-m.md::s5.n2.n1"
         }
@@ -3471,8 +3559,9 @@
         "start": "2026-07-16T09:00:00.000+09:00",
         "end": "2026-07-16T11:00:00.000+09:00",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-16T09:00/2026-07-16T11:00",
           "sourceNodeId": "demo/sample-m.md::s5.n2.n2"
         }
@@ -3494,6 +3583,10 @@
         "end": "2026-08-05T17:00:00.000+09:00",
         "metadata": {
           "schedule": null
+        },
+        "plan": {
+          "start": "2026-07-06T00:00:00.000+09:00",
+          "end": "2026-08-14T00:00:00.000+09:00"
         }
       },
       {
@@ -3502,6 +3595,7 @@
         "type": "task",
         "name": "求人票の内容を経理部長と確認して媒体へ入稿",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-06-29T10:00/2026-06-29T11:30"
@@ -3515,12 +3609,14 @@
         "type": "task",
         "name": "書類選考（応募12名）",
         "completed": false,
+        "status": "in_progress",
         "metadata": {
-          "status": "doing",
+          "status": "in_progress",
           "schedule": "2026-07-06T15:00/2026-07-06T17:00"
         },
         "start": "2026-07-06T15:00:00.000+09:00",
-        "end": "2026-07-06T17:00:00.000+09:00"
+        "end": "2026-07-06T17:00:00.000+09:00",
+        "milestone": "2026-07-08T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s6.n1.n2",
@@ -3528,12 +3624,18 @@
         "type": "task",
         "name": "一次面接の日程調整（候補5名 × 面接官2名）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-09T13:00/2026-07-09T15:00"
         },
         "start": "2026-07-09T13:00:00.000+09:00",
-        "end": "2026-07-09T15:00:00.000+09:00"
+        "end": "2026-07-09T15:00:00.000+09:00",
+        "plan": {
+          "start": "2026-07-09T00:00:00.000+09:00",
+          "end": "2026-07-17T00:00:00.000+09:00"
+        },
+        "milestone": "2026-07-10T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s6.n1.n3",
@@ -3541,12 +3643,14 @@
         "type": "task",
         "name": "一次面接の実施",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-21T10:00/2026-07-23T18:00"
         },
         "start": "2026-07-21T10:00:00.000+09:00",
-        "end": "2026-07-23T18:00:00.000+09:00"
+        "end": "2026-07-23T18:00:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s6.n1.n4",
@@ -3554,12 +3658,18 @@
         "type": "task",
         "name": "二次面接（役員面接）の設定",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-08-05T15:00/2026-08-05T17:00"
         },
         "start": "2026-08-05T15:00:00.000+09:00",
-        "end": "2026-08-05T17:00:00.000+09:00"
+        "end": "2026-08-05T17:00:00.000+09:00",
+        "plan": {
+          "start": "2026-07-27T00:00:00.000+09:00",
+          "end": "2026-08-07T00:00:00.000+09:00"
+        },
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::section-7",
@@ -3575,6 +3685,7 @@
         "type": "task",
         "name": "消防設備点検（法定・年2回）の立ち会い",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-06-26T09:00/2026-06-26T16:00"
@@ -3588,12 +3699,14 @@
         "type": "task",
         "name": "夏季休暇取得予定表の取りまとめ",
         "completed": true,
+        "status": "done",
         "metadata": {
           "status": "done",
           "schedule": "2026-06-29T10:00/2026-06-29T12:00"
         },
         "start": "2026-06-29T10:00:00.000+09:00",
-        "end": "2026-06-29T12:00:00.000+09:00"
+        "end": "2026-06-29T12:00:00.000+09:00",
+        "milestone": "2026-06-30T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::section-8",
@@ -3631,12 +3744,14 @@
         "type": "subsection",
         "name": "PC・アカウント発行を情シスへ依頼",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-14T10:00/2026-07-14T10:30"
         },
         "start": "2026-07-14T10:00:00.000+09:00",
-        "end": "2026-07-14T10:30:00.000+09:00"
+        "end": "2026-07-14T10:30:00.000+09:00",
+        "milestone": "2026-07-17T00:00:00.000+09:00"
       },
       {
         "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
@@ -3644,12 +3759,14 @@
         "type": "task",
         "name": "発行されたアカウントの動作確認",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-31T14:00/2026-07-31T15:00"
         },
         "start": "2026-07-31T14:00:00.000+09:00",
-        "end": "2026-07-31T15:00:00.000+09:00"
+        "end": "2026-07-31T15:00:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n1.n1",
@@ -3668,12 +3785,14 @@
         "type": "task",
         "name": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-08-03T09:00/2026-08-03T09:30"
         },
         "start": "2026-08-03T09:00:00.000+09:00",
-        "end": "2026-08-03T09:30:00.000+09:00"
+        "end": "2026-08-03T09:30:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n1.n1.n1",
@@ -3681,12 +3800,14 @@
         "type": "task",
         "name": "オリエンテーションの実施",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-08-03T09:30/2026-08-03T11:00"
         },
         "start": "2026-08-03T09:30:00.000+09:00",
-        "end": "2026-08-03T11:00:00.000+09:00"
+        "end": "2026-08-03T11:00:00.000+09:00",
+        "tentative": true
       },
       {
         "id": "demo/sample-m.md::s8.n2",
@@ -3705,19 +3826,21 @@
         "type": "task",
         "name": "貸与物返却リストの作成と本人への連絡",
         "completed": false,
+        "status": "ready",
         "metadata": {
-          "status": "todo",
+          "status": "ready",
           "schedule": "2026-07-13T16:00/2026-07-13T17:00"
         },
         "start": "2026-07-13T16:00:00.000+09:00",
-        "end": "2026-07-13T17:00:00.000+09:00"
+        "end": "2026-07-13T17:00:00.000+09:00",
+        "milestone": "2026-07-17T00:00:00.000+09:00"
       }
     ],
     "kanban": [
       {
         "id": "demo/sample-m.md::s2.n1",
         "title": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -3750,7 +3873,7 @@
       {
         "id": "demo/sample-m.md::s2.n2",
         "title": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
-        "status": "blocked",
+        "status": "waiting",
         "hierarchy": [
           {
             "type": "heading",
@@ -3783,7 +3906,7 @@
       {
         "id": "demo/sample-m.md::s2.n3",
         "title": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -3849,7 +3972,7 @@
       {
         "id": "demo/sample-m.md::s3.n1.n1",
         "title": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -3888,7 +4011,7 @@
       {
         "id": "demo/sample-m.md::s3.n1.n1.n2",
         "title": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
-        "status": "blocked",
+        "status": "waiting",
         "hierarchy": [
           {
             "type": "heading",
@@ -3924,7 +4047,7 @@
       {
         "id": "demo/sample-m.md::s3.n1.n2",
         "title": "比較表を課長へ提出し、業者決定の承認を得る",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -3960,7 +4083,7 @@
       {
         "id": "demo/sample-m.md::s3.n1.n3",
         "title": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -3993,7 +4116,7 @@
       {
         "id": "demo/sample-m.md::s3.n1.n4",
         "title": "契約締結（押印・製本・原本送付）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4029,7 +4152,7 @@
       {
         "id": "demo/sample-m.md::s3.n2.n0",
         "title": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4064,7 +4187,7 @@
       {
         "id": "demo/sample-m.md::s3.n2.n1",
         "title": "買取への切り替え検討",
-        "status": "hold",
+        "status": "cancelled",
         "hierarchy": [
           {
             "type": "heading",
@@ -4134,7 +4257,7 @@
       {
         "id": "demo/sample-m.md::s4.n1.n1",
         "title": "入居各社への工事告知文を作成",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -4173,7 +4296,7 @@
       {
         "id": "demo/sample-m.md::s4.n1.n2",
         "title": "掲示板への掲示とエントランス告知",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4208,7 +4331,7 @@
       {
         "id": "demo/sample-m.md::s4.n1.n3",
         "title": "仮設スポットクーラーの電源容量が足りるか要確認 → ボール：村井さん",
-        "status": "blocked",
+        "status": "waiting",
         "hierarchy": [
           {
             "type": "heading",
@@ -4245,7 +4368,7 @@
       {
         "id": "demo/sample-m.md::s4.n2.n0",
         "title": "3F 空調機交換（1期）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4281,7 +4404,7 @@
       {
         "id": "demo/sample-m.md::s4.n2.n1",
         "title": "4F 空調機交換（2期）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4316,7 +4439,7 @@
       {
         "id": "demo/sample-m.md::s4.n2.n2",
         "title": "毎朝の現場立ち会い（作業開始時の確認）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4351,7 +4474,7 @@
       {
         "id": "demo/sample-m.md::s4.n2.n3",
         "title": "試運転立ち会いと引き渡し確認",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4386,7 +4509,7 @@
       {
         "id": "demo/sample-m.md::s5.n1.n0",
         "title": "部内ミーティング（進捗共有・15分）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4421,7 +4544,7 @@
       {
         "id": "demo/sample-m.md::s5.n1.n1",
         "title": "郵便物の仕分けと各部配布",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4456,7 +4579,7 @@
       {
         "id": "demo/sample-m.md::s5.n1.n2",
         "title": "備品在庫チェック（コピー用紙・トナー・文具）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4491,7 +4614,7 @@
       {
         "id": "demo/sample-m.md::s5.n2.n0",
         "title": "請求書の受領確認と経理への回付",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4529,7 +4652,7 @@
       {
         "id": "demo/sample-m.md::s5.n2.n1",
         "title": "定期清掃の立ち会い（第2・第4金曜）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4565,7 +4688,7 @@
       {
         "id": "demo/sample-m.md::s5.n2.n2",
         "title": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4635,7 +4758,7 @@
       {
         "id": "demo/sample-m.md::s6.n1.n1",
         "title": "書類選考（応募12名）",
-        "status": "doing",
+        "status": "in_progress",
         "hierarchy": [
           {
             "type": "heading",
@@ -4673,7 +4796,7 @@
       {
         "id": "demo/sample-m.md::s6.n1.n2",
         "title": "一次面接の日程調整（候補5名 × 面接官2名）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4709,7 +4832,7 @@
       {
         "id": "demo/sample-m.md::s6.n1.n3",
         "title": "一次面接の実施",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4744,7 +4867,7 @@
       {
         "id": "demo/sample-m.md::s6.n1.n4",
         "title": "二次面接（役員面接）の設定",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4779,7 +4902,7 @@
       {
         "id": "demo/sample-m.md::s6.n1.n5",
         "title": "内定通知・条件提示",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4875,7 +4998,7 @@
       {
         "id": "demo/sample-m.md::s7.n3",
         "title": "フリーアドレス制の全社導入検討",
-        "status": "hold",
+        "status": "cancelled",
         "hierarchy": [
           {
             "type": "heading",
@@ -4905,7 +5028,7 @@
       {
         "id": "demo/sample-m.md::s7.n4",
         "title": "社用車の増車（2台→3台）",
-        "status": "hold",
+        "status": "cancelled",
         "hierarchy": [
           {
             "type": "heading",
@@ -4935,7 +5058,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n0.n0",
         "title": "PC・アカウント発行を情シスへ依頼",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -4977,7 +5100,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
         "title": "発行されたアカウントの動作確認",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5017,7 +5140,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n0.n1",
         "title": "座席とロッカーの割り当て（3F 経理エリア）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5057,7 +5180,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n0.n2",
         "title": "入館カードの発行と登録",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5097,7 +5220,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n1.n0",
         "title": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5136,7 +5259,7 @@
       {
         "id": "demo/sample-m.md::s8.n1.n1.n1",
         "title": "オリエンテーションの実施",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5176,7 +5299,7 @@
       {
         "id": "demo/sample-m.md::s8.n2.n0",
         "title": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
-        "status": "blocked",
+        "status": "waiting",
         "hierarchy": [
           {
             "type": "heading",
@@ -5213,7 +5336,7 @@
       {
         "id": "demo/sample-m.md::s8.n2.n1",
         "title": "貸与物返却リストの作成と本人への連絡",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5249,7 +5372,7 @@
       {
         "id": "demo/sample-m.md::s8.n2.n2",
         "title": "社会保険・雇用保険の喪失手続き",
-        "status": "todo",
+        "status": "ready",
         "hierarchy": [
           {
             "type": "heading",
@@ -5288,7 +5411,7 @@
         {
           "globalKey": "demo/sample-m.md::s2.n1",
           "text": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-06",
           "priority": 1,
           "path": "demo/sample-m.md",
@@ -5297,7 +5420,7 @@
         {
           "globalKey": "demo/sample-m.md::s6.n1.n1",
           "text": "書類選考（応募12名）",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-06",
           "priority": 2,
           "path": "demo/sample-m.md",
@@ -5306,7 +5429,7 @@
         {
           "globalKey": "demo/sample-m.md::s2.n3",
           "text": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-06",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5315,7 +5438,7 @@
         {
           "globalKey": "demo/sample-m.md::s5.n1.n0",
           "text": "部内ミーティング（進捗共有・15分）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-06",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5324,7 +5447,7 @@
         {
           "globalKey": "demo/sample-m.md::s5.n1.n1",
           "text": "郵便物の仕分けと各部配布",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-06",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5335,7 +5458,7 @@
         {
           "globalKey": "demo/sample-m.md::s5.n2.n0",
           "text": "請求書の受領確認と経理への回付",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-07",
           "priority": 1,
           "path": "demo/sample-m.md",
@@ -5344,7 +5467,7 @@
         {
           "globalKey": "demo/sample-m.md::s3.n1.n1",
           "text": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-07",
           "priority": 1,
           "path": "demo/sample-m.md",
@@ -5353,7 +5476,7 @@
         {
           "globalKey": "demo/sample-m.md::s4.n1.n1",
           "text": "入居各社への工事告知文を作成",
-          "status": "doing",
+          "status": "in_progress",
           "date": "2026-07-08",
           "priority": 1,
           "path": "demo/sample-m.md",
@@ -5362,7 +5485,7 @@
         {
           "globalKey": "demo/sample-m.md::s8.n2.n0",
           "text": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
-          "status": "blocked",
+          "status": "waiting",
           "date": "2026-07-08",
           "priority": 1,
           "path": "demo/sample-m.md",
@@ -5371,7 +5494,7 @@
         {
           "globalKey": "demo/sample-m.md::s2.n2",
           "text": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
-          "status": "blocked",
+          "status": "waiting",
           "date": "2026-07-08",
           "priority": 2,
           "path": "demo/sample-m.md",
@@ -5380,7 +5503,7 @@
         {
           "globalKey": "demo/sample-m.md::s6.n1.n2",
           "text": "一次面接の日程調整（候補5名 × 面接官2名）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-09",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5389,7 +5512,7 @@
         {
           "globalKey": "demo/sample-m.md::s5.n1.n2",
           "text": "備品在庫チェック（コピー用紙・トナー・文具）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-10",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5398,7 +5521,7 @@
         {
           "globalKey": "demo/sample-m.md::s5.n2.n1",
           "text": "定期清掃の立ち会い（第2・第4金曜）",
-          "status": "todo",
+          "status": "ready",
           "date": "2026-07-10",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5407,7 +5530,7 @@
         {
           "globalKey": "demo/sample-m.md::s3.n1.n1.n2",
           "text": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
-          "status": "blocked",
+          "status": "waiting",
           "date": "2026-07-10",
           "priority": null,
           "path": "demo/sample-m.md",
@@ -5418,38 +5541,11 @@
         {
           "globalKey": "demo/sample-m.md::s3.n1.n3",
           "text": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
-          "status": "todo",
+          "status": "ready",
           "date": null,
           "priority": null,
           "path": "demo/sample-m.md",
           "lineNumber": 67
-        },
-        {
-          "globalKey": "demo/sample-m.md::s3.n2.n1",
-          "text": "買取への切り替え検討",
-          "status": "hold",
-          "date": null,
-          "priority": null,
-          "path": "demo/sample-m.md",
-          "lineNumber": 81
-        },
-        {
-          "globalKey": "demo/sample-m.md::s7.n3",
-          "text": "フリーアドレス制の全社導入検討",
-          "status": "hold",
-          "date": null,
-          "priority": null,
-          "path": "demo/sample-m.md",
-          "lineNumber": 215
-        },
-        {
-          "globalKey": "demo/sample-m.md::s7.n4",
-          "text": "社用車の増車（2台→3台）",
-          "status": "hold",
-          "date": null,
-          "priority": null,
-          "path": "demo/sample-m.md",
-          "lineNumber": 218
         }
       ]
     }

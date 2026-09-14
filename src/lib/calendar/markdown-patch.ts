@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import type { Document, Section, Node, TaskNode, Status } from '../parser/types'
+import { MARKER_BY_STATUS } from '../contract/canonical'
 
 // ----------------------------------------------------------------
 // Helpers
@@ -11,13 +12,7 @@ export function formatSchedule(start: DateTime, end: DateTime): string {
 }
 
 function statusToMarker(status: Status): string {
-  switch (status) {
-    case 'todo':    return '[ ]'
-    case 'done':    return '[x]'
-    case 'doing':   return '[>]'
-    case 'blocked': return '[!]'
-    case 'hold':    return '[-]'
-  }
+  return MARKER_BY_STATUS[status]
 }
 
 // ----------------------------------------------------------------
@@ -129,7 +124,7 @@ export function patchNodeStatus(
   const lineIdx = node.lineNumber
   if (lineIdx < 0 || lineIdx >= lines.length) return md
   const newMarker = statusToMarker(newStatus)
-  lines[lineIdx] = lines[lineIdx].replace(/(\s*- )\[[xX>!\- ]\]/, `$1${newMarker}`)
+  lines[lineIdx] = lines[lineIdx].replace(/(\s*- )\[[xX>!\-?/ ]\]/, `$1${newMarker}`)
   return lines.join('\n')
 }
 

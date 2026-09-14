@@ -3,6 +3,7 @@ import type { Root, ListItem, Paragraph } from 'mdast'
 import { visit } from 'unist-util-visit'
 import { toString } from 'mdast-util-to-string'
 import type { Status } from '../types'
+import { STATUS_BY_MARKER } from '../../contract/canonical'
 
 declare module 'mdast' {
   interface ListItemData {
@@ -11,13 +12,10 @@ declare module 'mdast' {
   }
 }
 
-const CUSTOM_MARKER_RE = /^\[([>!\-])\] ([\s\S]+)$/
+const CUSTOM_MARKER_RE = /^\[([>!\-?/])\] ([\s\S]+)$/
 
 function markerToStatus(marker: string): Status | null {
-  if (marker === '>') return 'doing'
-  if (marker === '!') return 'blocked'
-  if (marker === '-') return 'hold'
-  return null
+  return STATUS_BY_MARKER[marker] ?? null
 }
 
 const remarkTaskStatus: Plugin<[], Root> = () => (tree) => {
@@ -29,7 +27,7 @@ const remarkTaskStatus: Plugin<[], Root> = () => (tree) => {
       return
     }
     if (node.checked === false) {
-      node.data.taskStatus = 'todo'
+      node.data.taskStatus = 'ready'
       return
     }
 

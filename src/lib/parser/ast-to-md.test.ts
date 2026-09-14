@@ -16,7 +16,7 @@ describe('serializeAst', () => {
           type: 'task',
           id: 'n1',
           text: 'タスク',
-          status: 'todo',
+          status: 'ready',
           children: [],
           hasTaskDescendant: false,
           isGroup: false,
@@ -33,11 +33,13 @@ describe('serializeAst', () => {
 
   it('serializes all status markers', () => {
     const statuses = [
-      { status: 'todo' as const,    marker: '[ ]' },
-      { status: 'done' as const,    marker: '[x]' },
-      { status: 'doing' as const,   marker: '[>]' },
-      { status: 'blocked' as const, marker: '[!]' },
-      { status: 'hold' as const,    marker: '[-]' },
+      { status: 'planning' as const,    marker: '[?]' },
+      { status: 'ready' as const,       marker: '[ ]' },
+      { status: 'done' as const,        marker: '[x]' },
+      { status: 'in_progress' as const, marker: '[>]' },
+      { status: 'waiting' as const,     marker: '[!]' },
+      { status: 'deferred' as const,    marker: '[/]' },
+      { status: 'cancelled' as const,   marker: '[-]' },
     ]
     for (const { status, marker } of statuses) {
       const doc: Document = {
@@ -67,7 +69,7 @@ describe('serializeAst', () => {
         type: 'section', id: 's1', depth: 0, title: '',
         children: [{
           type: 'task', id: 'n1', text: 'タスク',
-          status: 'todo', children: [],
+          status: 'ready', children: [],
           meta: { schedule: '2026-04-01T10:00/12:00', priority: 1 },
           hasTaskDescendant: false, isGroup: false, isLeafTask: true, isMemo: false,
           depth: 1, path: ['タスク[0]'],
@@ -173,7 +175,7 @@ describe('serializeAst', () => {
         type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1,
         children: [{
           type: 'task', id: 'n1', text: 'タスク',
-          status: 'todo', children: [], lineNumber: 0,
+          status: 'ready', children: [], lineNumber: 0,
           meta: {
             plan: '2026-07-01/2026-07-31',
             schedule: '2026-07-10T10:00/2026-07-10T12:00',
@@ -223,5 +225,74 @@ describe('serializeAst', () => {
     expect(result).toContain('\t- [ ] 画面設計')
     expect(result).toContain('\t\t- [ ] ワイヤー作成')
     expect(result).toContain('\t\t- [ ] UIレビュー')
+  })
+
+  // ──────────────────────────────────────────────────────
+  // issue-phase005-001: 7状態のラウンドトリップ・複数行メタ値のラウンドトリップ
+  // ──────────────────────────────────────────────────────
+
+  it('roundtrip: 7状態すべてについて、パース→シリアライズで元の記法へ戻る', () => {
+    const markers = ['[?]', '[ ]', '[>]', '[!]', '[/]', '[x]', '[-]']
+    for (const marker of markers) {
+      const md = `- ${marker} タスク\n`
+      const doc = parseMarkdown(md)
+      expect(serializeAst(doc)).toBe(md)
+    }
+  })
+
+  it('roundtrip: @condition の複数行値（string[]）が一字一句戻る', () => {
+    // シリアライザはカノニカル英字キーのみを書き出す（日本語エイリアスは解析時に消費され、
+    // どのエイリアスで書かれたかは AST に残らないため、英字キーの入力でラウンドトリップを確認する）。
+    const md = [
+      '- [ ] タスク',
+      '\t- @condition:',
+      '\t\t- 資料Aが承認された',
+      '\t\t- 資料Bが承認された',
+    ].join('\n') + '\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toBe(md)
+  })
+
+  it('日本語エイリアス @完了イメージ の複数行値は、シリアライズ時にカノニカルキー @condition へ正規化される', () => {
+    const md = [
+      '- [ ] タスク',
+      '\t- @完了イメージ:',
+      '\t\t- 資料Aが承認された',
+      '\t\t- 資料Bが承認された',
+    ].join('\n') + '\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toContain('- @condition:')
+    expect(result).toContain('\t\t- 資料Aが承認された')
+    expect(result).toContain('\t\t- 資料Bが承認された')
+  })
+
+  it('serializes condition/purpose/savepoint/special_note as single-line values', () => {
+    const doc: Document = {
+      type: 'document',
+      sections: [{
+        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1,
+        children: [{
+          type: 'task', id: 'n1', text: 'タスク',
+          status: 'ready', children: [], lineNumber: 0,
+          meta: {
+            condition: '資料が承認された状態',
+            purpose: '顧客満足度の向上',
+            savepoint: '一次レビュー完了時点',
+            special_note: '予算超過に注意',
+          },
+          hasTaskDescendant: false, isGroup: false, isLeafTask: true, isMemo: false,
+          depth: 1, path: ['タスク[0]'],
+        }],
+        subSections: [],
+      }],
+      nodeLineMap: new Map(),
+    }
+    const md = serializeAst(doc)
+    expect(md).toContain('- @condition: 資料が承認された状態')
+    expect(md).toContain('- @purpose: 顧客満足度の向上')
+    expect(md).toContain('- @savepoint: 一次レビュー完了時点')
+    expect(md).toContain('- @special_note: 予算超過に注意')
   })
 })

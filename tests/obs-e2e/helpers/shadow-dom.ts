@@ -58,7 +58,7 @@ export async function getShadowRect(viewClass: string, selector: string): Promis
  * shadow root 内で containerSel 配下の itemSel 要素の属性値を DOM 順で返す。
  * カード・バー等の「表示順」アサート用（コンテナ存在のみのアサートは禁止 — obs-0008）。
  *
- * 例: getShadowOrder('kanban-view', '.kanban-lane[data-lane-id="doing"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
+ * 例: getShadowOrder('kanban-view', '.kanban-lane[data-lane-id="in_progress"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
  */
 export async function getShadowOrder(
   viewClass: string,

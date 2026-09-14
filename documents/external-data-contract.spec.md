@@ -2,8 +2,8 @@ title: 連携アプリ向けデータ契約（ホストが連携アプリへ渡�
 status: draft
 owner: human
 created: 2026-09-12
-updated: 2026-09-12
-related_issues: [issue-phase004-006]
+updated: 2026-09-14
+related_issues: [issue-phase004-006, issue-phase005-001]
 related_decisions: []
 
 ---
@@ -79,15 +79,17 @@ related_decisions: []
     > 折り返し待ち。                    ← タスクの子の引用（quote）
 ```
 
-ステータスマーカーの意味は次のとおりである。
+ステータスマーカーの意味は次のとおりである（統一Markdownデータ仕様の7状態モデル。`issue-phase005-001`）。
 
 | 記法 | 値 | 意味 |
 |---|---|---|
-| `- [ ]` | `todo` | 未着手 |
+| `- [?]` | `planning` | 計画中（内容・順序・日時が未整理） |
+| `- [ ]` | `ready` | 未着手（実行可能だが未開始） |
 | `- [x]` | `done` | 完了 |
-| `- [>]` | `doing` | 進行中・対応中・相手の回答待ち |
-| `- [!]` | `blocked` | 要注意・緊急・ブロック |
-| `- [-]` | `hold` | 保留・キャンセル・スキップ |
+| `- [>]` | `in_progress` | 進行中・対応中・相手の回答待ち |
+| `- [!]` | `waiting` | 待ち（外部条件の待ち） |
+| `- [/]` | `deferred` | 一時保留（自分の都合による後回し） |
+| `- [-]` | `cancelled` | 中止（実施しないが流れを残す） |
 
 ### 3.3 時間メタ3層モデルの意味
 
@@ -202,7 +204,7 @@ type TaskNode = {
   type: 'task'
   id: string
   text: string               // ステータスマーカーを除去した本文。前後の空白は無い
-  status: 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
+  status: 'planning' | 'ready' | 'in_progress' | 'waiting' | 'deferred' | 'done' | 'cancelled'
   children: Node[]           // 子ノード。メタ行は含まれない
   parentId?: string          // 注釈 A-02
   meta?: Meta                // メタが1個も無い場合はキー自体が存在しない
@@ -256,7 +258,7 @@ BR-024 `children` の要素は、Markdown 内の出現順に並んでいなけ�
 
 ### 4.4 メタ
 
-BR-025 `Meta` は次の構造でなければならない。すべてのフィールドが省略可能である。
+BR-025 `Meta` は次の構造でなければならない。すべてのフィールドが省略可能である（`issue-phase005-001` により `condition`・`purpose`・`savepoint`・`special_note` の4キーを追加）。
 
 ```ts
 type Meta = {
@@ -267,9 +269,27 @@ type Meta = {
   dependsOn?: string[] // 依存先の指定（自由文字列）
   tags?: string[]      // 分類ラベル
   repeat?: string      // 繰り返し規則（RFC5545 の RRULE 本体）
+  condition?: string | string[]     // 完了イメージ。単一行なら string、子リストなら string[]
+  purpose?: string | string[]       // 目的。単一行なら string、子リストなら string[]
+  savepoint?: string | string[]     // セーブポイント。単一行なら string、子リストなら string[]
+  special_note?: string | string[]  // 特記事項。単一行なら string、子リストなら string[]
   tentative?: { plan?: true; schedule?: true; due?: true }  // 仮置き
 }
 ```
+
+BR-069 メタキーは、英字のカノニカルキー（`plan`・`schedule`・`due`・`condition`・`purpose`・`savepoint`・`special_note` 等）に加え、次の日本語エイリアスで書かれた `@キー:` 行を受理しなければならない。両者は解析後、`meta` 上は同一のフィールドとして扱わなければならない。ホストは、どちらの表記で書かれたかを保持しない。
+
+| 日本語エイリアス | カノニカルキー |
+|---|---|
+| `@想定期間` | `plan` |
+| `@実施日時` | `schedule` |
+| `@期限` | `due` |
+| `@完了イメージ` | `condition` |
+| `@目的` | `purpose` |
+| `@セーブポイント` | `savepoint` |
+| `@特記事項` | `special_note` |
+
+BR-070 `condition`・`purpose`・`savepoint`・`special_note` の4キーに限り、値は子リスト（複数行）を取ることができる。`- @キー:` のように値を空にして直下に子リストを書いた場合、子リストの各項目のテキストを `string[]` として `meta` に格納しなければならない。この場合、子リストはノードの `children` に残してはならない（BR-020 と同様の畳み込みを行う）。子リストが無く値が1行で書かれた場合は、他のメタキーと同様に `string` として格納しなければならない。この2キー挙動（子リストの有無）は、上記4キー以外のメタキーには適用してはならない。
 
 BR-026 `plan`・`schedule`・`due` の値は、期間の場合 `<開始>/<終了>` を1本の文字列として保持しなければならない。開始と終了を別フィールドに分解してはならない。
 
@@ -351,12 +371,12 @@ BR-049 既存の連携アプリが参照している値は次のとおりであ�
 
 | 連携アプリ | 参照しているメタ | 対象とするノード |
 |---|---|---|
-| カレンダー | `schedule`・`repeat` | `schedule` を持つ `task` のみ |
-| ガント | `schedule`・`repeat` | `schedule` を持つ `task`、およびその祖先（`list`・セクション） |
+| カレンダー | `schedule`・`repeat`・`plan`・`tentative`（`schedule` の仮置き） | `schedule` を持つ `task` のみ |
+| ガント | `schedule`・`repeat`・`plan`・`due`（`milestone` として）・`tentative`（`schedule` の仮置き） | `schedule` を持つ `task`、およびその祖先（`list`・セクション） |
 | かんばん | `schedule`・`due`・`priority`・`tags` | すべての `task` |
-| アジェンダ | `schedule`（終了日）・`due`・`priority` | 未完了（`done` 以外）の `task` |
+| アジェンダ | `schedule`（終了日）・`due`・`priority` | 未完了（`done`・`cancelled` 以外）の `task` |
 
-BR-050 カレンダーへの投影では、`status` を3値に丸めなければならない（`doing` はそのまま、`done` はそのまま、`todo`・`blocked`・`hold` は `todo`）。連携アプリが5値すべてを必要とする場合、投影を新規に定義しなければならない。
+BR-050 カレンダーへの投影では、`status` を3値に丸めなければならない（`in_progress` はそのまま、`done` はそのまま、それ以外（`planning`・`ready`・`waiting`・`deferred`・`cancelled`）は `ready`）。連携アプリが7値すべてを必要とする場合、投影を新規に定義しなければならない。
 
 BR-051 ガントへの投影では、自身に `schedule` を持たないグループの期間を、子孫タスクの最小開始・最大終了から算出しなければならない。
 
@@ -366,7 +386,21 @@ BR-053 かんばんへの投影では、複数ファイルが渡された場合�
 
 BR-054 かんばんへの投影では、タスク直下の引用（`quote`）およびメモ（`isMemo` な `list`）の本文を連結して説明文としなければならない。
 
-> **注釈 A-09（`@plan`・仮置きは表示に反映されていない）**: `@plan` と `?`（仮置き）は解析処理には実装済みであり `meta` に現れるが、カレンダー・ガント・かんばんのいずれの投影もこれらを参照していない（`@due` はかんばんとアジェンダのみ参照する）。時間メタ3層モデルの Spec が規定する描画（`@plan` の点線枠、`@due` の◆、仮置きの半透明表示）はホスト側に未実装である。新しい連携アプリがこれらを扱う場合、投影の新規実装がホスト側に必要である。
+BR-071 ガントへの投影では、`task` タイプの `GanttNode` に対し次を設定しなければならない。値が無い・パースに失敗した場合は、そのフィールド自体を出力してはならない。
+
+- トップレベル `status`: `node.status`（丸めない、7値そのまま）
+- `plan`: `node.meta.plan` をパースした `{ start, end }`（`Luxon DateTime`）
+- `milestone`: `node.meta.due` をパースした値。単一点なら `DateTime`、期間（`開始/終了`）なら `{ start, end }`
+- `tentative`: `node.meta.tentative?.schedule === true` の場合のみ `true`
+
+`list`（`ListNode`）由来の `subsection` ノードには `plan` のみ設定してよい。`ListNode` は `status` を持たないため、`status` を設定してはならない。
+
+BR-072 カレンダーへの投影では、`Task` に対し次を設定しなければならない。値が無い・パースに失敗した場合は、そのフィールド自体を出力してはならない。
+
+- `plan`: `node.meta.plan` をパースした `TimeSpan`
+- `tentative`: `node.meta.tentative?.schedule === true` の場合のみ `true`
+
+> **注釈 A-09（かんばんは `@plan`・仮置きを投影していない）**: `@plan` と `?`（仮置き）は解析処理には実装済みであり `meta` に現れる。カレンダー（BR-072）とガント（BR-071）はこれらを投影に反映しているが、かんばんはいずれも参照していない（`@due` はかんばんとアジェンダのみ参照する）。かんばんカードへの `@plan`・仮置きの反映は未実装である。新しい連携アプリがこれらを扱う場合、投影の新規実装がホスト側に必要である。
 
 > **注釈 A-10（`@repeat` は表示範囲を渡さないと消える）**: `@repeat` を持つタスクは、投影時に表示範囲（開始・終了）を与えた場合にのみオカレンスへ展開される。表示範囲を与えない場合、そのタスクは**一切出力されない**（展開前の `@schedule` も出力されない）。展開されたオカレンスの識別子は `<globalKey>__r<連番>` の形を取り、これは `globalKey` ではないため、そのまま書き戻しに使用できない。連携アプリは、書き戻し時に `__r<連番>` を除去しなければならない。
 
@@ -434,7 +468,7 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
 | A-06 | BR-029 | 終端に月を書いた継続省略が展開されず不正値になる | 既知の不具合 |
 | A-07 | BR-025 | `@plan` の祖先継承が未実装 | 未実装 |
 | A-08 | BR-038 | 識別子は編集で変化し、永続保存に使えない | 実装の事実 |
-| A-09 | BR-049 | `@plan`・仮置きがどの投影にも反映されていない | 未実装 |
+| A-09 | BR-049 | かんばんが `@plan`・仮置きを投影していない | 未実装 |
 | A-10 | BR-049 | `@repeat` は表示範囲を渡さないと出力されない | 実装の事実 |
 | A-11 | BR-049 | 日付のみの期間の終端解釈が一致していない | 未決定 |
 | A-12 | BR-025 | 値が空のメタ行が空の値として現れる | 未決定 |
@@ -478,7 +512,7 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
 - 差分更新・増分同期・変更通知の購読機構。連携アプリは常に全ソースを受け取る。
 - 編集に耐える恒久識別子（注釈 A-08）。
 - `@plan` 継承の実装（注釈 A-07）。
-- `@plan`・`@due`・仮置きの投影および描画（注釈 A-09）。
+- かんばんへの `@plan`・仮置きの投影および描画（注釈 A-09）。カレンダー・ガントへの投影は BR-071・BR-072 で規定済み。
 - 日付のみの期間の終端解釈の統一（注釈 A-11）。
 - 表示仕様（色・線幅・レイアウト・操作感）。
 - 連携アプリ内部の状態管理・永続化。
@@ -490,9 +524,9 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
 | BR 範囲 | 内容 | 検証層 |
 |---|---|---|
 | BR-009〜BR-024 | Document・セクション・ノードの構造 | ホスト側の単体テスト（解析処理） |
-| BR-025〜BR-037 | メタの解析・省略記法の展開・仮置き | ホスト側の単体テスト（解析処理） |
+| BR-025〜BR-037・BR-069・BR-070 | メタの解析・省略記法の展開・仮置き・日本語エイリアス・複数行値 | ホスト側の単体テスト（解析処理） |
 | BR-038〜BR-042 | 識別子の生成 | ホスト側の単体テスト（解析処理） |
-| BR-043〜BR-054 | 投影の出力 | ホスト側の単体テスト（投影処理） |
+| BR-043〜BR-054・BR-071・BR-072 | 投影の出力 | ホスト側の単体テスト（投影処理） |
 | BR-055〜BR-062 | 書き戻し | ホスト側の単体テスト（パッチ処理） |
 | BR-001〜BR-008・BR-063〜BR-068 | 受け渡し経路・更新通知・DnD・クリック連動 | ホスト側の E2E テスト |
 
@@ -502,8 +536,8 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
 
 | ファイル | 入力 Markdown | 規模 | 用途 |
 |---|---|---|---|
-| `sample-external-data-s.json` | `demo/sample-s.md`（96行） | タスク13件・カレンダー10件・ガント15件 | 最初に読む最小例。見出し・グループ・タスク3種・`@schedule`・`@due`・`@priority`・`@tags`・引用のみ |
-| `sample-external-data-m.json` | `demo/sample-m.md`（266行） | タスク44件・カレンダー52件・ガント71件 | 実務相当。ステータス5種・`@plan`・仮置き `?`・`@repeat`・`@dependsOn`・各種の期間表記・4階層の入れ子 |
+| `sample-external-data-s.json` | `demo/sample-s.md`（96行） | タスク13件・カレンダー10件・ガント15件 | 最初に読む最小例。見出し・グループ・タスク3種（`ready`/`in_progress`/`done`）・`@schedule`・`@due`・`@priority`・`@tags`・引用のみ |
+| `sample-external-data-m.json` | `demo/sample-m.md`（266行） | タスク44件・カレンダー52件・ガント71件 | 実務相当。ステータス7種すべて・`@plan`・仮置き `?`・`@repeat`・`@dependsOn`・各種の期間表記・4階層の入れ子 |
 | `sample-external-data-l.json` | `demo/sample-l.md`（753行） | タスク126件・カレンダー98件・ガント147件 | 網羅版。多段 WBS と部門横断の業務パターンに加え、本書の注釈 A-05・A-06・A-10・A-12 に該当する入力の実際の出力を含む |
 
 いずれのファイルも、`sources`（連携アプリへ渡される `SourceEntry[]`）と `projections`（各連携アプリが受け取る投影結果）を含み、先頭の `_about` に生成条件（表示範囲・基準日）を記載している。
@@ -564,7 +598,7 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
                 "type": "task",
                 "id": "s2.n1.n0",
                 "text": "松田さんへ日程変更の連絡",
-                "status": "doing",
+                "status": "in_progress",
                 "children": [
                   {
                     "type": "quote",
@@ -621,18 +655,31 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
     "id": "総務/2026-06.md::s2.n1.n0",
     "type": "task",
     "title": "松田さんへ日程変更の連絡",
-    "status": "doing",
+    "status": "in_progress",
     "parents": ["【清掃業者対応】", "6月定期清掃 日程変更対応"],
     "temporal": {
       "kind": "CalendarDateTimeRange",
       "start": "2026-06-10T09:00:00.000+09:00",
       "end": "2026-06-10T09:30:00.000+09:00"
-    }
+    },
+    "tentative": true
   }
 ]
 ```
 
-ガントへの投影結果:
+`plan`（想定期間）を持つタスクの例（カレンダーの `plan` フィールド。BR-072）:
+
+```json
+{
+  "plan": {
+    "kind": "CalendarDateRange",
+    "start": "2026-06-01",
+    "endExclusive": "2026-06-30"
+  }
+}
+```
+
+ガントへの投影結果（BR-071 により `plan`・`milestone`・`tentative`・トップレベル `status` が加わった）:
 
 ```json
 [
@@ -642,11 +689,15 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
     "start": "2026-06-10T09:00:00.000+09:00", "end": "2026-06-10T09:30:00.000+09:00" },
   { "id": "総務/2026-06.md::s2.n1", "parentId": "総務/2026-06.md::section-2", "type": "subsection", "name": "6月定期清掃 日程変更対応",
     "start": "2026-06-10T09:00:00.000+09:00", "end": "2026-06-10T09:30:00.000+09:00",
-    "metadata": { "schedule": null } },
+    "metadata": { "schedule": null },
+    "plan": { "start": "2026-06-01T00:00:00.000+09:00", "end": "2026-06-30T00:00:00.000+09:00" } },
   { "id": "総務/2026-06.md::s2.n1.n0", "parentId": "総務/2026-06.md::s2.n1", "type": "task", "name": "松田さんへ日程変更の連絡",
     "completed": false,
-    "metadata": { "status": "doing", "schedule": "2026-06-10T09:00/2026-06-10T09:30" },
-    "start": "2026-06-10T09:00:00.000+09:00", "end": "2026-06-10T09:30:00.000+09:00" }
+    "status": "in_progress",
+    "metadata": { "status": "in_progress", "schedule": "2026-06-10T09:00/2026-06-10T09:30" },
+    "start": "2026-06-10T09:00:00.000+09:00", "end": "2026-06-10T09:30:00.000+09:00",
+    "milestone": "2026-06-15T00:00:00.000+09:00",
+    "tentative": true }
 ]
 ```
 
@@ -657,7 +708,7 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
   {
     "id": "総務/2026-06.md::s2.n1.n0",
     "title": "松田さんへ日程変更の連絡",
-    "status": "doing",
+    "status": "in_progress",
     "hierarchy": [
       { "type": "heading", "level": 1, "name": "総務 2026年6月" },
       { "type": "heading", "level": 2, "name": "【清掃業者対応】" },
@@ -679,8 +730,9 @@ BR-068 連携アプリは、`onNodeClick` および `onReload` の呼び出し�
 
 この実例から読み取れる事実:
 
-- `@plan` は `meta.plan` に解析されているが、カレンダー・ガント・かんばんのいずれにも渡っていない（注釈 A-09）。
-- `@schedule?` の仮置き情報は `meta.tentative.schedule` に入るが、投影結果には現れない（注釈 A-09）。
+- `@plan` は `meta.plan` に解析され、カレンダー（`plan`。BR-072）とガント（`plan`。BR-071）の投影に渡る。かんばんへは渡っていない（注釈 A-09）。
+- `@schedule?` の仮置き情報は `meta.tentative.schedule` に入り、カレンダー・ガントの投影結果では `tentative: true` として現れる（BR-071・BR-072）。かんばんへは渡っていない（注釈 A-09）。
+- `@due` は、ガントの投影結果では `milestone` として現れる（単一点のため `DateTime` の ISO 文字列。期間指定の場合は `{ start, end }` になる。BR-071）。
 - タスクの `path` は自身を含み添字が付くが、カレンダーの `parents` では両方とも除去されている（注釈 A-03）。
 - ガントは、`@schedule` を持つタスクの祖先セクション・祖先グループを、子孫の期間を集約したノードとして出力する（BR-051）。
 - かんばんは単一ファイルのため、階層にファイル名を含めていない（BR-053）。

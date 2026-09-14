@@ -91,14 +91,14 @@ describe('filterNodes — 空クエリ', () => {
 // ──────────────────────────────────────────────────────────────────
 
 describe('filterNodes — status', () => {
-  it('todo のみ', () => {
-    const result = filterNodes(doc, { status: ['todo'] })
+  it('ready のみ', () => {
+    const result = filterNodes(doc, { status: ['ready'] })
     const texts = taskTexts(result)
     expect(texts).toContain('Task A')
     expect(texts).toContain('Task E')
     expect(texts).not.toContain('SubTask A1')   // done
-    expect(texts).not.toContain('Task A2')       // doing
-    expect(texts).not.toContain('Blocked Task B') // blocked
+    expect(texts).not.toContain('Task A2')       // in_progress
+    expect(texts).not.toContain('Blocked Task B') // waiting
     expect(texts).not.toContain('Hold Task C')   // hold
   })
 
@@ -113,7 +113,7 @@ describe('filterNodes — status', () => {
   })
 
   it('複数ステータスは OR', () => {
-    const result = filterNodes(doc, { status: ['doing', 'blocked'] })
+    const result = filterNodes(doc, { status: ['in_progress', 'waiting'] })
     const texts = taskTexts(result)
     expect(texts).toContain('Task A2')
     expect(texts).toContain('Blocked Task B')
@@ -300,12 +300,12 @@ describe('filterNodes — sectionPath', () => {
 // ──────────────────────────────────────────────────────────────────
 
 describe('filterNodes — 複数条件 AND', () => {
-  it('status:todo かつ tags:urgent', () => {
-    const result = filterNodes(doc, { status: ['todo'], tags: ['urgent'] })
+  it('status:ready かつ tags:urgent', () => {
+    const result = filterNodes(doc, { status: ['ready'], tags: ['urgent'] })
     const texts = taskTexts(result)
     expect(texts).toContain('Task A')
     expect(texts).toContain('Task E')
-    expect(texts).not.toContain('Blocked Task B') // blocked (not todo)
+    expect(texts).not.toContain('Blocked Task B') // waiting (not ready)
   })
 
   it('tags:total かつ priorityMax:1', () => {
@@ -331,7 +331,7 @@ describe('filterNodes — 複数条件 AND', () => {
 describe('filterNodes — keepAncestors:true (既定)', () => {
   it('合致タスクの ListNode 祖先を保持する', () => {
     // Blocked Task B は ListGroup の子なので、keepAncestors:true なら ListGroup が残る
-    const result = filterNodes(doc, { status: ['blocked'] }, { keepAncestors: true })
+    const result = filterNodes(doc, { status: ['waiting'] }, { keepAncestors: true })
     const sec = result.sections[0]
     expect(sec).toBeDefined()
     // ListGroup (list) が children に含まれること
@@ -340,7 +340,7 @@ describe('filterNodes — keepAncestors:true (既定)', () => {
   })
 
   it('合致タスクの非合致 TaskNode 祖先を保持する', () => {
-    // SubTask A1 が合致 → 親 Task A (todo) が祖先として保持される
+    // SubTask A1 が合致 → 親 Task A (ready) が祖先として保持される
     const result = filterNodes(doc, { status: ['done'] }, { keepAncestors: true })
     const sec = result.sections[0]
     const taskA = sec.children.find(n => n.type === 'task' && (n as TaskNode).text === 'Task A')
@@ -357,7 +357,7 @@ describe('filterNodes — keepAncestors:true (既定)', () => {
 describe('filterNodes — keepAncestors:false', () => {
   it('ListNode 祖先を保持しない（合致タスクをフラットに返す）', () => {
     // Blocked Task B は ListGroup の子だが、keepAncestors:false では ListGroup なしで返す
-    const result = filterNodes(doc, { status: ['blocked'] }, { keepAncestors: false })
+    const result = filterNodes(doc, { status: ['waiting'] }, { keepAncestors: false })
     const sec = result.sections[0]
     expect(sec).toBeDefined()
     const listNode = sec.children.find(n => n.type === 'list')
@@ -385,14 +385,14 @@ describe('filterNodes — イミュータビリティ', () => {
   it('入力 Document の sections 参照が変化しない', () => {
     const originalSections = doc.sections
     const originalChildren = doc.sections[0].children
-    filterNodes(doc, { status: ['todo'] })
+    filterNodes(doc, { status: ['ready'] })
     expect(doc.sections).toBe(originalSections)
     expect(doc.sections[0].children).toBe(originalChildren)
   })
 
   it('入力 Document の nodeLineMap が変化しない', () => {
     const originalSize = doc.nodeLineMap.size
-    filterNodes(doc, { status: ['todo'] })
+    filterNodes(doc, { status: ['ready'] })
     expect(doc.nodeLineMap.size).toBe(originalSize)
   })
 })

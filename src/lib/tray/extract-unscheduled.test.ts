@@ -43,19 +43,29 @@ describe('extractUnscheduledTasks', () => {
   // ステータス別
   // ----------------------------------------------------------------
 
-  it('status=doing の日付なしタスクは含まれる', () => {
+  it('status=planning の日付なしタスクは含まれる', () => {
+    const items = extractUnscheduledTasks(src('- [?] 計画中\n'))
+    expect(items).toHaveLength(1)
+  })
+
+  it('status=in_progress の日付なしタスクは含まれる', () => {
     const items = extractUnscheduledTasks(src('- [>] 進行中\n'))
     expect(items).toHaveLength(1)
   })
 
-  it('status=blocked の日付なしタスクは含まれる', () => {
-    const items = extractUnscheduledTasks(src('- [!] ブロック中\n'))
+  it('status=waiting の日付なしタスクは含まれる', () => {
+    const items = extractUnscheduledTasks(src('- [!] 待ち\n'))
     expect(items).toHaveLength(1)
   })
 
-  it('status=hold の日付なしタスクは含まれる', () => {
-    const items = extractUnscheduledTasks(src('- [-] 保留中\n'))
+  it('status=deferred の日付なしタスクは含まれる', () => {
+    const items = extractUnscheduledTasks(src('- [/] 一時保留\n'))
     expect(items).toHaveLength(1)
+  })
+
+  it('status=cancelled（中止）の日付なしタスクは含まれない（未完了とみなさない）', () => {
+    const items = extractUnscheduledTasks(src('- [-] 中止\n'))
+    expect(items).toHaveLength(0)
   })
 
   // ----------------------------------------------------------------

@@ -41,15 +41,17 @@ const tokenProvider: monaco.languages.TokensProvider = {
     }
 
     // Task checkbox line: (indent)- [?] text — colorize from "[" to end of line
-    const taskMatch = line.match(/^(\s*- )(\[[xX>!\- ]\])(.*)$/)
+    const taskMatch = line.match(/^(\s*- )(\[[xX>!\-?/ ]\])(.*)$/)
     if (taskMatch) {
       const [, prefix, checkbox] = taskMatch
       const marker = checkbox[1]
       const scope =
-        marker === ' '                    ? 'task.todo.md-task'    :
-        marker === 'x' || marker === 'X' ? 'task.done.md-task'    :
-        marker === '>'                    ? 'task.doing.md-task'   :
-        marker === '!'                    ? 'task.blocked.md-task' :
+        marker === ' '                    ? 'task.todo.md-task'     :
+        marker === 'x' || marker === 'X' ? 'task.done.md-task'     :
+        marker === '>'                    ? 'task.doing.md-task'    :
+        marker === '!'                    ? 'task.blocked.md-task'  :
+        marker === '?'                    ? 'task.planning.md-task' :
+        marker === '/'                    ? 'task.deferred.md-task' :
                                             'task.hold.md-task'
 
       tokens.push({ startIndex: 0, scopes: '' })                // indent + "- " unstyled
@@ -80,8 +82,10 @@ function defineTaskTheme() {
       { token: 'task.todo.md-task',    foreground: 'cccccc' }, // default white
       { token: 'task.done.md-task',    foreground: '4ec9b0' }, // teal (done)
       { token: 'task.doing.md-task',   foreground: '569cd6' }, // blue (doing)
-      { token: 'task.blocked.md-task', foreground: 'f44747' }, // red (blocked)
-      { token: 'task.hold.md-task',    foreground: '808080' }, // gray (hold)
+      { token: 'task.blocked.md-task', foreground: 'f44747' }, // red (blocked/waiting)
+      { token: 'task.hold.md-task',    foreground: '808080' }, // gray (hold/cancelled)
+      { token: 'task.planning.md-task', foreground: 'c586c0' }, // purple (planning)
+      { token: 'task.deferred.md-task', foreground: 'd7ba7d' }, // tan (deferred)
     ],
     colors: {},
   })

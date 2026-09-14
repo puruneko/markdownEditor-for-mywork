@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import type { Status, TaskNode, Node, Section, Document } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
+import { INCOMPLETE_STATUSES } from '../contract/canonical'
 
 // ----------------------------------------------------------------
 // Types
@@ -29,10 +30,11 @@ export type AgendaBuckets = {
 // Helpers
 // ----------------------------------------------------------------
 
-const INCOMPLETE: ReadonlySet<Status> = new Set(['todo', 'doing', 'blocked', 'hold'])
+const INCOMPLETE: ReadonlySet<Status> = new Set(INCOMPLETE_STATUSES)
 
+/** カノニカルな7状態の記法順（issue-phase005-001 2.1.1節）に基づくソート順 */
 const STATUS_ORDER: Record<Status, number> = {
-  todo: 0, doing: 1, blocked: 2, hold: 3, done: 4,
+  planning: 0, ready: 1, in_progress: 2, waiting: 3, deferred: 4, done: 5, cancelled: 6,
 }
 
 /** @schedule 終了日 > @due の優先順で日付文字列（YYYY-MM-DD）を返す。 */
@@ -96,7 +98,7 @@ function sortTasks(tasks: AgendaTask[]): AgendaTask[] {
     const pa = a.priority ?? Infinity
     const pb = b.priority ?? Infinity
     if (pa !== pb) return pa - pb
-    // 3. ステータス順 todo < doing < blocked < hold
+    // 3. ステータス順 planning < ready < in_progress < waiting < deferred
     return STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
   })
 }

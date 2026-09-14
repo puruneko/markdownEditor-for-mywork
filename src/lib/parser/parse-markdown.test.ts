@@ -10,7 +10,7 @@ describe('parseMarkdown', () => {
 
     expect(node.type).toBe('task')
     expect(node.text).toBe('タスク')
-    expect(node.status).toBe('todo')
+    expect(node.status).toBe('ready')
     expect(node.isLeafTask).toBe(true)
     expect(node.isGroup).toBe(false)
     expect(node.hasTaskDescendant).toBe(false)
@@ -18,21 +18,25 @@ describe('parseMarkdown', () => {
 
   it('parses all status markers', () => {
     const md = [
-      '- [ ] todo',
+      '- [?] planning',
+      '- [ ] ready',
       '- [x] done',
       '- [X] done-uppercase',
-      '- [>] doing',
-      '- [!] blocked',
-      '- [-] hold',
+      '- [>] in_progress',
+      '- [!] waiting',
+      '- [/] deferred',
+      '- [-] cancelled',
     ].join('\n')
     const { sections } = parseMarkdown(md)
     const nodes = sections[0].children as TaskNode[]
-    expect(nodes[0].status).toBe('todo')
-    expect(nodes[1].status).toBe('done')
+    expect(nodes[0].status).toBe('planning')
+    expect(nodes[1].status).toBe('ready')
     expect(nodes[2].status).toBe('done')
-    expect(nodes[3].status).toBe('doing')
-    expect(nodes[4].status).toBe('blocked')
-    expect(nodes[5].status).toBe('hold')
+    expect(nodes[3].status).toBe('done')
+    expect(nodes[4].status).toBe('in_progress')
+    expect(nodes[5].status).toBe('waiting')
+    expect(nodes[6].status).toBe('deferred')
+    expect(nodes[7].status).toBe('cancelled')
   })
 
   it('parses a task group (task with child tasks)', () => {
@@ -557,5 +561,64 @@ describe('parseMarkdown', () => {
     expect(group.meta?.plan).toBe('2026-07-01/2026-07-31')
     expect(group.meta?.schedule).toBe('2026-07-10T10:00/2026-07-10T12:00')
     expect(group.meta?.due).toBe('2026-07-31')
+  })
+
+  // ──────────────────────────────────────────────────────
+  // issue-phase005-001: 日本語メタキー・4キー追加・複数行値
+  // ──────────────────────────────────────────────────────
+
+  it('parses Japanese meta key alias @実施日時 into meta.schedule', () => {
+    const md = `- [ ] タスク\n  - @実施日時: 2026-07-01T09:00/10:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-07-01T09:00/2026-07-01T10:00')
+  })
+
+  it('parses Japanese meta key alias @期限 into meta.due', () => {
+    const md = `- [ ] タスク\n  - @期限: 2026-07-31\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.due).toBe('2026-07-31')
+  })
+
+  it('parses Japanese meta key alias @想定期間 into meta.plan', () => {
+    const md = `- [ ] タスク\n  - @想定期間: 2026-07-01/2026-07-31\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.plan).toBe('2026-07-01/2026-07-31')
+  })
+
+  it('parses @完了イメージ (single line) into meta.condition', () => {
+    const md = `- [ ] タスク\n  - @完了イメージ: 資料が承認された状態\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.condition).toBe('資料が承認された状態')
+  })
+
+  it('parses @目的・@セーブポイント・@特記事項 into meta', () => {
+    const md = [
+      '- [ ] タスク',
+      '  - @目的: 顧客満足度の向上',
+      '  - @セーブポイント: 一次レビュー完了時点',
+      '  - @特記事項: 予算超過に注意',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.purpose).toBe('顧客満足度の向上')
+    expect(node.meta?.savepoint).toBe('一次レビュー完了時点')
+    expect(node.meta?.special_note).toBe('予算超過に注意')
+  })
+
+  it('parses @完了イメージ with a child list into a string[] and removes the child list from children', () => {
+    const md = [
+      '- [ ] タスク',
+      '  - @完了イメージ:',
+      '    - 資料Aが承認された',
+      '    - 資料Bが承認された',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.condition).toEqual(['資料Aが承認された', '資料Bが承認された'])
+    expect(node.children).toHaveLength(0)
   })
 })

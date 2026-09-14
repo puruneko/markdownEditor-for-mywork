@@ -73,7 +73,7 @@ async function switchToStatusLanes(): Promise<void> {
   await browser.waitUntil(
     async () => {
       const lanes = await getShadowOrder(VIEW, '.kanban-board', '.kanban-lane[data-lane-id]', 'data-lane-id')
-      return lanes.includes('todo') && lanes.includes('doing') && lanes.includes('done')
+      return lanes.includes('ready') && lanes.includes('in_progress') && lanes.includes('done')
     },
     { timeout: 10000, interval: 500, timeoutMsg: 'ステータスレーンへの切替が反映されない' },
   )
@@ -108,7 +108,7 @@ describe('カンバンビュー', function () {
   it('グルーピングをステータスに切り替えるとレーン構成が変わる', async function () {
     await switchToStatusLanes()
     const lanes = await getShadowOrder(VIEW, '.kanban-board', '.kanban-lane[data-lane-id]', 'data-lane-id')
-    for (const laneId of ['todo', 'doing', 'blocked', 'hold', 'done']) {
+    for (const laneId of ['planning', 'ready', 'in_progress', 'waiting', 'deferred', 'done', 'cancelled']) {
       expect(lanes).toContain(laneId)
     }
   })
@@ -119,34 +119,34 @@ describe('カンバンビュー', function () {
     const cardId = await getCardIdByTitle('タスクF')
     expect(cardId).not.toBeNull()
 
-    // ドラッグ前の状態を確認：todo レーンに存在し、markdown は "- [ ] タスクF"
+    // ドラッグ前の状態を確認：ready レーンに存在し、markdown は "- [ ] タスクF"
     const before = await readVaultFile('kanban-live.md')
     expect(before).toContain('- [ ] タスクF')
-    const todoBefore = await getShadowOrder(
-      VIEW, '.kanban-lane[data-lane-id="todo"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
-    expect(todoBefore).toContain(cardId!)
+    const readyBefore = await getShadowOrder(
+      VIEW, '.kanban-lane[data-lane-id="ready"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
+    expect(readyBefore).toContain(cardId!)
 
-    // doing レーンへドラッグ
-    const dragged = await dragKanbanCard(cardId!, { laneId: 'doing' })
+    // in_progress レーンへドラッグ
+    const dragged = await dragKanbanCard(cardId!, { laneId: 'in_progress' })
     expect(dragged).toBe(true)
 
     // ① markdown への書き戻し
     const after = await waitForFileContentChange('kanban-live.md', before!)
     expect(after).toContain('- [>] タスクF')
 
-    // ② DOM 上の表示位置：doing レーンに現れ、todo レーンから消える
+    // ② DOM 上の表示位置：in_progress レーンに現れ、ready レーンから消える
     //    （書き戻しだけ検証すると「表示が動かない」バグを見逃す — issue-phase000-003 の教訓）
     await browser.waitUntil(
       async () => {
-        const doing = await getShadowOrder(
-          VIEW, '.kanban-lane[data-lane-id="doing"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
-        return doing.includes(cardId!)
+        const inProgress = await getShadowOrder(
+          VIEW, '.kanban-lane[data-lane-id="in_progress"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
+        return inProgress.includes(cardId!)
       },
-      { timeout: 10000, interval: 500, timeoutMsg: 'カードが doing レーンに表示されない' },
+      { timeout: 10000, interval: 500, timeoutMsg: 'カードが in_progress レーンに表示されない' },
     )
-    const todoAfter = await getShadowOrder(
-      VIEW, '.kanban-lane[data-lane-id="todo"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
-    expect(todoAfter).not.toContain(cardId!)
+    const readyAfter = await getShadowOrder(
+      VIEW, '.kanban-lane[data-lane-id="ready"] .kanban-lane-body', '[data-card-id]', 'data-card-id')
+    expect(readyAfter).not.toContain(cardId!)
 
     // 目視レビュー用の証跡
     await captureView('kanban-after-dnd')

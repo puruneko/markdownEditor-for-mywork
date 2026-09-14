@@ -1,18 +1,13 @@
 import type { Document, Section, Node, TaskNode, ListNode, QuoteNode, Meta, Status } from './types'
 import { META_KEYS } from './meta-keys'
+import { MARKER_BY_STATUS } from '../contract/canonical'
 
 // ----------------------------------------------------------------
 // Status → Checkbox marker
 // ----------------------------------------------------------------
 
 function statusToMarker(status: Status): string {
-  switch (status) {
-    case 'todo':    return '[ ]'
-    case 'done':    return '[x]'
-    case 'doing':   return '[>]'
-    case 'blocked': return '[!]'
-    case 'hold':    return '[-]'
-  }
+  return MARKER_BY_STATUS[status]
 }
 
 // ----------------------------------------------------------------
@@ -24,15 +19,29 @@ function tentativeSuffix(meta: Meta, key: 'plan' | 'schedule' | 'due'): string {
   return meta.tentative?.[key] ? '?' : ''
 }
 
+/**
+ * string | string[] を取るメタキー（condition/purpose/savepoint/special_note）を出力する。
+ * string ならこれまでどおり単一行。string[] なら親行 `- @key:` の下に、1段深い子リスト
+ * として各要素を出力する（issue-phase005-001 C-1。パース側の子リスト受理と対称）。
+ */
+function serializeMultiValueMeta(key: string, value: string | string[]): string[] {
+  if (typeof value === 'string') return [`- @${key}: ${value}`]
+  return [`- @${key}:`, ...value.map(v => `\t- ${v}`)]
+}
+
 function serializeMeta(meta: Meta): string[] {
   const lines: string[] = []
-  if (meta.plan      !== undefined) lines.push(`- @${META_KEYS.plan}${tentativeSuffix(meta, 'plan')}: ${meta.plan}`)
-  if (meta.schedule  !== undefined) lines.push(`- @${META_KEYS.schedule}${tentativeSuffix(meta, 'schedule')}: ${meta.schedule}`)
-  if (meta.due       !== undefined) lines.push(`- @${META_KEYS.due}${tentativeSuffix(meta, 'due')}: ${meta.due}`)
-  if (meta.priority  !== undefined) lines.push(`- @${META_KEYS.priority}: ${meta.priority}`)
-  if (meta.dependsOn !== undefined) lines.push(`- @${META_KEYS.dependsOn}: ${meta.dependsOn.join(', ')}`)
-  if (meta.tags      !== undefined) lines.push(`- @${META_KEYS.tags}: ${meta.tags.join(', ')}`)
-  if (meta.repeat    !== undefined) lines.push(`- @${META_KEYS.repeat}: ${meta.repeat}`)
+  if (meta.plan         !== undefined) lines.push(`- @${META_KEYS.plan}${tentativeSuffix(meta, 'plan')}: ${meta.plan}`)
+  if (meta.schedule     !== undefined) lines.push(`- @${META_KEYS.schedule}${tentativeSuffix(meta, 'schedule')}: ${meta.schedule}`)
+  if (meta.due          !== undefined) lines.push(`- @${META_KEYS.due}${tentativeSuffix(meta, 'due')}: ${meta.due}`)
+  if (meta.priority     !== undefined) lines.push(`- @${META_KEYS.priority}: ${meta.priority}`)
+  if (meta.dependsOn    !== undefined) lines.push(`- @${META_KEYS.dependsOn}: ${meta.dependsOn.join(', ')}`)
+  if (meta.tags         !== undefined) lines.push(`- @${META_KEYS.tags}: ${meta.tags.join(', ')}`)
+  if (meta.repeat       !== undefined) lines.push(`- @${META_KEYS.repeat}: ${meta.repeat}`)
+  if (meta.condition    !== undefined) lines.push(...serializeMultiValueMeta(META_KEYS.condition, meta.condition))
+  if (meta.purpose      !== undefined) lines.push(...serializeMultiValueMeta(META_KEYS.purpose, meta.purpose))
+  if (meta.savepoint    !== undefined) lines.push(...serializeMultiValueMeta(META_KEYS.savepoint, meta.savepoint))
+  if (meta.special_note !== undefined) lines.push(...serializeMultiValueMeta(META_KEYS.special_note, meta.special_note))
   return lines
 }
 

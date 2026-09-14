@@ -15,6 +15,7 @@
   import { makeGlobalKey } from '../viewmodel/global-key'
   import { MD_TASK_MIME } from '../../editor/task-drag-source'
   import type { TaskDragPayload } from '../../editor/task-drag-source'
+  import { STATUS_BY_MARKER } from '../contract/canonical'
 
   interface Props {
     /** 複数ソース（ファイルパスと Document のペア）— カード抽出とキーの名前空間化に使用 */
@@ -69,7 +70,7 @@
   // 外部ドロップ（エディタからのタスク DnD）
   // ----------------------------------------------------------------
 
-  const VALID_STATUSES = new Set<string>(['todo', 'doing', 'done', 'blocked', 'hold'])
+  const VALID_STATUSES = new Set<string>(Object.values(STATUS_BY_MARKER))
 
   function handleExternalDragOver(e: DragEvent) {
     if (!e.dataTransfer?.types.includes(MD_TASK_MIME)) return

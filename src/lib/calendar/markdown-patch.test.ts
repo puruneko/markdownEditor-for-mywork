@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { parseMarkdown } from '../parser/parse-markdown'
-import { findNodeById, patchSchedule, patchTaskTitle, formatSchedule } from './markdown-patch'
+import { findNodeById, patchSchedule, patchTaskTitle, patchNodeStatus, formatSchedule } from './markdown-patch'
 import { DateTime } from 'luxon'
+import type { TaskNode } from '../parser/types'
 
 // ----------------------------------------------------------------
 // formatSchedule
@@ -110,37 +111,69 @@ describe('patchSchedule', () => {
 describe('patchTaskTitle', () => {
   it('replaces only the task title line', () => {
     const md = `- [ ] 旧タイトル\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
-    const result = patchTaskTitle(md, 'todo', '旧タイトル', '新タイトル')
+    const result = patchTaskTitle(md, 'ready', '旧タイトル', '新タイトル')
     expect(result).toContain('- [ ] 新タイトル')
     expect(result).not.toContain('旧タイトル')
   })
 
   it('preserves @schedule line after the task line', () => {
     const md = `- [ ] 旧タイトル\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
-    const result = patchTaskTitle(md, 'todo', '旧タイトル', '新タイトル')
+    const result = patchTaskTitle(md, 'ready', '旧タイトル', '新タイトル')
     expect(result).toContain('  - @schedule: 2026-04-01T10:00/2026-04-01T12:00')
   })
 
   it('preserves blank lines', () => {
     const md = `- [ ] タスクA\n\n- [ ] 旧タイトル\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n\n- [ ] タスクB\n`
-    const result = patchTaskTitle(md, 'todo', '旧タイトル', '新タイトル')
+    const result = patchTaskTitle(md, 'ready', '旧タイトル', '新タイトル')
     expect(result.split('\n\n').length).toBe(md.split('\n\n').length)
   })
 
   it('preserves indentation', () => {
     const md = `- グループ\n  - [ ] 旧タイトル\n    - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
-    const result = patchTaskTitle(md, 'todo', '旧タイトル', '新タイトル')
+    const result = patchTaskTitle(md, 'ready', '旧タイトル', '新タイトル')
     expect(result).toContain('  - [ ] 新タイトル')
   })
 
   it('returns original if title unchanged', () => {
     const md = `- [ ] タスク\n`
-    expect(patchTaskTitle(md, 'todo', 'タスク', 'タスク')).toBe(md)
+    expect(patchTaskTitle(md, 'ready', 'タスク', 'タスク')).toBe(md)
   })
 
-  it('handles doing marker correctly', () => {
+  it('handles in_progress marker correctly', () => {
     const md = `- [>] 進行中タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
-    const result = patchTaskTitle(md, 'doing', '進行中タスク', '完了タスク')
+    const result = patchTaskTitle(md, 'in_progress', '進行中タスク', '完了タスク')
     expect(result).toContain('- [>] 完了タスク')
+  })
+})
+
+// ----------------------------------------------------------------
+// patchNodeStatus — issue-phase005-001: [?]・[/] を含む全7状態の書き戻し
+// ----------------------------------------------------------------
+
+describe('patchNodeStatus', () => {
+  it('replaces the marker for each of the 7 statuses, including planning [?] and deferred [/]', () => {
+    const cases: Array<{ from: string; to: TaskNode['status']; expected: string }> = [
+      { from: '[?]', to: 'ready',       expected: '[ ]' },
+      { from: '[ ]', to: 'planning',    expected: '[?]' },
+      { from: '[ ]', to: 'in_progress', expected: '[>]' },
+      { from: '[>]', to: 'waiting',     expected: '[!]' },
+      { from: '[!]', to: 'deferred',    expected: '[/]' },
+      { from: '[/]', to: 'done',        expected: '[x]' },
+      { from: '[x]', to: 'cancelled',   expected: '[-]' },
+    ]
+    for (const { from, to, expected } of cases) {
+      const md = `- ${from} タスク\n`
+      const doc = parseMarkdown(md)
+      const node = doc.sections[0].children[0] as TaskNode
+      const result = patchNodeStatus(md, node, to)
+      expect(result).toContain(`- ${expected} タスク`)
+    }
+  })
+
+  it('returns the original markdown unchanged when newStatus equals the current status', () => {
+    const md = '- [?] タスク\n'
+    const doc = parseMarkdown(md)
+    const node = doc.sections[0].children[0] as TaskNode
+    expect(patchNodeStatus(md, node, 'planning')).toBe(md)
   })
 })

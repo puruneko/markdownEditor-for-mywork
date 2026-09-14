@@ -13,14 +13,14 @@ describe('parseQueryDsl', () => {
     expect(query).toEqual({})
   })
 
-  it('status: todo,doing をパースする', () => {
-    const { query } = parseQueryDsl('status: todo,doing')
-    expect(query.status).toEqual(['todo', 'doing'])
+  it('status: ready,in_progress をパースする', () => {
+    const { query } = parseQueryDsl('status: ready,in_progress')
+    expect(query.status).toEqual(['ready', 'in_progress'])
   })
 
   it('不正なステータス値は除外して有効値のみ取る', () => {
-    const { query } = parseQueryDsl('status: todo,invalid,done')
-    expect(query.status).toEqual(['todo', 'done'])
+    const { query } = parseQueryDsl('status: ready,invalid,done')
+    expect(query.status).toEqual(['ready', 'done'])
   })
 
   it('すべて不正なステータスの場合は status を設定しない', () => {
@@ -74,7 +74,7 @@ describe('parseQueryDsl', () => {
 
   it('複数条件を複合パース', () => {
     const dsl = [
-      'status: todo,doing',
+      'status: ready,in_progress',
       'tag: urgent',
       'due: <=2026-12-31',
       'due: >=2026-01-01',
@@ -83,7 +83,7 @@ describe('parseQueryDsl', () => {
       'scope: current',
     ].join('\n')
     const { query, scope } = parseQueryDsl(dsl)
-    expect(query.status).toEqual(['todo', 'doing'])
+    expect(query.status).toEqual(['ready', 'in_progress'])
     expect(query.tags).toEqual(['urgent'])
     expect(query.dueBefore).toBe('2026-12-31')
     expect(query.dueAfter).toBe('2026-01-01')
@@ -93,9 +93,9 @@ describe('parseQueryDsl', () => {
   })
 
   it('不正な行（コロンなし）は無視して続行する', () => {
-    const dsl = 'invalid line\nstatus: todo'
+    const dsl = 'invalid line\nstatus: ready'
     const { query } = parseQueryDsl(dsl)
-    expect(query.status).toEqual(['todo'])
+    expect(query.status).toEqual(['ready'])
   })
 
   it('不正な日付形式は設定しない', () => {
@@ -109,13 +109,13 @@ describe('parseQueryDsl', () => {
   })
 
   it('大文字小文字混在のステータスを正規化', () => {
-    const { query } = parseQueryDsl('status: TODO,Done')
-    expect(query.status).toEqual(['todo', 'done'])
+    const { query } = parseQueryDsl('status: READY,Done')
+    expect(query.status).toEqual(['ready', 'done'])
   })
 
   it('前後の空白を無視する', () => {
-    const { query } = parseQueryDsl('  status  :  todo , doing  ')
-    expect(query.status).toEqual(['todo', 'doing'])
+    const { query } = parseQueryDsl('  status  :  ready , in_progress  ')
+    expect(query.status).toEqual(['ready', 'in_progress'])
   })
 
   it('due に <=/ >= 以外の書式は無視', () => {

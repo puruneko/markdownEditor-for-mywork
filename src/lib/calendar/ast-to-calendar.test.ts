@@ -83,11 +83,11 @@ describe('extractCalendarItems', () => {
     expect((taskC as any).status).toBe('done')
   })
 
-  it('maps blocked/hold to todo', () => {
-    const md = `- [!] ブロック中\n  - @schedule: 2026-04-01T10:00/2026-04-01T11:00\n- [-] 保留\n  - @schedule: 2026-04-01T11:00/2026-04-01T12:00\n`
+  it('maps waiting/cancelled to ready', () => {
+    const md = `- [!] 待ち\n  - @schedule: 2026-04-01T10:00/2026-04-01T11:00\n- [-] 中止\n  - @schedule: 2026-04-01T11:00/2026-04-01T12:00\n`
     const items = extractCalendarItems(src(md))
     expect(items).toHaveLength(2)
-    items.forEach(item => expect((item as any).status).toBe('todo'))
+    items.forEach(item => expect((item as any).status).toBe('ready'))
   })
 
   it('ignores quote nodes', () => {
@@ -122,6 +122,40 @@ describe('extractCalendarItems', () => {
     const md = `- 親\n  - [ ] 子タスク\n    - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n`
     const items = extractCalendarItems(src(md))
     expect(items[0].parents).toContain('親')
+  })
+})
+
+// ----------------------------------------------------------------
+// issue-phase005-001 C-3: plan・tentative の投影
+// ----------------------------------------------------------------
+
+describe('extractCalendarItems — plan・tentative', () => {
+  it('@想定期間(@plan) を持つタスクの plan が設定される', () => {
+    const md = `- [ ] タスク\n  - @plan: 2026-04-01/2026-04-10\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n`
+    const items = extractCalendarItems(src(md))
+    const plan = (items[0] as any).plan
+    expect(plan).toBeDefined()
+    expect(plan.kind).toBe('CalendarDateRange')
+    expect(plan.start).toBe('2026-04-01')
+    expect(plan.endExclusive).toBe('2026-04-10')
+  })
+
+  it('@実施日時?（仮置き）を持つタスクの tentative が true になる', () => {
+    const md = `- [ ] タスク\n  - @schedule?: 2026-04-05T10:00/2026-04-05T12:00\n`
+    const items = extractCalendarItems(src(md))
+    expect((items[0] as any).tentative).toBe(true)
+  })
+
+  it('@schedule に ? が無い場合、tentative は未設定', () => {
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n`
+    const items = extractCalendarItems(src(md))
+    expect((items[0] as any).tentative).toBeUndefined()
+  })
+
+  it('@plan が無いタスクには plan フィールド自体が現れない', () => {
+    const md = `- [ ] タスク\n  - @schedule: 2026-04-05T10:00/2026-04-05T12:00\n`
+    const items = extractCalendarItems(src(md))
+    expect('plan' in items[0]).toBe(false)
   })
 })
 

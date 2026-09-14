@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { Task, TaskStatus, CalendarItem } from 'svelte-calendar-lib'
+import type { Task, TaskStatus, CalendarItem, TimeSpan } from 'svelte-calendar-lib'
 import type { Document, Section, Node, Status } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
@@ -11,9 +11,9 @@ import { expandOccurrences } from '../recurrence/expand'
 
 function mapStatus(status: Status): TaskStatus {
   switch (status) {
-    case 'doing': return 'doing'
-    case 'done':  return 'done'
-    default:      return 'todo'  // todo / blocked / hold → todo
+    case 'in_progress': return 'in_progress'
+    case 'done':         return 'done'
+    default:             return 'ready'  // planning / waiting / deferred / cancelled → ready
   }
 }
 
@@ -58,6 +58,26 @@ export function parseSchedule(schedule: string): ParsedSchedule | null {
   return { kind: 'dateRange', start: startDate, endExclusive }
 }
 
+/**
+ * ParsedSchedule → CalendarItem の TimeSpan 表現へ変換する（temporal・plan で共用）。
+ * パースに失敗した値は null を返し、呼び出し側はフィールド自体を設定しない。
+ */
+function toTimeSpan(parsed: ParsedSchedule): TimeSpan {
+  // CalendarDateRange の start/endExclusive は ISODate ブランド型だが、ここでは
+  // バリデーション済みの YYYY-MM-DD 文字列（parseSchedule 内で正規表現検証済み）を渡しているため、
+  // 構造的に等価な値をキャストする（既存の temporal 変換と同じ扱い。ライブラリは parseISODate を公開していない）。
+  return parsed.kind === 'dateRange'
+    ? { kind: 'CalendarDateRange' as const, start: parsed.start, endExclusive: parsed.endExclusive } as TimeSpan
+    : { kind: 'CalendarDateTimeRange' as const, start: parsed.start, end: parsed.end }
+}
+
+/** @plan のパース結果を CalendarItem.plan（TimeSpan）へ変換する。パース失敗時は undefined。 */
+function resolvePlan(planStr: string | undefined): TimeSpan | undefined {
+  if (!planStr) return undefined
+  const parsed = parseSchedule(planStr)
+  return parsed ? toTimeSpan(parsed) : undefined
+}
+
 // ----------------------------------------------------------------
 // Node traversal
 // ----------------------------------------------------------------
@@ -81,6 +101,8 @@ function extractFromNodes(
         // @repeat あり: viewRange があれば展開、なければスキップ（本体スケジュールは出さない）
         if (viewRange) {
           const occurrences = expandOccurrences(node.meta, viewRange.start, viewRange.end)
+          const plan = resolvePlan(node.meta.plan)
+          const tentative = node.meta.tentative?.schedule === true
           occurrences.forEach((occ, idx) => {
             const item: Task = {
               id: `${baseId}__r${idx}`,
@@ -89,6 +111,8 @@ function extractFromNodes(
               status: mapStatus(node.status),
               parents,
               temporal: { kind: 'CalendarDateTimeRange' as const, start: occ.start, end: occ.end },
+              ...(plan ? { plan } : {}),
+              ...(tentative ? { tentative } : {}),
             }
             items.push(item)
           })
@@ -96,9 +120,9 @@ function extractFromNodes(
       } else {
         const parsed = parseSchedule(node.meta.schedule)
         if (parsed) {
-          const temporal = parsed.kind === 'dateRange'
-            ? { kind: 'CalendarDateRange' as const, start: parsed.start, endExclusive: parsed.endExclusive }
-            : { kind: 'CalendarDateTimeRange' as const, start: parsed.start, end: parsed.end }
+          const temporal = toTimeSpan(parsed)
+          const plan = resolvePlan(node.meta.plan)
+          const tentative = node.meta.tentative?.schedule === true
 
           const item: Task = {
             id: baseId,
@@ -107,6 +131,8 @@ function extractFromNodes(
             status: mapStatus(node.status),
             parents,
             temporal,
+            ...(plan ? { plan } : {}),
+            ...(tentative ? { tentative } : {}),
           }
           items.push(item)
         }
