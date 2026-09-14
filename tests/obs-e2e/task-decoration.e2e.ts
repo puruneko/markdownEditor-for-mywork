@@ -1,6 +1,6 @@
 import { browser, expect } from '@wdio/globals'
 import { obsidianPage } from 'wdio-obsidian-service'
-import { openFile } from './helpers/obsidian-helpers'
+import { openFile, readVaultFile, waitForFileContentChange, writeVaultFile } from './helpers/obsidian-helpers'
 
 describe('タスクデコレーション', function () {
   before(async function () {
@@ -60,5 +60,74 @@ describe('タスクデコレーション', function () {
     // test-tasks.mdのブロッククォート内の"[ ]"はハイライトされないので、
     // ハイライト済み要素数は0以上であればよい（ブロッククォートの分が混入していない）。
     expect(todoElements.length).toBeGreaterThanOrEqual(0)
+  })
+
+  // issue-phase004-005: @plan・仮置き `?` の装飾
+  describe('新記法（@plan・仮置き `?`）の装飾', function () {
+    it('@planキーにmd-ast-meta-key--planクラスが付与される', async function () {
+      await writeVaultFile('phase004-005-plan.md', [
+        '- [ ] 新記法タスク',
+        '  - @plan: 2026-07-07/2026-07-11',
+      ].join('\n'))
+      await openFile('phase004-005-plan.md')
+      await browser.waitUntil(
+        async () => (await browser.$('.md-ast-meta-key--plan')).isExisting(),
+        { timeout: 5000, interval: 200 },
+      )
+      await expect(browser.$('.md-ast-meta-key--plan')).toExist()
+    })
+
+    it('仮置き（?）メタにmd-ast-meta-tentativeクラスが付与される', async function () {
+      await writeVaultFile('phase004-005-tentative.md', [
+        '- [ ] 新記法タスク',
+        '  - @schedule?: 2026-07-10T10:00/2026-07-10T11:00',
+      ].join('\n'))
+      await openFile('phase004-005-tentative.md')
+      await browser.waitUntil(
+        async () => (await browser.$('.md-ast-meta-tentative')).isExisting(),
+        { timeout: 5000, interval: 200 },
+      )
+      await expect(browser.$('.md-ast-meta-tentative')).toExist()
+    })
+  })
+
+  // issue-phase004-005: メタ行を推奨位置へ整形するコマンド
+  describe('コマンド: メタ行を推奨位置へ整形', function () {
+    it('サブタスクの後にあるメタ行を直下へ移動し、本文は変更しない', async function () {
+      const fileName = 'phase004-005-reformat.md'
+      const before = [
+        '- [ ] タスクA',
+        '  - サブタスク',
+        '  - @schedule: 2026-07-10T10:00/2026-07-10T11:00',
+      ].join('\n') + '\n'
+      await writeVaultFile(fileName, before)
+      await openFile(fileName)
+
+      await browser.executeObsidianCommand('md-ast-editor:reformat-meta-lines')
+
+      const after = await waitForFileContentChange(fileName, before)
+      expect(after).toBe([
+        '- [ ] タスクA',
+        '  - @schedule: 2026-07-10T10:00/2026-07-10T11:00',
+        '  - サブタスク',
+      ].join('\n') + '\n')
+    })
+
+    it('冪等: 整形済みファイルに対する2回目の実行は内容を変更しない', async function () {
+      const fileName = 'phase004-005-reformat-idempotent.md'
+      const already = [
+        '- [ ] タスクA',
+        '  - @due: 2026-07-15',
+        '  - サブタスク',
+      ].join('\n') + '\n'
+      await writeVaultFile(fileName, already)
+      await openFile(fileName)
+
+      await browser.executeObsidianCommand('md-ast-editor:reformat-meta-lines')
+      await browser.pause(500)
+
+      const after = await readVaultFile(fileName)
+      expect(after).toBe(already)
+    })
   })
 })

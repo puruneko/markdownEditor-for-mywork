@@ -200,6 +200,101 @@ describe('Valid forms — no warnings', () => {
 })
 
 // ──────────────────────────────────────────────────────
+// issue-phase004-002 / issue-phase004-005: @plan・仮置き `?`
+// ──────────────────────────────────────────────────────
+
+describe('@plan value checks (shares logic with @schedule)', () => {
+  it('warns when @plan has no slash', () => {
+    const results = lint('  - @plan: 2026-07-07')
+    expect(results).toHaveLength(1)
+    expect(results[0].message).toMatch(/@plan/)
+    expect(results[0].message).toMatch(/終了が設定されていない/)
+  })
+
+  it('no warning for a valid @plan range', () => {
+    expect(lint('  - @plan: 2026-07-07/2026-07-11')).toHaveLength(0)
+  })
+
+  it('warns on @plan with wrong separator, with quickfix', () => {
+    const results = lint('  - @plan: 2026-07-07〜2026-07-11')
+    const sep = results.find(r => r.actions?.length)
+    expect(sep).toBeDefined()
+    expect(sep!.actions![0].replacement).toBe('/')
+  })
+
+  it('warns when @plan end is non-ISO after normalization', () => {
+    const results = lint('  - @plan: 2026-07-07/bar')
+    expect(results.some(r => r.message.includes('終了日時'))).toBe(true)
+  })
+})
+
+describe('tentative `?` marker — valid position', () => {
+  it('no warning for @schedule? with a valid value', () => {
+    expect(lint('  - @schedule?: 2026-06-01T10:00/2026-06-01T11:00')).toHaveLength(0)
+  })
+
+  it('no warning for @plan? with a valid value', () => {
+    expect(lint('  - @plan?: 2026-07-07/2026-07-11')).toHaveLength(0)
+  })
+
+  it('no warning for @due? with a valid value', () => {
+    expect(lint('  - @due?: 2026-07-10')).toHaveLength(0)
+  })
+
+  it('still validates the value of a tentative meta line', () => {
+    const results = lint('  - @schedule?: 2026-06-01T10:00')
+    expect(results).toHaveLength(1)
+    expect(results[0].message).toMatch(/終了が設定されていない/)
+  })
+})
+
+describe('tentative `?` marker — invalid position (with quickfix)', () => {
+  it('warns on space before `?` and offers a quickfix', () => {
+    const results = lint('  - @schedule ?: 2026-06-01T10:00/2026-06-01T11:00')
+    expect(results).toHaveLength(1)
+    expect(results[0].message).toMatch(/仮置き修飾子/)
+    expect(results[0].actions).toEqual([{ name: '@schedule?: に修正', replacement: '@schedule?:' }])
+  })
+
+  it('warns on `?` before the key name and offers a quickfix', () => {
+    const results = lint('  - @?schedule: 2026-06-01T10:00/2026-06-01T11:00')
+    expect(results).toHaveLength(1)
+    expect(results[0].actions).toEqual([{ name: '@schedule?: に修正', replacement: '@schedule?:' }])
+  })
+
+  it('quickfix range covers only the malformed key/marker segment', () => {
+    const line = '  - @schedule ?: 2026-06-01T10:00/2026-06-01T11:00'
+    const results = lint(line)
+    const atIdx = line.indexOf('@schedule')
+    const colonIdx = line.indexOf(':')
+    expect(results[0].from).toBe(atIdx)
+    expect(results[0].to).toBe(colonIdx + 1)
+  })
+})
+
+describe('@due period (issue-phase004-002)', () => {
+  it('no warning for a valid @due period', () => {
+    expect(lint('  - @due: 2026-07-10/2026-07-15')).toHaveLength(0)
+  })
+
+  it('no warning for an abbreviated @due period', () => {
+    expect(lint('  - @due: 2026-07-10/15')).toHaveLength(0)
+  })
+
+  it('warns when @due period is reversed', () => {
+    const results = lint('  - @due: 2026-07-15/2026-07-10')
+    expect(results).toHaveLength(1)
+    expect(results[0].message).toMatch(/逆順/)
+  })
+
+  it('warns when @due period has a non-ISO half', () => {
+    const results = lint('  - @due: 2026-07-10/bar')
+    expect(results).toHaveLength(1)
+    expect(results[0].message).toMatch(/@due/)
+  })
+})
+
+// ──────────────────────────────────────────────────────
 // Exclusion — blockquote
 // ──────────────────────────────────────────────────────
 

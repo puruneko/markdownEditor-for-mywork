@@ -39,10 +39,13 @@ Phase 004 の全実装の前提となる**仕様書（Spec）が存在しない*
 - 既存 Spec（calendar-integration / gantt-integration）と矛盾する記述がないか横断確認し、矛盾があれば本 Spec を正とし相手側に deprecation 注記を入れる（BR 番号は消さない・番号の付け替え禁止）。
 
 ### TODO
-- [ ] R-1（schedule 名称）をユーザーに確認
-- [ ] `project/specs/time-meta-model.spec.md` を起票（PURPOSE / SCOPE / DEFINITIONS / BEHAVIORAL REQUIREMENTS(BR) / EDGE CONDITIONS / VERIFICATION）
-- [ ] 既存 Spec との整合確認・必要なら deprecation 注記
-- [ ] 関連 Issue（phase004-002〜005、各ライブラリ Issue）の related_specs を更新
+- [x] R-1（schedule 名称）をユーザーに確認 → 2026-08-01 時点で未回答。issue-phase004-000 §2-4「メタキー名は変えない。全 Issue は現行名で実装する」に従い、現行名 `@schedule` のまま Spec を起票した（8章に明記）。最終回答は引き続き未確定（下記「確認事項」参照）。
+- [x] `project/specs/time-meta-model.spec.md` を起票（PURPOSE / SCOPE / DEFINITIONS / BEHAVIORAL REQUIREMENTS(BR) / EDGE CONDITIONS / VERIFICATION）
+- [x] 既存 Spec との整合確認・必要なら deprecation 注記 → calendar-integration.spec.md・gantt-integration.spec.md と用語・BR番号の衝突なし。矛盾なし（deprecation 注記不要）。
+- [x] 関連 Issue（phase004-002〜005、各ライブラリ Issue）の related_specs を更新 → issue-phase004-002・issue-phase004-005 の related_specs は起票時点から `time-meta-model.spec.md` を指しており変更不要と確認。issue-phase004-003・004（本 Issue の範囲外・未着手）は着手時に実装者が参照すること。
+
+### 確認事項（ユーザーへ）
+- **R-1（`@schedule` の名称）は依然オーナー最終回答待ち。** 今回は phase004-000 の指示に従い現行名で実装を進めたが、`project/plan/time-meta-spec-and-implementation-plan-2026-07-03.html` §7 の記載どおり、これは唯一の残ブロッカーとして残っている。改名する場合は Spec・パーサー・エディタの3層（issue-phase004-001/002/005、実装済み）に加えて lint 一括変換が必要になる。
 
 ### 受け入れ基準
 - 上記決定事項 1〜8 がすべて BR として番号付きで記載されている。
@@ -55,14 +58,27 @@ Phase 004 の全実装の前提となる**仕様書（Spec）が存在しない*
 ### 履歴（追記のみ）
 - 2026-07-04 — 起票。
 
+### 2026-08-01 09:00
+
+- User Instruction:
+  - 「project/governanceを確認してください。そのあと、phase004のエディタ実装分をすべて実装してください。私は席を外すので、あなたの推奨案で実装し切ってください。懸念点や質問は各issueに追記しておいてください、後で確認します。」
+
+- Change:
+  - `project/specs/time-meta-model.spec.md` を新規作成（BR-001〜BR-043）。issue-phase004-005（エディタ実装）の前提として本 Issue を先行完了させた。
+  - R-1 は未回答のため、issue-phase004-000 §2-4 に従い現行名 `@schedule` で確定。Spec 8章に「OUT OF SCOPE」として明記し、将来 R-1 が決まった場合の更新手順（NAMING_AND_ID_RULES §5・§6 準拠の追記）も記載した。
+  - R-2〜R-4（plan継承の見せ方・calendar でのplan表示・gantt DnDデフォルト値）も Spec 8章で「対象外・実装時判断」として明記した。
+
+- Rationale:
+  - ユーザー不在時の自律実装が指示されたため、AI_RUNTIME_RULES §4「不確実性がある場合は STOP」よりも本指示（推奨案で実装し切る・懸念は Issue に記録）を優先した。R-1 のような真にユーザー判断が必要な事項は、実装をブロックする代わりに「現状維持で進め、確認事項として記録する」方針を採用した。
+
 ---
 
 ## 3. メタデータ
 - id: issue-phase004-001__time-meta-spec
-- status: open
+- status: implemented（ユーザー承認待ち）
 - phase: 004
 - related_specs: time-meta-model.spec.md（本 Issue で作成）
 - related_issues: issue-phase004-000, issue-phase004-002, issue-phase004-003, issue-phase004-004
 - target_files: project/specs/time-meta-model.spec.md（新規）
 - created: 2026-07-04
-- updated: 2026-07-04
+- updated: 2026-08-01

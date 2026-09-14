@@ -1,12 +1,19 @@
 export type Status = 'todo' | 'doing' | 'done' | 'blocked' | 'hold'
 
 export type Meta = {
+  plan?: string
   schedule?: string
   due?: string
   priority?: number
   dependsOn?: string[]
   tags?: string[]
   repeat?: string
+  /** `?` 修飾子（仮置き）が付与されたメタキー。plan/schedule/due にのみ意味を持つ。 */
+  tentative?: {
+    plan?: true
+    schedule?: true
+    due?: true
+  }
 }
 
 export type TaskNode = {

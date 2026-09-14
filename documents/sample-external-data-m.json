@@ -1,0 +1,5457 @@
+{
+  "_about": {
+    "サイズ": "M",
+    "このファイル": "実務サンプル（入力266行）。1ヶ月分の総務業務を想定した現実的な分量",
+    "入力Markdown": "demo/sample-m.md",
+    "含む記法": "S の内容 ＋ ステータス5種すべて・@plan・仮置き `?`・@repeat・@dependsOn・日付のみの期間・複数日の期間・省略記法・4階層の入れ子",
+    "他のサイズ": [
+      "S: documents/sample-external-data-s.json",
+      "L: documents/sample-external-data-l.json"
+    ],
+    "仕様書": "documents/external-data-contract.spec.md",
+    "生成元": "このリポジトリのホスト実装（解析処理と各投影処理）を実行して得た実出力",
+    "再生成": "npm run gen:samples（このファイルは手で編集しない）",
+    "読み方": {
+      "sources": "ホストが連携アプリへ渡す SourceEntry[] そのもの。仕様書 §4.1〜§4.5 に対応する",
+      "projections": "ホストが sources を変換して各連携アプリへ渡している値。仕様書 §4.7 に対応する。連携アプリが実際に受け取るのはこの形"
+    },
+    "生成条件": {
+      "calendar / gantt の表示範囲": "2026-07-01T00:00 〜 2026-07-31T23:59（@repeat の展開範囲）",
+      "agenda の基準日": "2026-07-06",
+      "gantt のオプション": "既定値。@schedule を持たないサブタスクは出力していない（仕様書 BR-052）"
+    },
+    "JSON 化による差異": {
+      "sources[].doc.nodeLineMap": "実際の受け渡しでは Map<string, number>。JSON 化のためオブジェクトへ変換している（仕様書 注釈 A-01）",
+      "priority": "数値に変換できない @priority は実際には NaN になるが、JSON では null として現れる（仕様書 注釈 A-05）",
+      "日時": "投影結果の日時は Luxon DateTime であり、JSON 化するとオフセット付き ISO 文字列になる"
+    }
+  },
+  "sources": [
+    {
+      "path": "demo/sample-m.md",
+      "doc": {
+        "type": "document",
+        "sections": [
+          {
+            "type": "section",
+            "id": "section-1",
+            "depth": 1,
+            "title": "総務・管理部門 タスク管理 2026年7月",
+            "lineNumber": 0,
+            "children": [
+              {
+                "type": "quote",
+                "id": "s1.q0",
+                "raw": "【M: 実務サンプル】1ヶ月分の総務業務を想定した、実務に近い分量のファイルです。\n対になる出力は documents/sample-external-data-m.json です。\nS に加えて含む記法：\n・ステータス5種すべて（todo / doing / done / blocked / hold）\n・時間メタ3層（@plan＝予定枠、@schedule＝作業ブロック、@due＝期限）\n・仮置き ?（@schedule?: のように、値は入れたが未確定であることを示す）\n・@repeat（繰り返し）、@dependsOn（依存）\n・日付のみの期間、複数日にまたがる期間、省略記法（2桁年・分省略・継続省略）\n・4階層までの入れ子\n含まない記法：不正入力・未対応記法の境界ケース（L で扱います）。",
+                "lineNumber": 2,
+                "hasTaskDescendant": false,
+                "isGroup": false,
+                "isMemo": true
+              }
+            ],
+            "subSections": [
+              {
+                "type": "section",
+                "id": "section-2",
+                "depth": 2,
+                "title": "【今日のインボックス】突発・当日締切",
+                "lineNumber": 15,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s2.q0",
+                    "raw": "メールやチャットで飛んできた依頼を、まずここに書きます。\n数時間後が締切のものは @due（当日）と @schedule（作業ブロック）を両方書きます。",
+                    "lineNumber": 17,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n1",
+                    "text": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
+                    "status": "doing",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s2.n1.n0",
+                        "text": "13:05 予約システムから6月分CSVを出力済み",
+                        "children": [],
+                        "lineNumber": 25,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "【今日のインボックス】突発・当日締切",
+                          "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付[1]",
+                          "13:05 予約システムから6月分CSVを出力済み[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s2.n1.n1",
+                        "text": "13:40 会議室Cの改装閉鎖期間の扱いを確認 → 「除外でOK」と返信あり",
+                        "children": [],
+                        "lineNumber": 26,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "【今日のインボックス】突発・当日締切",
+                          "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付[1]",
+                          "13:40 会議室Cの改装閉鎖期間の扱いを確認 → 「除外でOK」と返信あり[1]"
+                        ]
+                      },
+                      {
+                        "type": "quote",
+                        "id": "s2.n1.q2",
+                        "raw": "戸田さん「役員会の資料に貼るので、稼働率は小数第1位まで。母数も併記して」",
+                        "lineNumber": 27,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-06T13:00/2026-07-06T14:30",
+                      "due": "2026-07-06",
+                      "priority": 1,
+                      "tags": [
+                        "突発",
+                        "経営企画"
+                      ]
+                    },
+                    "lineNumber": 20,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【今日のインボックス】突発・当日締切",
+                      "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付[1]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n2",
+                    "text": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
+                    "status": "blocked",
+                    "children": [
+                      {
+                        "type": "quote",
+                        "id": "s2.n2.q0",
+                        "raw": "情シス・岡田さん「最終出社日ではなく、雇用契約終了日で止めます。そこだけ確定させてください」",
+                        "lineNumber": 32,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true
+                      }
+                    ],
+                    "meta": {
+                      "due": "2026-07-08",
+                      "priority": 2,
+                      "tags": [
+                        "突発",
+                        "ボール待ち",
+                        "情シス"
+                      ]
+                    },
+                    "lineNumber": 28,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【今日のインボックス】突発・当日締切",
+                      "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん[2]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n3",
+                    "text": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
+                    "status": "todo",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s2.n3.n0",
+                        "text": "台車は防災倉庫の左奥。HDMIケーブルとUSB-C変換も忘れずに",
+                        "children": [],
+                        "lineNumber": 37,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "【今日のインボックス】突発・当日締切",
+                          "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設[3]",
+                          "台車は防災倉庫の左奥。HDMIケーブルとUSB-C変換も忘れずに[0]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-06T17:00/2026-07-06T17:30",
+                      "due": "2026-07-07",
+                      "tags": [
+                        "突発"
+                      ]
+                    },
+                    "lineNumber": 33,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【今日のインボックス】突発・当日締切",
+                      "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設[3]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-3",
+                "depth": 2,
+                "title": "【契約管理】委託契約・更新期限",
+                "lineNumber": 39,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s3.q0",
+                    "raw": "更新月の2ヶ月前に動き出すこと（昨年、清掃契約で期限ギリギリになった反省）。\n法務レビューの標準リードタイムは5営業日です。",
+                    "lineNumber": 41,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s3.n1",
+                    "text": "清掃業務委託（㈱クリーンプロ）契約更新",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n0",
+                        "text": "現行契約書の条件を洗い出して比較表を作成",
+                        "status": "done",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-01T10:00/2026-07-01T12:00",
+                          "tags": [
+                            "契約",
+                            "清掃"
+                          ]
+                        },
+                        "lineNumber": 46,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                          "現行契約書の条件を洗い出して比較表を作成[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n1",
+                        "text": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
+                        "status": "doing",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s3.n1.n1.n0",
+                            "text": "クリーンプロ：現行比 +3.2%（人件費上昇分）。見積受領済み",
+                            "children": [],
+                            "lineNumber": 55,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【契約管理】委託契約・更新期限",
+                              "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                              "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）[1]",
+                              "クリーンプロ：現行比 +3.2%（人件費上昇分）。見積受領済み[0]"
+                            ]
+                          },
+                          {
+                            "type": "list",
+                            "id": "s3.n1.n1.n1",
+                            "text": "日本メンテ：現行比 -1.5%。ただし窓清掃が年2回→年1回に減る",
+                            "children": [],
+                            "lineNumber": 56,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【契約管理】委託契約・更新期限",
+                              "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                              "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）[1]",
+                              "日本メンテ：現行比 -1.5%。ただし窓清掃が年2回→年1回に減る[1]"
+                            ]
+                          },
+                          {
+                            "type": "task",
+                            "id": "s3.n1.n1.n2",
+                            "text": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
+                            "status": "blocked",
+                            "children": [
+                              {
+                                "type": "list",
+                                "id": "s3.n1.n1.n2.n0",
+                                "text": "7/3 に依頼、7/8 に催促メール済み",
+                                "children": [],
+                                "lineNumber": 60,
+                                "hasTaskDescendant": false,
+                                "isGroup": false,
+                                "isMemo": true,
+                                "depth": 4,
+                                "path": [
+                                  "【契約管理】委託契約・更新期限",
+                                  "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                                  "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）[1]",
+                                  "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん[2]",
+                                  "7/3 に依頼、7/8 に催促メール済み[0]"
+                                ]
+                              }
+                            ],
+                            "meta": {
+                              "due": "2026-07-10",
+                              "tags": [
+                                "ボール待ち"
+                              ]
+                            },
+                            "lineNumber": 57,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isLeafTask": false,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【契約管理】委託契約・更新期限",
+                              "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                              "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）[1]",
+                              "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん[2]"
+                            ]
+                          },
+                          {
+                            "type": "quote",
+                            "id": "s3.n1.n1.q3",
+                            "raw": "課長「金額だけで決めないこと。窓清掃の回数は入居者クレームに直結する」",
+                            "lineNumber": 61,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "plan": "2026-07-06/2026-07-17",
+                          "schedule": "2026-07-07T14:00/2026-07-07T17:00",
+                          "due": "2026-07-17",
+                          "priority": 1,
+                          "tags": [
+                            "契約",
+                            "清掃",
+                            "相見積"
+                          ]
+                        },
+                        "lineNumber": 49,
+                        "hasTaskDescendant": true,
+                        "isGroup": true,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                          "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n2",
+                        "text": "比較表を課長へ提出し、業者決定の承認を得る",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-20T10:00/2026-07-20T11:00",
+                          "tentative": {
+                            "schedule": true
+                          },
+                          "due": "2026-07-22",
+                          "dependsOn": [
+                            "見積3社比較"
+                          ],
+                          "tags": [
+                            "契約",
+                            "承認"
+                          ]
+                        },
+                        "lineNumber": 62,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                          "比較表を課長へ提出し、業者決定の承認を得る[2]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n3",
+                        "text": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "plan": "2026-07-22/2026-08-07",
+                          "tentative": {
+                            "plan": true
+                          },
+                          "tags": [
+                            "契約"
+                          ]
+                        },
+                        "lineNumber": 67,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                          "決定業者と契約条件の詰め（清掃範囲・回数・単価）[3]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n4",
+                        "text": "契約締結（押印・製本・原本送付）",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "quote",
+                            "id": "s3.n1.n4.q0",
+                            "raw": "現行契約の満了日は 2026-08-31。空白期間を作らないこと",
+                            "lineNumber": 75,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "due": "2026-08-31",
+                          "priority": 1,
+                          "dependsOn": [
+                            "決定業者と契約条件の詰め"
+                          ],
+                          "tags": [
+                            "契約"
+                          ]
+                        },
+                        "lineNumber": 70,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "清掃業務委託（㈱クリーンプロ）契約更新[1]",
+                          "契約締結（押印・製本・原本送付）[4]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "plan": "2026-07-01/2026-08-31"
+                    },
+                    "lineNumber": 44,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【契約管理】委託契約・更新期限",
+                      "清掃業務委託（㈱クリーンプロ）契約更新[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s3.n2",
+                    "text": "複合機リース契約（富士ビジネス機器）満了対応",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s3.n2.n0",
+                        "text": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-13T13:00/2026-07-13T16:00",
+                          "tags": [
+                            "契約",
+                            "情シス"
+                          ]
+                        },
+                        "lineNumber": 78,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "複合機リース契約（富士ビジネス機器）満了対応[2]",
+                          "現行5台の使用実績（印刷枚数・カラー比率）を集計[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n2.n1",
+                        "text": "買取への切り替え検討",
+                        "status": "hold",
+                        "children": [
+                          {
+                            "type": "quote",
+                            "id": "s3.n2.n1.q0",
+                            "raw": "経理・宮本さん「資産計上すると固定資産税と管理が増える。リース継続で」",
+                            "lineNumber": 83,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "tags": [
+                            "契約",
+                            "保留"
+                          ]
+                        },
+                        "lineNumber": 81,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【契約管理】委託契約・更新期限",
+                          "複合機リース契約（富士ビジネス機器）満了対応[2]",
+                          "買取への切り替え検討[1]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "plan": "2026-07-13/2026-09-30"
+                    },
+                    "lineNumber": 76,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【契約管理】委託契約・更新期限",
+                      "複合機リース契約（富士ビジネス機器）満了対応[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-4",
+                "depth": 2,
+                "title": "【工事】空調更新工事（3F・4F）",
+                "lineNumber": 85,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s4.q0",
+                    "raw": "元請：大成設備／現場代理人・村井さん\n騒音を伴う作業は平日18時以降または土日に限る（管理組合ルール）。",
+                    "lineNumber": 87,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s4.n1",
+                    "text": "工事前の準備",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s4.n1.n0",
+                        "text": "工事日程の確定（村井さんと現地調整）",
+                        "status": "done",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-02T15:00/2026-07-02T16:00",
+                          "tags": [
+                            "工事",
+                            "空調"
+                          ]
+                        },
+                        "lineNumber": 92,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事前の準備[1]",
+                          "工事日程の確定（村井さんと現地調整）[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n1.n1",
+                        "text": "入居各社への工事告知文を作成",
+                        "status": "doing",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s4.n1.n1.n0",
+                            "text": "騒音発生時間帯（9:00-17:00）と断続的な停止を明記する",
+                            "children": [],
+                            "lineNumber": 100,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【工事】空調更新工事（3F・4F）",
+                              "工事前の準備[1]",
+                              "入居各社への工事告知文を作成[1]",
+                              "騒音発生時間帯（9:00-17:00）と断続的な停止を明記する[0]"
+                            ]
+                          },
+                          {
+                            "type": "list",
+                            "id": "s4.n1.n1.n1",
+                            "text": "エレベーター使用制限（資材搬入 7:00-9:00）も併記する",
+                            "children": [],
+                            "lineNumber": 101,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【工事】空調更新工事（3F・4F）",
+                              "工事前の準備[1]",
+                              "入居各社への工事告知文を作成[1]",
+                              "エレベーター使用制限（資材搬入 7:00-9:00）も併記する[1]"
+                            ]
+                          },
+                          {
+                            "type": "quote",
+                            "id": "s4.n1.n1.q2",
+                            "raw": "課長「クレームは『聞いていない』から始まる。掲示とメール両方でやること」",
+                            "lineNumber": 102,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-08T09:30/2026-07-08T11:30",
+                          "due": "2026-07-10",
+                          "priority": 1,
+                          "tags": [
+                            "工事",
+                            "空調",
+                            "告知"
+                          ]
+                        },
+                        "lineNumber": 95,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事前の準備[1]",
+                          "入居各社への工事告知文を作成[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n1.n2",
+                        "text": "掲示板への掲示とエントランス告知",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-13T09:00/2026-07-13T09:30",
+                          "dependsOn": [
+                            "入居各社への工事告知文を作成"
+                          ],
+                          "tags": [
+                            "工事",
+                            "告知"
+                          ]
+                        },
+                        "lineNumber": 103,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事前の準備[1]",
+                          "掲示板への掲示とエントランス告知[2]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n1.n3",
+                        "text": "仮設スポットクーラーの電源容量が足りるか要確認 → ボール：村井さん",
+                        "status": "blocked",
+                        "children": [
+                          {
+                            "type": "quote",
+                            "id": "s4.n1.n3.q0",
+                            "raw": "3F の分電盤は既存機器で余裕が少ない。ブレーカーが落ちると業務停止になる",
+                            "lineNumber": 111,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "due": "2026-07-17",
+                          "priority": 1,
+                          "tags": [
+                            "工事",
+                            "ボール待ち"
+                          ]
+                        },
+                        "lineNumber": 107,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事前の準備[1]",
+                          "仮設スポットクーラーの電源容量が足りるか要確認 → ボール：村井さん[3]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "plan": "2026-07-06/2026-07-24"
+                    },
+                    "lineNumber": 90,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【工事】空調更新工事（3F・4F）",
+                      "工事前の準備[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s4.n2",
+                    "text": "工事の実施",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s4.n2.n0",
+                        "text": "3F 空調機交換（1期）",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s4.n2.n0.n0",
+                            "text": "期間中の3Fは仮設スポットクーラー5台で対応する",
+                            "children": [],
+                            "lineNumber": 117,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【工事】空調更新工事（3F・4F）",
+                              "工事の実施[2]",
+                              "3F 空調機交換（1期）[0]",
+                              "期間中の3Fは仮設スポットクーラー5台で対応する[0]"
+                            ]
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-27/2026-07-31",
+                          "tags": [
+                            "工事",
+                            "空調"
+                          ]
+                        },
+                        "lineNumber": 114,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事の実施[2]",
+                          "3F 空調機交換（1期）[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n2.n1",
+                        "text": "4F 空調機交換（2期）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-08-03/2026-08-07",
+                          "tags": [
+                            "工事",
+                            "空調"
+                          ]
+                        },
+                        "lineNumber": 118,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事の実施[2]",
+                          "4F 空調機交換（2期）[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n2.n2",
+                        "text": "毎朝の現場立ち会い（作業開始時の確認）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+                          "repeat": "FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR;COUNT=10",
+                          "tags": [
+                            "工事",
+                            "立ち会い"
+                          ]
+                        },
+                        "lineNumber": 121,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事の実施[2]",
+                          "毎朝の現場立ち会い（作業開始時の確認）[2]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s4.n2.n3",
+                        "text": "試運転立ち会いと引き渡し確認",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-08-10T13:00/2026-08-10T15:00",
+                          "tentative": {
+                            "schedule": true
+                          },
+                          "dependsOn": [
+                            "4F 空調機交換（2期）"
+                          ],
+                          "tags": [
+                            "工事",
+                            "検収"
+                          ]
+                        },
+                        "lineNumber": 125,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【工事】空調更新工事（3F・4F）",
+                          "工事の実施[2]",
+                          "試運転立ち会いと引き渡し確認[3]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "plan": "2026-07-27/2026-08-07"
+                    },
+                    "lineNumber": 112,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【工事】空調更新工事（3F・4F）",
+                      "工事の実施[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-5",
+                "depth": 2,
+                "title": "【定例業務】週次・月次",
+                "lineNumber": 130,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s5.q0",
+                    "raw": "繰り返す予定は @repeat を使います。@schedule の開始時刻が繰り返しの起点になり、\n1回あたりの長さは @schedule の長さがそのまま使われます。",
+                    "lineNumber": 132,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s5.n1",
+                    "text": "週次",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s5.n1.n0",
+                        "text": "部内ミーティング（進捗共有・15分）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+                          "repeat": "FREQ=WEEKLY;BYDAY=MO",
+                          "tags": [
+                            "定例",
+                            "会議"
+                          ]
+                        },
+                        "lineNumber": 136,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "週次[1]",
+                          "部内ミーティング（進捗共有・15分）[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s5.n1.n1",
+                        "text": "郵便物の仕分けと各部配布",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+                          "repeat": "FREQ=WEEKLY;BYDAY=MO,WE,FR",
+                          "tags": [
+                            "定例",
+                            "庶務"
+                          ]
+                        },
+                        "lineNumber": 140,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "週次[1]",
+                          "郵便物の仕分けと各部配布[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s5.n1.n2",
+                        "text": "備品在庫チェック（コピー用紙・トナー・文具）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+                          "repeat": "FREQ=WEEKLY;BYDAY=FR",
+                          "tags": [
+                            "定例",
+                            "庶務"
+                          ]
+                        },
+                        "lineNumber": 144,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "週次[1]",
+                          "備品在庫チェック（コピー用紙・トナー・文具）[2]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 135,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【定例業務】週次・月次",
+                      "週次[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s5.n2",
+                    "text": "月次",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s5.n2.n0",
+                        "text": "請求書の受領確認と経理への回付",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s5.n2.n0.n0",
+                            "text": "未着分は先方へ催促する。特に工事関係は遅れがち",
+                            "children": [],
+                            "lineNumber": 155,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【定例業務】週次・月次",
+                              "月次[2]",
+                              "請求書の受領確認と経理への回付[0]",
+                              "未着分は先方へ催促する。特に工事関係は遅れがち[0]"
+                            ]
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-07T09:00/2026-07-07T12:00",
+                          "repeat": "FREQ=MONTHLY;BYMONTHDAY=7",
+                          "due": "2026-07-08",
+                          "priority": 1,
+                          "tags": [
+                            "経理",
+                            "月次"
+                          ]
+                        },
+                        "lineNumber": 149,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "月次[2]",
+                          "請求書の受領確認と経理への回付[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s5.n2.n1",
+                        "text": "定期清掃の立ち会い（第2・第4金曜）",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "quote",
+                            "id": "s5.n2.n1.q0",
+                            "raw": "松田さん「鍵開けは7:45にお願いします。作業員が外で待つことになるので」",
+                            "lineNumber": 160,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-10T08:00/2026-07-10T12:00",
+                          "repeat": "FREQ=MONTHLY;BYDAY=2FR,4FR",
+                          "tags": [
+                            "定例",
+                            "清掃"
+                          ]
+                        },
+                        "lineNumber": 156,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "月次[2]",
+                          "定期清掃の立ち会い（第2・第4金曜）[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s5.n2.n2",
+                        "text": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-16T09:00/2026-07-16T11:00",
+                          "repeat": "FREQ=MONTHLY;BYMONTHDAY=16",
+                          "priority": 2,
+                          "tags": [
+                            "勤怠",
+                            "定例"
+                          ]
+                        },
+                        "lineNumber": 161,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【定例業務】週次・月次",
+                          "月次[2]",
+                          "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）[2]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 148,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【定例業務】週次・月次",
+                      "月次[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-6",
+                "depth": 2,
+                "title": "【採用】中途採用（経理担当1名）",
+                "lineNumber": 167,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s6.q0",
+                    "raw": "日程が相手の都合で動くものは、仮置き ? を付けておきます。\n仮置きは「値は入れたが確定していない」という意味で、確定値と区別して表示されます。",
+                    "lineNumber": 169,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s6.n1",
+                    "text": "選考プロセス",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n0",
+                        "text": "求人票の内容を経理部長と確認して媒体へ入稿",
+                        "status": "done",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-06-29T10:00/2026-06-29T11:30",
+                          "tags": [
+                            "採用"
+                          ]
+                        },
+                        "lineNumber": 174,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "求人票の内容を経理部長と確認して媒体へ入稿[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n1",
+                        "text": "書類選考（応募12名）",
+                        "status": "doing",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s6.n1.n1.n0",
+                            "text": "12名中5名を一次面接へ。3名は経験不足、4名は希望年収が上限超過",
+                            "children": [],
+                            "lineNumber": 182,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【採用】中途採用（経理担当1名）",
+                              "選考プロセス[1]",
+                              "書類選考（応募12名）[1]",
+                              "12名中5名を一次面接へ。3名は経験不足、4名は希望年収が上限超過[0]"
+                            ]
+                          },
+                          {
+                            "type": "quote",
+                            "id": "s6.n1.n1.q1",
+                            "raw": "経理部長「決算経験の有無だけは妥協しないで。月次だけの人は厳しい」",
+                            "lineNumber": 183,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-06T15:00/2026-07-06T17:00",
+                          "due": "2026-07-08",
+                          "priority": 2,
+                          "tags": [
+                            "採用",
+                            "選考"
+                          ]
+                        },
+                        "lineNumber": 177,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "書類選考（応募12名）[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n2",
+                        "text": "一次面接の日程調整（候補5名 × 面接官2名）",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "plan": "2026-07-09/2026-07-17",
+                          "schedule": "2026-07-09T13:00/2026-07-09T15:00",
+                          "due": "2026-07-10",
+                          "dependsOn": [
+                            "書類選考（応募12名）"
+                          ],
+                          "tags": [
+                            "採用",
+                            "日程調整"
+                          ]
+                        },
+                        "lineNumber": 184,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "一次面接の日程調整（候補5名 × 面接官2名）[2]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n3",
+                        "text": "一次面接の実施",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-21T10:00/2026-07-23T18:00",
+                          "tentative": {
+                            "schedule": true
+                          },
+                          "tags": [
+                            "採用",
+                            "面接"
+                          ]
+                        },
+                        "lineNumber": 190,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "一次面接の実施[3]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n4",
+                        "text": "二次面接（役員面接）の設定",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "plan": "2026-07-27/2026-08-07",
+                          "tentative": {
+                            "plan": true,
+                            "schedule": true
+                          },
+                          "schedule": "2026-08-05T15:00/2026-08-05T17:00",
+                          "tags": [
+                            "採用",
+                            "面接"
+                          ]
+                        },
+                        "lineNumber": 193,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "二次面接（役員面接）の設定[4]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s6.n1.n5",
+                        "text": "内定通知・条件提示",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "due": "2026-08-14",
+                          "tentative": {
+                            "due": true
+                          },
+                          "priority": 1,
+                          "tags": [
+                            "採用"
+                          ]
+                        },
+                        "lineNumber": 197,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【採用】中途採用（経理担当1名）",
+                          "選考プロセス[1]",
+                          "内定通知・条件提示[5]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "plan": "2026-07-06/2026-08-14"
+                    },
+                    "lineNumber": 172,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【採用】中途採用（経理担当1名）",
+                      "選考プロセス[1]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-7",
+                "depth": 2,
+                "title": "【完了・保留】",
+                "lineNumber": 202,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s7.q0",
+                    "raw": "完了したものは月末までここに残し、振り返りに使います。\n保留にしたものは理由を必ず書きます。書かないと同じ検討を繰り返すことになります。",
+                    "lineNumber": 204,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "task",
+                    "id": "s7.n1",
+                    "text": "消防設備点検（法定・年2回）の立ち会い",
+                    "status": "done",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s7.n1.n0",
+                        "text": "指摘2件（誘導灯の球切れ、消火器の期限切れ1本）→ いずれも即日対応済み",
+                        "children": [],
+                        "lineNumber": 210,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "【完了・保留】",
+                          "消防設備点検（法定・年2回）の立ち会い[1]",
+                          "指摘2件（誘導灯の球切れ、消火器の期限切れ1本）→ いずれも即日対応済み[0]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-06-26T09:00/2026-06-26T16:00",
+                      "tags": [
+                        "防災",
+                        "法定点検"
+                      ]
+                    },
+                    "lineNumber": 207,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【完了・保留】",
+                      "消防設備点検（法定・年2回）の立ち会い[1]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s7.n2",
+                    "text": "夏季休暇取得予定表の取りまとめ",
+                    "status": "done",
+                    "children": [],
+                    "meta": {
+                      "schedule": "2026-06-29T10:00/2026-06-29T12:00",
+                      "due": "2026-06-30",
+                      "tags": [
+                        "勤怠"
+                      ]
+                    },
+                    "lineNumber": 211,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【完了・保留】",
+                      "夏季休暇取得予定表の取りまとめ[2]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s7.n3",
+                    "text": "フリーアドレス制の全社導入検討",
+                    "status": "hold",
+                    "children": [
+                      {
+                        "type": "quote",
+                        "id": "s7.n3.q0",
+                        "raw": "移転プロジェクトと一体で検討する方が効率的。単独では進めない",
+                        "lineNumber": 217,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true
+                      }
+                    ],
+                    "meta": {
+                      "tags": [
+                        "保留",
+                        "働き方"
+                      ]
+                    },
+                    "lineNumber": 215,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【完了・保留】",
+                      "フリーアドレス制の全社導入検討[3]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s7.n4",
+                    "text": "社用車の増車（2台→3台）",
+                    "status": "hold",
+                    "children": [
+                      {
+                        "type": "quote",
+                        "id": "s7.n4.q0",
+                        "raw": "稼働率を3ヶ月測定した結果、平均42%。増車は不要と判断",
+                        "lineNumber": 220,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true
+                      }
+                    ],
+                    "meta": {
+                      "tags": [
+                        "保留",
+                        "コスト"
+                      ]
+                    },
+                    "lineNumber": 218,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【完了・保留】",
+                      "社用車の増車（2台→3台）[4]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-8",
+                "depth": 2,
+                "title": "【入退社手続き】",
+                "lineNumber": 222,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s8.q0",
+                    "raw": "入社手続きは「入社日の10営業日前」までに席・PC・カードの3点を確定させます。\n入れ子は4階層まで使っています（分類 → 手続き → タスク → サブタスク）。",
+                    "lineNumber": 224,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s8.n1",
+                    "text": "8月1日入社（1名・経理配属）",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s8.n1.n0",
+                        "text": "受け入れ準備",
+                        "children": [
+                          {
+                            "type": "task",
+                            "id": "s8.n1.n0.n0",
+                            "text": "PC・アカウント発行を情シスへ依頼",
+                            "status": "todo",
+                            "children": [
+                              {
+                                "type": "list",
+                                "id": "s8.n1.n0.n0.n0",
+                                "text": "依頼票に「経理システムの権限：仕訳入力のみ」と明記する",
+                                "children": [],
+                                "lineNumber": 233,
+                                "hasTaskDescendant": false,
+                                "isGroup": false,
+                                "isMemo": true,
+                                "depth": 4,
+                                "path": [
+                                  "【入退社手続き】",
+                                  "8月1日入社（1名・経理配属）[1]",
+                                  "受け入れ準備[0]",
+                                  "PC・アカウント発行を情シスへ依頼[0]",
+                                  "依頼票に「経理システムの権限：仕訳入力のみ」と明記する[0]"
+                                ]
+                              },
+                              {
+                                "type": "task",
+                                "id": "s8.n1.n0.n0.n1",
+                                "text": "発行されたアカウントの動作確認",
+                                "status": "todo",
+                                "children": [],
+                                "meta": {
+                                  "schedule": "2026-07-31T14:00/2026-07-31T15:00",
+                                  "tentative": {
+                                    "schedule": true
+                                  },
+                                  "dependsOn": [
+                                    "PC・アカウント発行を情シスへ依頼"
+                                  ],
+                                  "tags": [
+                                    "入社手続き"
+                                  ]
+                                },
+                                "lineNumber": 234,
+                                "hasTaskDescendant": false,
+                                "isGroup": false,
+                                "isLeafTask": true,
+                                "isMemo": false,
+                                "depth": 4,
+                                "path": [
+                                  "【入退社手続き】",
+                                  "8月1日入社（1名・経理配属）[1]",
+                                  "受け入れ準備[0]",
+                                  "PC・アカウント発行を情シスへ依頼[0]",
+                                  "発行されたアカウントの動作確認[1]"
+                                ]
+                              }
+                            ],
+                            "meta": {
+                              "schedule": "2026-07-14T10:00/2026-07-14T10:30",
+                              "due": "2026-07-17",
+                              "tags": [
+                                "入社手続き",
+                                "情シス"
+                              ]
+                            },
+                            "lineNumber": 229,
+                            "hasTaskDescendant": true,
+                            "isGroup": true,
+                            "isLeafTask": false,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "8月1日入社（1名・経理配属）[1]",
+                              "受け入れ準備[0]",
+                              "PC・アカウント発行を情シスへ依頼[0]"
+                            ]
+                          },
+                          {
+                            "type": "task",
+                            "id": "s8.n1.n0.n1",
+                            "text": "座席とロッカーの割り当て（3F 経理エリア）",
+                            "status": "todo",
+                            "children": [],
+                            "meta": {
+                              "due": "2026-07-24",
+                              "tags": [
+                                "入社手続き",
+                                "ファシリティ"
+                              ]
+                            },
+                            "lineNumber": 238,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isLeafTask": true,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "8月1日入社（1名・経理配属）[1]",
+                              "受け入れ準備[0]",
+                              "座席とロッカーの割り当て（3F 経理エリア）[1]"
+                            ]
+                          },
+                          {
+                            "type": "task",
+                            "id": "s8.n1.n0.n2",
+                            "text": "入館カードの発行と登録",
+                            "status": "todo",
+                            "children": [],
+                            "meta": {
+                              "due": "2026-07-31",
+                              "tags": [
+                                "入社手続き",
+                                "警備"
+                              ]
+                            },
+                            "lineNumber": 241,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isLeafTask": true,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "8月1日入社（1名・経理配属）[1]",
+                              "受け入れ準備[0]",
+                              "入館カードの発行と登録[2]"
+                            ]
+                          }
+                        ],
+                        "lineNumber": 228,
+                        "hasTaskDescendant": true,
+                        "isGroup": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【入退社手続き】",
+                          "8月1日入社（1名・経理配属）[1]",
+                          "受け入れ準備[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s8.n1.n1",
+                        "text": "初日対応",
+                        "children": [
+                          {
+                            "type": "task",
+                            "id": "s8.n1.n1.n0",
+                            "text": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
+                            "status": "todo",
+                            "children": [],
+                            "meta": {
+                              "schedule": "2026-08-03T09:00/2026-08-03T09:30",
+                              "tentative": {
+                                "schedule": true
+                              },
+                              "tags": [
+                                "入社手続き"
+                              ]
+                            },
+                            "lineNumber": 245,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isLeafTask": true,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "8月1日入社（1名・経理配属）[1]",
+                              "初日対応[1]",
+                              "入社時書類一式の回収（誓約書・身元保証書・通勤届）[0]"
+                            ]
+                          },
+                          {
+                            "type": "task",
+                            "id": "s8.n1.n1.n1",
+                            "text": "オリエンテーションの実施",
+                            "status": "todo",
+                            "children": [
+                              {
+                                "type": "quote",
+                                "id": "s8.n1.n1.n1.q0",
+                                "raw": "前回、初日にPCが届いておらず半日待たせてしまった。前週金曜に現物確認すること",
+                                "lineNumber": 251,
+                                "hasTaskDescendant": false,
+                                "isGroup": false,
+                                "isMemo": true
+                              }
+                            ],
+                            "meta": {
+                              "schedule": "2026-08-03T09:30/2026-08-03T11:00",
+                              "tentative": {
+                                "schedule": true
+                              },
+                              "tags": [
+                                "入社手続き"
+                              ]
+                            },
+                            "lineNumber": 248,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isLeafTask": false,
+                            "isMemo": false,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "8月1日入社（1名・経理配属）[1]",
+                              "初日対応[1]",
+                              "オリエンテーションの実施[1]"
+                            ]
+                          }
+                        ],
+                        "lineNumber": 244,
+                        "hasTaskDescendant": true,
+                        "isGroup": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【入退社手続き】",
+                          "8月1日入社（1名・経理配属）[1]",
+                          "初日対応[1]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 227,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【入退社手続き】",
+                      "8月1日入社（1名・経理配属）[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s8.n2",
+                    "text": "7月31日退職（2名）",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s8.n2.n0",
+                        "text": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
+                        "status": "blocked",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s8.n2.n0.n0",
+                            "text": "アカウント停止日がこれに連動するため、情シスが待っている",
+                            "children": [],
+                            "lineNumber": 257,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "7月31日退職（2名）[2]",
+                              "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん[0]",
+                              "アカウント停止日がこれに連動するため、情シスが待っている[0]"
+                            ]
+                          }
+                        ],
+                        "meta": {
+                          "due": "2026-07-08",
+                          "priority": 1,
+                          "tags": [
+                            "退職手続き",
+                            "ボール待ち"
+                          ]
+                        },
+                        "lineNumber": 253,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【入退社手続き】",
+                          "7月31日退職（2名）[2]",
+                          "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s8.n2.n1",
+                        "text": "貸与物返却リストの作成と本人への連絡",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s8.n2.n1.n0",
+                            "text": "PC・入館カード・社章・貸与スマホ・引き出しの鍵",
+                            "children": [],
+                            "lineNumber": 262,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "【入退社手続き】",
+                              "7月31日退職（2名）[2]",
+                              "貸与物返却リストの作成と本人への連絡[1]",
+                              "PC・入館カード・社章・貸与スマホ・引き出しの鍵[0]"
+                            ]
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-13T16:00/2026-07-13T17:00",
+                          "due": "2026-07-17",
+                          "tags": [
+                            "退職手続き"
+                          ]
+                        },
+                        "lineNumber": 258,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【入退社手続き】",
+                          "7月31日退職（2名）[2]",
+                          "貸与物返却リストの作成と本人への連絡[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s8.n2.n2",
+                        "text": "社会保険・雇用保険の喪失手続き",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "due": "2026-08-05",
+                          "tags": [
+                            "退職手続き",
+                            "社保"
+                          ]
+                        },
+                        "lineNumber": 263,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "【入退社手続き】",
+                          "7月31日退職（2名）[2]",
+                          "社会保険・雇用保険の喪失手続き[2]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 252,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "【入退社手続き】",
+                      "7月31日退職（2名）[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              }
+            ]
+          }
+        ],
+        "nodeLineMap": {
+          "section-1": 0,
+          "s1.q0": 2,
+          "section-2": 15,
+          "s2.q0": 17,
+          "s2.n1": 20,
+          "s2.n1.n0": 25,
+          "s2.n1.n1": 26,
+          "s2.n1.q2": 27,
+          "s2.n2": 28,
+          "s2.n2.q0": 32,
+          "s2.n3": 33,
+          "s2.n3.n0": 37,
+          "section-3": 39,
+          "s3.q0": 41,
+          "s3.n1": 44,
+          "s3.n1.n0": 46,
+          "s3.n1.n1": 49,
+          "s3.n1.n1.n0": 55,
+          "s3.n1.n1.n1": 56,
+          "s3.n1.n1.n2": 57,
+          "s3.n1.n1.n2.n0": 60,
+          "s3.n1.n1.q3": 61,
+          "s3.n1.n2": 62,
+          "s3.n1.n3": 67,
+          "s3.n1.n4": 70,
+          "s3.n1.n4.q0": 75,
+          "s3.n2": 76,
+          "s3.n2.n0": 78,
+          "s3.n2.n1": 81,
+          "s3.n2.n1.q0": 83,
+          "section-4": 85,
+          "s4.q0": 87,
+          "s4.n1": 90,
+          "s4.n1.n0": 92,
+          "s4.n1.n1": 95,
+          "s4.n1.n1.n0": 100,
+          "s4.n1.n1.n1": 101,
+          "s4.n1.n1.q2": 102,
+          "s4.n1.n2": 103,
+          "s4.n1.n3": 107,
+          "s4.n1.n3.q0": 111,
+          "s4.n2": 112,
+          "s4.n2.n0": 114,
+          "s4.n2.n0.n0": 117,
+          "s4.n2.n1": 118,
+          "s4.n2.n2": 121,
+          "s4.n2.n3": 125,
+          "section-5": 130,
+          "s5.q0": 132,
+          "s5.n1": 135,
+          "s5.n1.n0": 136,
+          "s5.n1.n1": 140,
+          "s5.n1.n2": 144,
+          "s5.n2": 148,
+          "s5.n2.n0": 149,
+          "s5.n2.n0.n0": 155,
+          "s5.n2.n1": 156,
+          "s5.n2.n1.q0": 160,
+          "s5.n2.n2": 161,
+          "section-6": 167,
+          "s6.q0": 169,
+          "s6.n1": 172,
+          "s6.n1.n0": 174,
+          "s6.n1.n1": 177,
+          "s6.n1.n1.n0": 182,
+          "s6.n1.n1.q1": 183,
+          "s6.n1.n2": 184,
+          "s6.n1.n3": 190,
+          "s6.n1.n4": 193,
+          "s6.n1.n5": 197,
+          "section-7": 202,
+          "s7.q0": 204,
+          "s7.n1": 207,
+          "s7.n1.n0": 210,
+          "s7.n2": 211,
+          "s7.n3": 215,
+          "s7.n3.q0": 217,
+          "s7.n4": 218,
+          "s7.n4.q0": 220,
+          "section-8": 222,
+          "s8.q0": 224,
+          "s8.n1": 227,
+          "s8.n1.n0": 228,
+          "s8.n1.n0.n0": 229,
+          "s8.n1.n0.n0.n0": 233,
+          "s8.n1.n0.n0.n1": 234,
+          "s8.n1.n0.n1": 238,
+          "s8.n1.n0.n2": 241,
+          "s8.n1.n1": 244,
+          "s8.n1.n1.n0": 245,
+          "s8.n1.n1.n1": 248,
+          "s8.n1.n1.n1.q0": 251,
+          "s8.n2": 252,
+          "s8.n2.n0": 253,
+          "s8.n2.n0.n0": 257,
+          "s8.n2.n1": 258,
+          "s8.n2.n1.n0": 262,
+          "s8.n2.n2": 263
+        }
+      }
+    }
+  ],
+  "projections": {
+    "calendar": [
+      {
+        "id": "demo/sample-m.md::s2.n1",
+        "type": "task",
+        "title": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
+        "status": "doing",
+        "parents": [
+          "【今日のインボックス】突発・当日締切"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T13:00:00.000+09:00",
+          "end": "2026-07-06T14:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s2.n3",
+        "type": "task",
+        "title": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
+        "status": "todo",
+        "parents": [
+          "【今日のインボックス】突発・当日締切"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T17:00:00.000+09:00",
+          "end": "2026-07-06T17:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n0",
+        "type": "task",
+        "title": "現行契約書の条件を洗い出して比較表を作成",
+        "status": "done",
+        "parents": [
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-01T10:00:00.000+09:00",
+          "end": "2026-07-01T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n1",
+        "type": "task",
+        "title": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
+        "status": "doing",
+        "parents": [
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-07T14:00:00.000+09:00",
+          "end": "2026-07-07T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n2",
+        "type": "task",
+        "title": "比較表を課長へ提出し、業者決定の承認を得る",
+        "status": "todo",
+        "parents": [
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-20T10:00:00.000+09:00",
+          "end": "2026-07-20T11:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n2.n0",
+        "type": "task",
+        "title": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
+        "status": "todo",
+        "parents": [
+          "【契約管理】委託契約・更新期限",
+          "複合機リース契約（富士ビジネス機器）満了対応"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-13T13:00:00.000+09:00",
+          "end": "2026-07-13T16:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n0",
+        "type": "task",
+        "title": "工事日程の確定（村井さんと現地調整）",
+        "status": "done",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-02T15:00:00.000+09:00",
+          "end": "2026-07-02T16:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n1",
+        "type": "task",
+        "title": "入居各社への工事告知文を作成",
+        "status": "doing",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-08T09:30:00.000+09:00",
+          "end": "2026-07-08T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n2",
+        "type": "task",
+        "title": "掲示板への掲示とエントランス告知",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-13T09:00:00.000+09:00",
+          "end": "2026-07-13T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n0",
+        "type": "task",
+        "title": "3F 空調機交換（1期）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateRange",
+          "start": "2026-07-27",
+          "endExclusive": "2026-07-31"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n1",
+        "type": "task",
+        "title": "4F 空調機交換（2期）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateRange",
+          "start": "2026-08-03",
+          "endExclusive": "2026-08-07"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r0",
+        "type": "task",
+        "title": "毎朝の現場立ち会い（作業開始時の確認）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-28T08:30:00.000+09:00",
+          "end": "2026-07-28T09:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r1",
+        "type": "task",
+        "title": "毎朝の現場立ち会い（作業開始時の確認）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-29T08:30:00.000+09:00",
+          "end": "2026-07-29T09:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r2",
+        "type": "task",
+        "title": "毎朝の現場立ち会い（作業開始時の確認）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-30T08:30:00.000+09:00",
+          "end": "2026-07-30T09:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r3",
+        "type": "task",
+        "title": "毎朝の現場立ち会い（作業開始時の確認）",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-31T08:30:00.000+09:00",
+          "end": "2026-07-31T09:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n3",
+        "type": "task",
+        "title": "試運転立ち会いと引き渡し確認",
+        "status": "todo",
+        "parents": [
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-08-10T13:00:00.000+09:00",
+          "end": "2026-08-10T15:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r0",
+        "type": "task",
+        "title": "部内ミーティング（進捗共有・15分）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T09:15:00.000+09:00",
+          "end": "2026-07-06T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r1",
+        "type": "task",
+        "title": "部内ミーティング（進捗共有・15分）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-13T09:15:00.000+09:00",
+          "end": "2026-07-13T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r2",
+        "type": "task",
+        "title": "部内ミーティング（進捗共有・15分）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-20T09:15:00.000+09:00",
+          "end": "2026-07-20T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r3",
+        "type": "task",
+        "title": "部内ミーティング（進捗共有・15分）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-27T09:15:00.000+09:00",
+          "end": "2026-07-27T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r0",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T11:00:00.000+09:00",
+          "end": "2026-07-06T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r1",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-08T11:00:00.000+09:00",
+          "end": "2026-07-08T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r2",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-10T11:00:00.000+09:00",
+          "end": "2026-07-10T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r3",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-13T11:00:00.000+09:00",
+          "end": "2026-07-13T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r4",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-15T11:00:00.000+09:00",
+          "end": "2026-07-15T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r5",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-17T11:00:00.000+09:00",
+          "end": "2026-07-17T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r6",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-20T11:00:00.000+09:00",
+          "end": "2026-07-20T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r7",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-22T11:00:00.000+09:00",
+          "end": "2026-07-22T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r8",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-24T11:00:00.000+09:00",
+          "end": "2026-07-24T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r9",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-27T11:00:00.000+09:00",
+          "end": "2026-07-27T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r10",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-29T11:00:00.000+09:00",
+          "end": "2026-07-29T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r11",
+        "type": "task",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-31T11:00:00.000+09:00",
+          "end": "2026-07-31T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r0",
+        "type": "task",
+        "title": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-10T16:00:00.000+09:00",
+          "end": "2026-07-10T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r1",
+        "type": "task",
+        "title": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-17T16:00:00.000+09:00",
+          "end": "2026-07-17T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r2",
+        "type": "task",
+        "title": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-24T16:00:00.000+09:00",
+          "end": "2026-07-24T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r3",
+        "type": "task",
+        "title": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-31T16:00:00.000+09:00",
+          "end": "2026-07-31T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n0__r0",
+        "type": "task",
+        "title": "請求書の受領確認と経理への回付",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-07T09:00:00.000+09:00",
+          "end": "2026-07-07T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n1__r0",
+        "type": "task",
+        "title": "定期清掃の立ち会い（第2・第4金曜）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-11T08:00:00.000+09:00",
+          "end": "2026-07-11T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n1__r1",
+        "type": "task",
+        "title": "定期清掃の立ち会い（第2・第4金曜）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-25T08:00:00.000+09:00",
+          "end": "2026-07-25T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n2__r0",
+        "type": "task",
+        "title": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
+        "status": "todo",
+        "parents": [
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-16T09:00:00.000+09:00",
+          "end": "2026-07-16T11:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n0",
+        "type": "task",
+        "title": "求人票の内容を経理部長と確認して媒体へ入稿",
+        "status": "done",
+        "parents": [
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-06-29T10:00:00.000+09:00",
+          "end": "2026-06-29T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n1",
+        "type": "task",
+        "title": "書類選考（応募12名）",
+        "status": "doing",
+        "parents": [
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T15:00:00.000+09:00",
+          "end": "2026-07-06T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n2",
+        "type": "task",
+        "title": "一次面接の日程調整（候補5名 × 面接官2名）",
+        "status": "todo",
+        "parents": [
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-09T13:00:00.000+09:00",
+          "end": "2026-07-09T15:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n3",
+        "type": "task",
+        "title": "一次面接の実施",
+        "status": "todo",
+        "parents": [
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "temporal": {
+          "kind": "CalendarDateRange",
+          "start": "2026-07-21",
+          "endExclusive": "2026-07-24"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n4",
+        "type": "task",
+        "title": "二次面接（役員面接）の設定",
+        "status": "todo",
+        "parents": [
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-08-05T15:00:00.000+09:00",
+          "end": "2026-08-05T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s7.n1",
+        "type": "task",
+        "title": "消防設備点検（法定・年2回）の立ち会い",
+        "status": "done",
+        "parents": [
+          "【完了・保留】"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-06-26T09:00:00.000+09:00",
+          "end": "2026-06-26T16:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s7.n2",
+        "type": "task",
+        "title": "夏季休暇取得予定表の取りまとめ",
+        "status": "done",
+        "parents": [
+          "【完了・保留】"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-06-29T10:00:00.000+09:00",
+          "end": "2026-06-29T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0",
+        "type": "task",
+        "title": "PC・アカウント発行を情シスへ依頼",
+        "status": "todo",
+        "parents": [
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-14T10:00:00.000+09:00",
+          "end": "2026-07-14T10:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
+        "type": "task",
+        "title": "発行されたアカウントの動作確認",
+        "status": "todo",
+        "parents": [
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備",
+          "PC・アカウント発行を情シスへ依頼"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-31T14:00:00.000+09:00",
+          "end": "2026-07-31T15:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n0",
+        "type": "task",
+        "title": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
+        "status": "todo",
+        "parents": [
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "初日対応"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-08-03T09:00:00.000+09:00",
+          "end": "2026-08-03T09:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n1",
+        "type": "task",
+        "title": "オリエンテーションの実施",
+        "status": "todo",
+        "parents": [
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "初日対応"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-08-03T09:30:00.000+09:00",
+          "end": "2026-08-03T11:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2.n1",
+        "type": "task",
+        "title": "貸与物返却リストの作成と本人への連絡",
+        "status": "todo",
+        "parents": [
+          "【入退社手続き】",
+          "7月31日退職（2名）"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-13T16:00:00.000+09:00",
+          "end": "2026-07-13T17:00:00.000+09:00"
+        }
+      }
+    ],
+    "gantt": [
+      {
+        "id": "demo/sample-m.md::section-1",
+        "parentId": null,
+        "type": "project",
+        "name": "総務・管理部門 タスク管理 2026年7月",
+        "start": "2026-06-26T09:00:00.000+09:00",
+        "end": "2026-08-10T15:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-2",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【今日のインボックス】突発・当日締切",
+        "start": "2026-07-06T13:00:00.000+09:00",
+        "end": "2026-07-06T17:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s2.n1",
+        "parentId": "demo/sample-m.md::section-2",
+        "type": "task",
+        "name": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-06T13:00/2026-07-06T14:30"
+        },
+        "start": "2026-07-06T13:00:00.000+09:00",
+        "end": "2026-07-06T14:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s2.n3",
+        "parentId": "demo/sample-m.md::section-2",
+        "type": "task",
+        "name": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T17:00/2026-07-06T17:30"
+        },
+        "start": "2026-07-06T17:00:00.000+09:00",
+        "end": "2026-07-06T17:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-3",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【契約管理】委託契約・更新期限",
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1",
+        "parentId": "demo/sample-m.md::section-3",
+        "type": "subsection",
+        "name": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n0",
+        "parentId": "demo/sample-m.md::s3.n1",
+        "type": "task",
+        "name": "現行契約書の条件を洗い出して比較表を作成",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-07-01T10:00/2026-07-01T12:00"
+        },
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-01T12:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n1",
+        "parentId": "demo/sample-m.md::s3.n1",
+        "type": "task",
+        "name": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-07T14:00/2026-07-07T17:00"
+        },
+        "start": "2026-07-07T14:00:00.000+09:00",
+        "end": "2026-07-07T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n2",
+        "parentId": "demo/sample-m.md::s3.n1",
+        "type": "task",
+        "name": "比較表を課長へ提出し、業者決定の承認を得る",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-20T10:00/2026-07-20T11:00"
+        },
+        "start": "2026-07-20T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s3.n2",
+        "parentId": "demo/sample-m.md::section-3",
+        "type": "subsection",
+        "name": "複合機リース契約（富士ビジネス機器）満了対応",
+        "start": "2026-07-13T13:00:00.000+09:00",
+        "end": "2026-07-13T16:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s3.n2.n0",
+        "parentId": "demo/sample-m.md::s3.n2",
+        "type": "task",
+        "name": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-13T13:00/2026-07-13T16:00"
+        },
+        "start": "2026-07-13T13:00:00.000+09:00",
+        "end": "2026-07-13T16:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-4",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【工事】空調更新工事（3F・4F）",
+        "start": "2026-07-02T15:00:00.000+09:00",
+        "end": "2026-08-10T15:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1",
+        "parentId": "demo/sample-m.md::section-4",
+        "type": "subsection",
+        "name": "工事前の準備",
+        "start": "2026-07-02T15:00:00.000+09:00",
+        "end": "2026-07-13T09:30:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n0",
+        "parentId": "demo/sample-m.md::s4.n1",
+        "type": "task",
+        "name": "工事日程の確定（村井さんと現地調整）",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-07-02T15:00/2026-07-02T16:00"
+        },
+        "start": "2026-07-02T15:00:00.000+09:00",
+        "end": "2026-07-02T16:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n1",
+        "parentId": "demo/sample-m.md::s4.n1",
+        "type": "task",
+        "name": "入居各社への工事告知文を作成",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-08T09:30/2026-07-08T11:30"
+        },
+        "start": "2026-07-08T09:30:00.000+09:00",
+        "end": "2026-07-08T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n2",
+        "parentId": "demo/sample-m.md::s4.n1",
+        "type": "task",
+        "name": "掲示板への掲示とエントランス告知",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-13T09:00/2026-07-13T09:30"
+        },
+        "start": "2026-07-13T09:00:00.000+09:00",
+        "end": "2026-07-13T09:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2",
+        "parentId": "demo/sample-m.md::section-4",
+        "type": "subsection",
+        "name": "工事の実施",
+        "start": "2026-07-27T00:00:00.000+09:00",
+        "end": "2026-08-10T15:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n0",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "3F 空調機交換（1期）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-27/2026-07-31"
+        },
+        "start": "2026-07-27T00:00:00.000+09:00",
+        "end": "2026-07-31T00:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n1",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "4F 空調機交換（2期）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-08-03/2026-08-07"
+        },
+        "start": "2026-08-03T00:00:00.000+09:00",
+        "end": "2026-08-07T00:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r0",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "毎朝の現場立ち会い（作業開始時の確認）",
+        "start": "2026-07-28T08:30:00.000+09:00",
+        "end": "2026-07-28T09:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+          "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r1",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "毎朝の現場立ち会い（作業開始時の確認）",
+        "start": "2026-07-29T08:30:00.000+09:00",
+        "end": "2026-07-29T09:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+          "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r2",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "毎朝の現場立ち会い（作業開始時の確認）",
+        "start": "2026-07-30T08:30:00.000+09:00",
+        "end": "2026-07-30T09:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+          "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2__r3",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "毎朝の現場立ち会い（作業開始時の確認）",
+        "start": "2026-07-31T08:30:00.000+09:00",
+        "end": "2026-07-31T09:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+          "sourceNodeId": "demo/sample-m.md::s4.n2.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n3",
+        "parentId": "demo/sample-m.md::s4.n2",
+        "type": "task",
+        "name": "試運転立ち会いと引き渡し確認",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-08-10T13:00/2026-08-10T15:00"
+        },
+        "start": "2026-08-10T13:00:00.000+09:00",
+        "end": "2026-08-10T15:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-5",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【定例業務】週次・月次",
+        "start": "2026-07-06T09:15:00.000+09:00",
+        "end": "2026-07-16T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1",
+        "parentId": "demo/sample-m.md::section-5",
+        "type": "subsection",
+        "name": "週次",
+        "start": "2026-07-06T09:15:00.000+09:00",
+        "end": "2026-07-10T17:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r0",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "部内ミーティング（進捗共有・15分）",
+        "start": "2026-07-06T09:15:00.000+09:00",
+        "end": "2026-07-06T09:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r1",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "部内ミーティング（進捗共有・15分）",
+        "start": "2026-07-13T09:15:00.000+09:00",
+        "end": "2026-07-13T09:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r2",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "部内ミーティング（進捗共有・15分）",
+        "start": "2026-07-20T09:15:00.000+09:00",
+        "end": "2026-07-20T09:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0__r3",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "部内ミーティング（進捗共有・15分）",
+        "start": "2026-07-27T09:15:00.000+09:00",
+        "end": "2026-07-27T09:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n0"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r0",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-06T11:00:00.000+09:00",
+        "end": "2026-07-06T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r1",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-08T11:00:00.000+09:00",
+        "end": "2026-07-08T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r2",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-10T11:00:00.000+09:00",
+        "end": "2026-07-10T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r3",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-13T11:00:00.000+09:00",
+        "end": "2026-07-13T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r4",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-15T11:00:00.000+09:00",
+        "end": "2026-07-15T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r5",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-17T11:00:00.000+09:00",
+        "end": "2026-07-17T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r6",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-20T11:00:00.000+09:00",
+        "end": "2026-07-20T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r7",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-22T11:00:00.000+09:00",
+        "end": "2026-07-22T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r8",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-24T11:00:00.000+09:00",
+        "end": "2026-07-24T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r9",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-27T11:00:00.000+09:00",
+        "end": "2026-07-27T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r10",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-29T11:00:00.000+09:00",
+        "end": "2026-07-29T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1__r11",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "郵便物の仕分けと各部配布",
+        "start": "2026-07-31T11:00:00.000+09:00",
+        "end": "2026-07-31T11:30:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r0",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "start": "2026-07-10T16:00:00.000+09:00",
+        "end": "2026-07-10T17:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r1",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "start": "2026-07-17T16:00:00.000+09:00",
+        "end": "2026-07-17T17:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r2",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "start": "2026-07-24T16:00:00.000+09:00",
+        "end": "2026-07-24T17:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2__r3",
+        "parentId": "demo/sample-m.md::s5.n1",
+        "type": "task",
+        "name": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "start": "2026-07-31T16:00:00.000+09:00",
+        "end": "2026-07-31T17:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n1.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2",
+        "parentId": "demo/sample-m.md::section-5",
+        "type": "subsection",
+        "name": "月次",
+        "start": "2026-07-07T09:00:00.000+09:00",
+        "end": "2026-07-16T11:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n0__r0",
+        "parentId": "demo/sample-m.md::s5.n2",
+        "type": "task",
+        "name": "請求書の受領確認と経理への回付",
+        "start": "2026-07-07T09:00:00.000+09:00",
+        "end": "2026-07-07T12:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-07T09:00/2026-07-07T12:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n2.n0"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n1__r0",
+        "parentId": "demo/sample-m.md::s5.n2",
+        "type": "task",
+        "name": "定期清掃の立ち会い（第2・第4金曜）",
+        "start": "2026-07-11T08:00:00.000+09:00",
+        "end": "2026-07-11T12:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T08:00/2026-07-10T12:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n2.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n1__r1",
+        "parentId": "demo/sample-m.md::s5.n2",
+        "type": "task",
+        "name": "定期清掃の立ち会い（第2・第4金曜）",
+        "start": "2026-07-25T08:00:00.000+09:00",
+        "end": "2026-07-25T12:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-10T08:00/2026-07-10T12:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n2.n1"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n2__r0",
+        "parentId": "demo/sample-m.md::s5.n2",
+        "type": "task",
+        "name": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
+        "start": "2026-07-16T09:00:00.000+09:00",
+        "end": "2026-07-16T11:00:00.000+09:00",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-16T09:00/2026-07-16T11:00",
+          "sourceNodeId": "demo/sample-m.md::s5.n2.n2"
+        }
+      },
+      {
+        "id": "demo/sample-m.md::section-6",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【採用】中途採用（経理担当1名）",
+        "start": "2026-06-29T10:00:00.000+09:00",
+        "end": "2026-08-05T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1",
+        "parentId": "demo/sample-m.md::section-6",
+        "type": "subsection",
+        "name": "選考プロセス",
+        "start": "2026-06-29T10:00:00.000+09:00",
+        "end": "2026-08-05T17:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n0",
+        "parentId": "demo/sample-m.md::s6.n1",
+        "type": "task",
+        "name": "求人票の内容を経理部長と確認して媒体へ入稿",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-06-29T10:00/2026-06-29T11:30"
+        },
+        "start": "2026-06-29T10:00:00.000+09:00",
+        "end": "2026-06-29T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n1",
+        "parentId": "demo/sample-m.md::s6.n1",
+        "type": "task",
+        "name": "書類選考（応募12名）",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-06T15:00/2026-07-06T17:00"
+        },
+        "start": "2026-07-06T15:00:00.000+09:00",
+        "end": "2026-07-06T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n2",
+        "parentId": "demo/sample-m.md::s6.n1",
+        "type": "task",
+        "name": "一次面接の日程調整（候補5名 × 面接官2名）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-09T13:00/2026-07-09T15:00"
+        },
+        "start": "2026-07-09T13:00:00.000+09:00",
+        "end": "2026-07-09T15:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n3",
+        "parentId": "demo/sample-m.md::s6.n1",
+        "type": "task",
+        "name": "一次面接の実施",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-21T10:00/2026-07-23T18:00"
+        },
+        "start": "2026-07-21T10:00:00.000+09:00",
+        "end": "2026-07-23T18:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n4",
+        "parentId": "demo/sample-m.md::s6.n1",
+        "type": "task",
+        "name": "二次面接（役員面接）の設定",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-08-05T15:00/2026-08-05T17:00"
+        },
+        "start": "2026-08-05T15:00:00.000+09:00",
+        "end": "2026-08-05T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-7",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【完了・保留】",
+        "start": "2026-06-26T09:00:00.000+09:00",
+        "end": "2026-06-29T12:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s7.n1",
+        "parentId": "demo/sample-m.md::section-7",
+        "type": "task",
+        "name": "消防設備点検（法定・年2回）の立ち会い",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-06-26T09:00/2026-06-26T16:00"
+        },
+        "start": "2026-06-26T09:00:00.000+09:00",
+        "end": "2026-06-26T16:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s7.n2",
+        "parentId": "demo/sample-m.md::section-7",
+        "type": "task",
+        "name": "夏季休暇取得予定表の取りまとめ",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-06-29T10:00/2026-06-29T12:00"
+        },
+        "start": "2026-06-29T10:00:00.000+09:00",
+        "end": "2026-06-29T12:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::section-8",
+        "parentId": "demo/sample-m.md::section-1",
+        "type": "section",
+        "name": "【入退社手続き】",
+        "start": "2026-07-13T16:00:00.000+09:00",
+        "end": "2026-08-03T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1",
+        "parentId": "demo/sample-m.md::section-8",
+        "type": "subsection",
+        "name": "8月1日入社（1名・経理配属）",
+        "start": "2026-07-14T10:00:00.000+09:00",
+        "end": "2026-08-03T11:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0",
+        "parentId": "demo/sample-m.md::s8.n1",
+        "type": "subsection",
+        "name": "受け入れ準備",
+        "start": "2026-07-14T10:00:00.000+09:00",
+        "end": "2026-07-31T15:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0",
+        "parentId": "demo/sample-m.md::s8.n1.n0",
+        "type": "subsection",
+        "name": "PC・アカウント発行を情シスへ依頼",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-14T10:00/2026-07-14T10:30"
+        },
+        "start": "2026-07-14T10:00:00.000+09:00",
+        "end": "2026-07-14T10:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
+        "parentId": "demo/sample-m.md::s8.n1.n0.n0",
+        "type": "task",
+        "name": "発行されたアカウントの動作確認",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-31T14:00/2026-07-31T15:00"
+        },
+        "start": "2026-07-31T14:00:00.000+09:00",
+        "end": "2026-07-31T15:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1",
+        "parentId": "demo/sample-m.md::s8.n1",
+        "type": "subsection",
+        "name": "初日対応",
+        "start": "2026-08-03T09:00:00.000+09:00",
+        "end": "2026-08-03T11:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n0",
+        "parentId": "demo/sample-m.md::s8.n1.n1",
+        "type": "task",
+        "name": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-08-03T09:00/2026-08-03T09:30"
+        },
+        "start": "2026-08-03T09:00:00.000+09:00",
+        "end": "2026-08-03T09:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n1",
+        "parentId": "demo/sample-m.md::s8.n1.n1",
+        "type": "task",
+        "name": "オリエンテーションの実施",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-08-03T09:30/2026-08-03T11:00"
+        },
+        "start": "2026-08-03T09:30:00.000+09:00",
+        "end": "2026-08-03T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2",
+        "parentId": "demo/sample-m.md::section-8",
+        "type": "subsection",
+        "name": "7月31日退職（2名）",
+        "start": "2026-07-13T16:00:00.000+09:00",
+        "end": "2026-07-13T17:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2.n1",
+        "parentId": "demo/sample-m.md::s8.n2",
+        "type": "task",
+        "name": "貸与物返却リストの作成と本人への連絡",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-13T16:00/2026-07-13T17:00"
+        },
+        "start": "2026-07-13T16:00:00.000+09:00",
+        "end": "2026-07-13T17:00:00.000+09:00"
+      }
+    ],
+    "kanban": [
+      {
+        "id": "demo/sample-m.md::s2.n1",
+        "title": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【今日のインボックス】突発・当日締切"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【今日のインボックス】突発・当日締切"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【今日のインボックス】突発・当日締切",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "13:05 予約システムから6月分CSVを出力済み\n13:40 会議室Cの改装閉鎖期間の扱いを確認 → 「除外でOK」と返信あり\n戸田さん「役員会の資料に貼るので、稼働率は小数第1位まで。母数も併記して」",
+        "schedule": "2026-07-06T13:00/2026-07-06T14:30",
+        "due": "2026-07-06",
+        "priority": 1,
+        "tags": [
+          "突発",
+          "経営企画"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s2.n2",
+        "title": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
+        "status": "blocked",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【今日のインボックス】突発・当日締切"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【今日のインボックス】突発・当日締切"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【今日のインボックス】突発・当日締切",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "情シス・岡田さん「最終出社日ではなく、雇用契約終了日で止めます。そこだけ確定させてください」",
+        "due": "2026-07-08",
+        "priority": 2,
+        "tags": [
+          "突発",
+          "ボール待ち",
+          "情シス"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s2.n3",
+        "title": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【今日のインボックス】突発・当日締切"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【今日のインボックス】突発・当日締切"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【今日のインボックス】突発・当日締切",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "台車は防災倉庫の左奥。HDMIケーブルとUSB-C変換も忘れずに",
+        "schedule": "2026-07-06T17:00/2026-07-06T17:30",
+        "due": "2026-07-07",
+        "tags": [
+          "突発"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n0",
+        "title": "現行契約書の条件を洗い出して比較表を作成",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-01T10:00/2026-07-01T12:00",
+        "tags": [
+          "契約",
+          "清掃"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n1",
+        "title": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "クリーンプロ：現行比 +3.2%（人件費上昇分）。見積受領済み\n日本メンテ：現行比 -1.5%。ただし窓清掃が年2回→年1回に減る\n課長「金額だけで決めないこと。窓清掃の回数は入居者クレームに直結する」",
+        "schedule": "2026-07-07T14:00/2026-07-07T17:00",
+        "due": "2026-07-17",
+        "priority": 1,
+        "tags": [
+          "契約",
+          "清掃",
+          "相見積"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n1.n2",
+        "title": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
+        "status": "blocked",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "parentId": "demo/sample-m.md::s3.n1.n1",
+        "description": "7/3 に依頼、7/8 に催促メール済み",
+        "due": "2026-07-10",
+        "tags": [
+          "ボール待ち"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n2",
+        "title": "比較表を課長へ提出し、業者決定の承認を得る",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-20T10:00/2026-07-20T11:00",
+        "due": "2026-07-22",
+        "tags": [
+          "契約",
+          "承認"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n3",
+        "title": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "tags": [
+          "契約"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n1.n4",
+        "title": "契約締結（押印・製本・原本送付）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "清掃業務委託（㈱クリーンプロ）契約更新"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "清掃業務委託（㈱クリーンプロ）契約更新"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "清掃業務委託（㈱クリーンプロ）契約更新",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "現行契約の満了日は 2026-08-31。空白期間を作らないこと",
+        "due": "2026-08-31",
+        "priority": 1,
+        "tags": [
+          "契約"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n2.n0",
+        "title": "現行5台の使用実績（印刷枚数・カラー比率）を集計",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "複合機リース契約（富士ビジネス機器）満了対応"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "複合機リース契約（富士ビジネス機器）満了対応"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "複合機リース契約（富士ビジネス機器）満了対応",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-13T13:00/2026-07-13T16:00",
+        "tags": [
+          "契約",
+          "情シス"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s3.n2.n1",
+        "title": "買取への切り替え検討",
+        "status": "hold",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【契約管理】委託契約・更新期限"
+          },
+          {
+            "type": "unit",
+            "name": "複合機リース契約（富士ビジネス機器）満了対応"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【契約管理】委託契約・更新期限",
+          "複合機リース契約（富士ビジネス機器）満了対応"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "複合機リース契約（富士ビジネス機器）満了対応",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "経理・宮本さん「資産計上すると固定資産税と管理が増える。リース継続で」",
+        "tags": [
+          "契約",
+          "保留"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n0",
+        "title": "工事日程の確定（村井さんと現地調整）",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事前の準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事前の準備",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-02T15:00/2026-07-02T16:00",
+        "tags": [
+          "工事",
+          "空調"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n1",
+        "title": "入居各社への工事告知文を作成",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事前の準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事前の準備",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "騒音発生時間帯（9:00-17:00）と断続的な停止を明記する\nエレベーター使用制限（資材搬入 7:00-9:00）も併記する\n課長「クレームは『聞いていない』から始まる。掲示とメール両方でやること」",
+        "schedule": "2026-07-08T09:30/2026-07-08T11:30",
+        "due": "2026-07-10",
+        "priority": 1,
+        "tags": [
+          "工事",
+          "空調",
+          "告知"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n2",
+        "title": "掲示板への掲示とエントランス告知",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事前の準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事前の準備",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-13T09:00/2026-07-13T09:30",
+        "tags": [
+          "工事",
+          "告知"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n1.n3",
+        "title": "仮設スポットクーラーの電源容量が足りるか要確認 → ボール：村井さん",
+        "status": "blocked",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事前の準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事前の準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事前の準備",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "3F の分電盤は既存機器で余裕が少ない。ブレーカーが落ちると業務停止になる",
+        "due": "2026-07-17",
+        "priority": 1,
+        "tags": [
+          "工事",
+          "ボール待ち"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n0",
+        "title": "3F 空調機交換（1期）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事の実施"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事の実施",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "期間中の3Fは仮設スポットクーラー5台で対応する",
+        "schedule": "2026-07-27/2026-07-31",
+        "tags": [
+          "工事",
+          "空調"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n1",
+        "title": "4F 空調機交換（2期）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事の実施"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事の実施",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-08-03/2026-08-07",
+        "tags": [
+          "工事",
+          "空調"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n2",
+        "title": "毎朝の現場立ち会い（作業開始時の確認）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事の実施"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事の実施",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-27T08:30/2026-07-27T09:00",
+        "tags": [
+          "工事",
+          "立ち会い"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s4.n2.n3",
+        "title": "試運転立ち会いと引き渡し確認",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【工事】空調更新工事（3F・4F）"
+          },
+          {
+            "type": "unit",
+            "name": "工事の実施"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【工事】空調更新工事（3F・4F）",
+          "工事の実施"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "工事の実施",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-08-10T13:00/2026-08-10T15:00",
+        "tags": [
+          "工事",
+          "検収"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n0",
+        "title": "部内ミーティング（進捗共有・15分）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "週次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "週次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-06T09:15/2026-07-06T09:30",
+        "tags": [
+          "定例",
+          "会議"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n1",
+        "title": "郵便物の仕分けと各部配布",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "週次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "週次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-06T11:00/2026-07-06T11:30",
+        "tags": [
+          "定例",
+          "庶務"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n1.n2",
+        "title": "備品在庫チェック（コピー用紙・トナー・文具）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "週次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "週次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "週次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-10T16:00/2026-07-10T17:00",
+        "tags": [
+          "定例",
+          "庶務"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n0",
+        "title": "請求書の受領確認と経理への回付",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "月次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "月次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "未着分は先方へ催促する。特に工事関係は遅れがち",
+        "schedule": "2026-07-07T09:00/2026-07-07T12:00",
+        "due": "2026-07-08",
+        "priority": 1,
+        "tags": [
+          "経理",
+          "月次"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n1",
+        "title": "定期清掃の立ち会い（第2・第4金曜）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "月次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "月次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "松田さん「鍵開けは7:45にお願いします。作業員が外で待つことになるので」",
+        "schedule": "2026-07-10T08:00/2026-07-10T12:00",
+        "tags": [
+          "定例",
+          "清掃"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s5.n2.n2",
+        "title": "勤怠締めチェック（打刻漏れ・残業申請漏れの洗い出し）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【定例業務】週次・月次"
+          },
+          {
+            "type": "unit",
+            "name": "月次"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【定例業務】週次・月次",
+          "月次"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "月次",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-16T09:00/2026-07-16T11:00",
+        "priority": 2,
+        "tags": [
+          "勤怠",
+          "定例"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n0",
+        "title": "求人票の内容を経理部長と確認して媒体へ入稿",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-06-29T10:00/2026-06-29T11:30",
+        "tags": [
+          "採用"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n1",
+        "title": "書類選考（応募12名）",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "12名中5名を一次面接へ。3名は経験不足、4名は希望年収が上限超過\n経理部長「決算経験の有無だけは妥協しないで。月次だけの人は厳しい」",
+        "schedule": "2026-07-06T15:00/2026-07-06T17:00",
+        "due": "2026-07-08",
+        "priority": 2,
+        "tags": [
+          "採用",
+          "選考"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n2",
+        "title": "一次面接の日程調整（候補5名 × 面接官2名）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-09T13:00/2026-07-09T15:00",
+        "due": "2026-07-10",
+        "tags": [
+          "採用",
+          "日程調整"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n3",
+        "title": "一次面接の実施",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-07-21T10:00/2026-07-23T18:00",
+        "tags": [
+          "採用",
+          "面接"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n4",
+        "title": "二次面接（役員面接）の設定",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-08-05T15:00/2026-08-05T17:00",
+        "tags": [
+          "採用",
+          "面接"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s6.n1.n5",
+        "title": "内定通知・条件提示",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【採用】中途採用（経理担当1名）"
+          },
+          {
+            "type": "unit",
+            "name": "選考プロセス"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【採用】中途採用（経理担当1名）",
+          "選考プロセス"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "選考プロセス",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "due": "2026-08-14",
+        "priority": 1,
+        "tags": [
+          "採用"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s7.n1",
+        "title": "消防設備点検（法定・年2回）の立ち会い",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【完了・保留】"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【完了・保留】"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【完了・保留】",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "指摘2件（誘導灯の球切れ、消火器の期限切れ1本）→ いずれも即日対応済み",
+        "schedule": "2026-06-26T09:00/2026-06-26T16:00",
+        "tags": [
+          "防災",
+          "法定点検"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s7.n2",
+        "title": "夏季休暇取得予定表の取りまとめ",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【完了・保留】"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【完了・保留】"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【完了・保留】",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-06-29T10:00/2026-06-29T12:00",
+        "due": "2026-06-30",
+        "tags": [
+          "勤怠"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s7.n3",
+        "title": "フリーアドレス制の全社導入検討",
+        "status": "hold",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【完了・保留】"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【完了・保留】"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【完了・保留】",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "移転プロジェクトと一体で検討する方が効率的。単独では進めない",
+        "tags": [
+          "保留",
+          "働き方"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s7.n4",
+        "title": "社用車の増車（2台→3台）",
+        "status": "hold",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【完了・保留】"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【完了・保留】"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "【完了・保留】",
+        "depth": 1,
+        "sourcePath": "demo/sample-m.md",
+        "description": "稼働率を3ヶ月測定した結果、平均42%。増車は不要と判断",
+        "tags": [
+          "保留",
+          "コスト"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0",
+        "title": "PC・アカウント発行を情シスへ依頼",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "受け入れ準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "受け入れ準備",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "description": "依頼票に「経理システムの権限：仕訳入力のみ」と明記する",
+        "schedule": "2026-07-14T10:00/2026-07-14T10:30",
+        "due": "2026-07-17",
+        "tags": [
+          "入社手続き",
+          "情シス"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n0.n1",
+        "title": "発行されたアカウントの動作確認",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "受け入れ準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "受け入れ準備",
+        "depth": 4,
+        "sourcePath": "demo/sample-m.md",
+        "parentId": "demo/sample-m.md::s8.n1.n0.n0",
+        "schedule": "2026-07-31T14:00/2026-07-31T15:00",
+        "tags": [
+          "入社手続き"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n1",
+        "title": "座席とロッカーの割り当て（3F 経理エリア）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "受け入れ準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "受け入れ準備",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "due": "2026-07-24",
+        "tags": [
+          "入社手続き",
+          "ファシリティ"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n0.n2",
+        "title": "入館カードの発行と登録",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "受け入れ準備"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "受け入れ準備"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "受け入れ準備",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "due": "2026-07-31",
+        "tags": [
+          "入社手続き",
+          "警備"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n0",
+        "title": "入社時書類一式の回収（誓約書・身元保証書・通勤届）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "初日対応"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "初日対応"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "初日対応",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "schedule": "2026-08-03T09:00/2026-08-03T09:30",
+        "tags": [
+          "入社手続き"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n1.n1.n1",
+        "title": "オリエンテーションの実施",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "8月1日入社（1名・経理配属）"
+          },
+          {
+            "type": "unit",
+            "name": "初日対応"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "8月1日入社（1名・経理配属）",
+          "初日対応"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "初日対応",
+        "depth": 3,
+        "sourcePath": "demo/sample-m.md",
+        "description": "前回、初日にPCが届いておらず半日待たせてしまった。前週金曜に現物確認すること",
+        "schedule": "2026-08-03T09:30/2026-08-03T11:00",
+        "tags": [
+          "入社手続き"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2.n0",
+        "title": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
+        "status": "blocked",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "7月31日退職（2名）"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "7月31日退職（2名）"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "7月31日退職（2名）",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "アカウント停止日がこれに連動するため、情シスが待っている",
+        "due": "2026-07-08",
+        "priority": 1,
+        "tags": [
+          "退職手続き",
+          "ボール待ち"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2.n1",
+        "title": "貸与物返却リストの作成と本人への連絡",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "7月31日退職（2名）"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "7月31日退職（2名）"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "7月31日退職（2名）",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "description": "PC・入館カード・社章・貸与スマホ・引き出しの鍵",
+        "schedule": "2026-07-13T16:00/2026-07-13T17:00",
+        "due": "2026-07-17",
+        "tags": [
+          "退職手続き"
+        ]
+      },
+      {
+        "id": "demo/sample-m.md::s8.n2.n2",
+        "title": "社会保険・雇用保険の喪失手続き",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務・管理部門 タスク管理 2026年7月"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "【入退社手続き】"
+          },
+          {
+            "type": "unit",
+            "name": "7月31日退職（2名）"
+          }
+        ],
+        "section": [
+          "総務・管理部門 タスク管理 2026年7月",
+          "【入退社手続き】",
+          "7月31日退職（2名）"
+        ],
+        "sectionTitle": "総務・管理部門 タスク管理 2026年7月",
+        "groupTitle": "7月31日退職（2名）",
+        "depth": 2,
+        "sourcePath": "demo/sample-m.md",
+        "due": "2026-08-05",
+        "tags": [
+          "退職手続き",
+          "社保"
+        ]
+      }
+    ],
+    "agenda": {
+      "overdue": [],
+      "today": [
+        {
+          "globalKey": "demo/sample-m.md::s2.n1",
+          "text": "【15時締切】経営企画・戸田さんへ会議室稼働率の集計を送付",
+          "status": "doing",
+          "date": "2026-07-06",
+          "priority": 1,
+          "path": "demo/sample-m.md",
+          "lineNumber": 20
+        },
+        {
+          "globalKey": "demo/sample-m.md::s6.n1.n1",
+          "text": "書類選考（応募12名）",
+          "status": "doing",
+          "date": "2026-07-06",
+          "priority": 2,
+          "path": "demo/sample-m.md",
+          "lineNumber": 177
+        },
+        {
+          "globalKey": "demo/sample-m.md::s2.n3",
+          "text": "【明日朝イチ】部長会用にプロジェクター2台を7Fへ移設",
+          "status": "todo",
+          "date": "2026-07-06",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 33
+        },
+        {
+          "globalKey": "demo/sample-m.md::s5.n1.n0",
+          "text": "部内ミーティング（進捗共有・15分）",
+          "status": "todo",
+          "date": "2026-07-06",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 136
+        },
+        {
+          "globalKey": "demo/sample-m.md::s5.n1.n1",
+          "text": "郵便物の仕分けと各部配布",
+          "status": "todo",
+          "date": "2026-07-06",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 140
+        }
+      ],
+      "thisWeek": [
+        {
+          "globalKey": "demo/sample-m.md::s5.n2.n0",
+          "text": "請求書の受領確認と経理への回付",
+          "status": "todo",
+          "date": "2026-07-07",
+          "priority": 1,
+          "path": "demo/sample-m.md",
+          "lineNumber": 149
+        },
+        {
+          "globalKey": "demo/sample-m.md::s3.n1.n1",
+          "text": "見積3社比較（クリーンプロ／日本メンテ／ビルサポート）",
+          "status": "doing",
+          "date": "2026-07-07",
+          "priority": 1,
+          "path": "demo/sample-m.md",
+          "lineNumber": 49
+        },
+        {
+          "globalKey": "demo/sample-m.md::s4.n1.n1",
+          "text": "入居各社への工事告知文を作成",
+          "status": "doing",
+          "date": "2026-07-08",
+          "priority": 1,
+          "path": "demo/sample-m.md",
+          "lineNumber": 95
+        },
+        {
+          "globalKey": "demo/sample-m.md::s8.n2.n0",
+          "text": "退職日の確定待ち（有給消化の扱い） → ボール：人事・宮下さん",
+          "status": "blocked",
+          "date": "2026-07-08",
+          "priority": 1,
+          "path": "demo/sample-m.md",
+          "lineNumber": 253
+        },
+        {
+          "globalKey": "demo/sample-m.md::s2.n2",
+          "text": "情シスからの依頼：退職者3名のアカウント停止日を確認して返信 → ボール：人事・宮下さん",
+          "status": "blocked",
+          "date": "2026-07-08",
+          "priority": 2,
+          "path": "demo/sample-m.md",
+          "lineNumber": 28
+        },
+        {
+          "globalKey": "demo/sample-m.md::s6.n1.n2",
+          "text": "一次面接の日程調整（候補5名 × 面接官2名）",
+          "status": "todo",
+          "date": "2026-07-09",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 184
+        },
+        {
+          "globalKey": "demo/sample-m.md::s5.n1.n2",
+          "text": "備品在庫チェック（コピー用紙・トナー・文具）",
+          "status": "todo",
+          "date": "2026-07-10",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 144
+        },
+        {
+          "globalKey": "demo/sample-m.md::s5.n2.n1",
+          "text": "定期清掃の立ち会い（第2・第4金曜）",
+          "status": "todo",
+          "date": "2026-07-10",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 156
+        },
+        {
+          "globalKey": "demo/sample-m.md::s3.n1.n1.n2",
+          "text": "ビルサポート：見積書がまだ届かない → ボール：先方営業・川西さん",
+          "status": "blocked",
+          "date": "2026-07-10",
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 57
+        }
+      ],
+      "undated": [
+        {
+          "globalKey": "demo/sample-m.md::s3.n1.n3",
+          "text": "決定業者と契約条件の詰め（清掃範囲・回数・単価）",
+          "status": "todo",
+          "date": null,
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 67
+        },
+        {
+          "globalKey": "demo/sample-m.md::s3.n2.n1",
+          "text": "買取への切り替え検討",
+          "status": "hold",
+          "date": null,
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 81
+        },
+        {
+          "globalKey": "demo/sample-m.md::s7.n3",
+          "text": "フリーアドレス制の全社導入検討",
+          "status": "hold",
+          "date": null,
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 215
+        },
+        {
+          "globalKey": "demo/sample-m.md::s7.n4",
+          "text": "社用車の増車（2台→3台）",
+          "status": "hold",
+          "date": null,
+          "priority": null,
+          "path": "demo/sample-m.md",
+          "lineNumber": 218
+        }
+      ]
+    }
+  }
+}

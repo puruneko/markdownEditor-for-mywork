@@ -147,6 +147,43 @@ describe('upsertMeta — schedule と due が共存', () => {
 })
 
 // ----------------------------------------------------------------
+// upsertMeta — 仮置き `?` の保持（issue-phase004-002）
+// ----------------------------------------------------------------
+
+describe('upsertSchedule — 仮置き `?` の保持', () => {
+  it('既存の @schedule? を更新しても `?` が残る', () => {
+    const md = '- [ ] タスクA\n  - @schedule?: 2026-01-01T09:00/2026-01-01T10:00\n'
+    const node = getTaskNode(md, 'タスクA')
+    const result = upsertSchedule(md, node, '2026-06-30T14:00/2026-06-30T15:00')
+    expect(result).toBe('- [ ] タスクA\n  - @schedule?: 2026-06-30T14:00/2026-06-30T15:00\n')
+  })
+
+  it('`?` のない既存 @schedule を更新しても `?` は付与されない', () => {
+    const md = '- [ ] タスクA\n  - @schedule: 2026-01-01T09:00/2026-01-01T10:00\n'
+    const node = getTaskNode(md, 'タスクA')
+    const result = upsertSchedule(md, node, '2026-06-30T14:00/2026-06-30T15:00')
+    expect(result).toBe('- [ ] タスクA\n  - @schedule: 2026-06-30T14:00/2026-06-30T15:00\n')
+  })
+
+  it('新規挿入時は `?` を付与しない', () => {
+    const md = '- [ ] タスクA\n'
+    const node = getTaskNode(md, 'タスクA')
+    const result = upsertSchedule(md, node, '2026-06-30T10:00/2026-06-30T11:00')
+    expect(result).toContain('  - @schedule: 2026-06-30T10:00/2026-06-30T11:00')
+    expect(result).not.toContain('@schedule?')
+  })
+})
+
+describe('upsertDue — 仮置き `?` の保持', () => {
+  it('既存の @due? を更新しても `?` が残る', () => {
+    const md = '- [ ] タスクA\n  - @due?: 2026-01-01\n'
+    const node = getTaskNode(md, 'タスクA')
+    const result = upsertDue(md, node, '2026-06-30')
+    expect(result).toBe('- [ ] タスクA\n  - @due?: 2026-06-30\n')
+  })
+})
+
+// ----------------------------------------------------------------
 // 回帰: 他の子行・空行・本文を壊さない
 // ----------------------------------------------------------------
 

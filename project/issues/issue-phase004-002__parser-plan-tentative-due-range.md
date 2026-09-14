@@ -47,12 +47,12 @@
 - `@repeat` と `@plan` の併用は現時点で未定義。Spec に従い「repeat の展開は schedule 起点」のまま変更しない。
 
 ### TODO
-- [ ] Meta 型拡張（plan / tentative）
-- [ ] remark-meta-fields: plan キー追加・`?` 剥がしと tentative 記録
-- [ ] schedule-normalize: plan への適用・due 期間の継続省略対応（関数名は実態に合わせ整理可）
-- [ ] ast-to-md: `?` 付き・plan のラウンドトリップ出力
-- [ ] upsert-meta: `?` 保持
-- [ ] 既存テスト全見直し＋新テスト（下記）
+- [x] Meta 型拡張（plan / tentative）
+- [x] remark-meta-fields: plan キー追加・`?` 剥がしと tentative 記録
+- [x] schedule-normalize: plan への適用・due 期間の継続省略対応（関数名は実態に合わせ整理可）→ `normalizeSchedule`/`normalizeDue` を共通の内部関数 `normalizeDateOrRange` に委譲する形に整理。
+- [x] ast-to-md: `?` 付き・plan のラウンドトリップ出力
+- [x] upsert-meta: `?` 保持
+- [x] 既存テスト全見直し＋新テスト（下記）
 
 ### 受け入れ基準
 - `- @plan: 26-07-07/11` が `plan: '2026-07-07/2026-07-11'` にパースされる。
@@ -69,14 +69,31 @@
 ### 履歴（追記のみ）
 - 2026-07-04 — 起票。
 
+### 2026-08-01 09:20
+
+- User Instruction:
+  - 「project/governanceを確認してください。そのあと、phase004のエディタ実装分をすべて実装してください。私は席を外すので、あなたの推奨案で実装し切ってください。懸念点や質問は各issueに追記しておいてください、後で確認します。」
+
+- Change:
+  - `Meta` 型に `plan?: string` と `tentative?: { plan?: true; schedule?: true; due?: true }` を追加。
+  - `META_KEYS` に `plan` を追加。
+  - `remark-meta-fields.ts`: `META_LINE_RE` を `/^@(\w+)(\?)?:\s*(.*)$/` に変更し、`?` の有無をキー名の直後・コロン直前でのみ受理するようにした（`@schedule ?:` / `@?schedule:` は既存の不正メタ同様に無視される＝parser では専用のエラー処理を追加していない。ユーザー向けの警告・quickfix は issue-phase004-005 のエディタ lint 側で対応）。
+  - `schedule-normalize.ts`: `normalizeSchedule` と `normalizeDue` を共通の内部関数 `normalizeDateOrRange` に統合。`normalizeDue` が `/` を含む値を `normalizeSchedule` と同じ継続省略規則で期間として正規化するようになった。
+  - `ast-to-md.ts`: `serializeMeta` の出力順を `plan → schedule → due → priority → dependsOn → tags → repeat` とし、`tentative` に応じて `?` を付与してラウンドトリップを保証。
+  - `upsert-meta.ts`: 既存メタ行が `?` 付きかどうかを判定し、更新時にその `?` を保持するよう修正（新規挿入時は `?` を付与しない）。
+  - 既存テストの見直し: `schedule-normalize.test.ts` / `parse-markdown.test.ts` / `ast-to-md.test.ts` / `upsert-meta.test.ts` を確認したが、`plan` 追加は既存キー一覧を拡張するのみで、既存の陰性テスト（「未知キーとして無視される」等）を反転させるものはなかった（`@plan` は元々このプロジェクトのどのテストにも登場していなかった）。既存テストの期待値を変更する必要はなく、新規ケースの追加のみで完了。
+
+- Rationale:
+  - `?` の構文検証・quickfix を parser 層に持ち込まなかったのは、Spec BR-022「パーサーは子要素内であれば位置を問わず受理」の対称として、パーサーは寛容（受理できないものは黙って無視）に保ち、ユーザーへの警告・修正提案はエディタ層（lint）の責務とする既存方針（issue-phase004-000 §2-1 の役割分担の考え方を拡張適用）に合わせたため。
+
 ---
 
 ## 3. メタデータ
 - id: issue-phase004-002__parser-plan-tentative-due-range
-- status: open
+- status: implemented（ユーザー承認待ち）
 - phase: 004
 - related_specs: time-meta-model.spec.md
 - related_issues: issue-phase004-000, issue-phase004-001（先行必須）, issue-phase004-003, issue-phase004-004
 - target_files: src/lib/parser/meta-keys.ts, src/lib/parser/types.ts, src/lib/parser/plugins/remark-meta-fields.ts, src/lib/parser/schedule-normalize.ts, src/lib/parser/ast-to-md.ts, src/lib/patch/upsert-meta.ts, 各 *.test.ts
 - created: 2026-07-04
-- updated: 2026-07-04
+- updated: 2026-08-01

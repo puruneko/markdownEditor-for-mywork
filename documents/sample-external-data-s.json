@@ -1,0 +1,1644 @@
+{
+  "_about": {
+    "サイズ": "S",
+    "このファイル": "最小サンプル（入力96行）。連携アプリ実装者が最初に読む1本",
+    "入力Markdown": "demo/sample-s.md",
+    "含む記法": "見出し2階層・グループ・タスク3種（todo/doing/done）・@schedule・@due・@priority・@tags・引用・メモのみのリスト",
+    "他のサイズ": [
+      "M: documents/sample-external-data-m.json",
+      "L: documents/sample-external-data-l.json"
+    ],
+    "仕様書": "documents/external-data-contract.spec.md",
+    "生成元": "このリポジトリのホスト実装（解析処理と各投影処理）を実行して得た実出力",
+    "再生成": "npm run gen:samples（このファイルは手で編集しない）",
+    "読み方": {
+      "sources": "ホストが連携アプリへ渡す SourceEntry[] そのもの。仕様書 §4.1〜§4.5 に対応する",
+      "projections": "ホストが sources を変換して各連携アプリへ渡している値。仕様書 §4.7 に対応する。連携アプリが実際に受け取るのはこの形"
+    },
+    "生成条件": {
+      "calendar / gantt の表示範囲": "2026-07-01T00:00 〜 2026-07-31T23:59（@repeat の展開範囲）",
+      "agenda の基準日": "2026-07-06",
+      "gantt のオプション": "既定値。@schedule を持たないサブタスクは出力していない（仕様書 BR-052）"
+    },
+    "JSON 化による差異": {
+      "sources[].doc.nodeLineMap": "実際の受け渡しでは Map<string, number>。JSON 化のためオブジェクトへ変換している（仕様書 注釈 A-01）",
+      "priority": "数値に変換できない @priority は実際には NaN になるが、JSON では null として現れる（仕様書 注釈 A-05）",
+      "日時": "投影結果の日時は Luxon DateTime であり、JSON 化するとオフセット付き ISO 文字列になる"
+    }
+  },
+  "sources": [
+    {
+      "path": "demo/sample-s.md",
+      "doc": {
+        "type": "document",
+        "sections": [
+          {
+            "type": "section",
+            "id": "section-1",
+            "depth": 1,
+            "title": "総務タスク 2026年7月（第1週）",
+            "lineNumber": 0,
+            "children": [
+              {
+                "type": "quote",
+                "id": "s1.q0",
+                "raw": "【S: 最小サンプル】まずこのファイルと documents/sample-external-data-s.json を対で読んでください。\n含む記法：見出し2階層／グループ（チェックボックス無しの行）／タスク3種（todo・doing・done）／\nメタ4種（@schedule・@due・@priority・@tags）／引用（補足メモ）／メモだけのリスト。\n含まない記法：@plan・@repeat・@dependsOn・仮置き ?・blocked・hold・境界ケース（M と L で扱います）。",
+                "lineNumber": 2,
+                "hasTaskDescendant": false,
+                "isGroup": false,
+                "isMemo": true
+              }
+            ],
+            "subSections": [
+              {
+                "type": "section",
+                "id": "section-2",
+                "depth": 2,
+                "title": "今週やること",
+                "lineNumber": 7,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s2.q0",
+                    "raw": "セクション直下の引用は、そのセクション全体への補足として扱われます。",
+                    "lineNumber": 9,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n1",
+                    "text": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
+                    "status": "doing",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s2.n1.n0",
+                        "text": "予約システムから6月分のCSVを出力済み",
+                        "children": [],
+                        "lineNumber": 16,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "今週やること",
+                          "6月度の会議室稼働率レポートを作成して経営企画へ送付[1]",
+                          "予約システムから6月分のCSVを出力済み[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s2.n1.n1",
+                        "text": "会議室Cの改装期間は集計から除外する",
+                        "children": [],
+                        "lineNumber": 17,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "今週やること",
+                          "6月度の会議室稼働率レポートを作成して経営企画へ送付[1]",
+                          "会議室Cの改装期間は集計から除外する[1]"
+                        ]
+                      },
+                      {
+                        "type": "quote",
+                        "id": "s2.n1.q2",
+                        "raw": "戸田さん「稼働率は小数第1位まで。母数も併記してほしい」",
+                        "lineNumber": 18,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-06T13:00/2026-07-06T14:30",
+                      "due": "2026-07-06",
+                      "priority": 1,
+                      "tags": [
+                        "レポート",
+                        "経営企画"
+                      ]
+                    },
+                    "lineNumber": 11,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "今週やること",
+                      "6月度の会議室稼働率レポートを作成して経営企画へ送付[1]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n2",
+                    "text": "部長会用にプロジェクター2台を7Fへ移設",
+                    "status": "todo",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s2.n2.n0",
+                        "text": "台車は防災倉庫の左奥。HDMIケーブルも一緒に持っていく",
+                        "children": [],
+                        "lineNumber": 23,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "今週やること",
+                          "部長会用にプロジェクター2台を7Fへ移設[2]",
+                          "台車は防災倉庫の左奥。HDMIケーブルも一緒に持っていく[0]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-06T17:00/2026-07-06T17:30",
+                      "due": "2026-07-07",
+                      "tags": [
+                        "庶務"
+                      ]
+                    },
+                    "lineNumber": 19,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "今週やること",
+                      "部長会用にプロジェクター2台を7Fへ移設[2]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n3",
+                    "text": "名刺の発注（営業部5名分）",
+                    "status": "todo",
+                    "children": [],
+                    "meta": {
+                      "schedule": "2026-07-08T11:00/2026-07-08T11:30",
+                      "due": "2026-07-10",
+                      "tags": [
+                        "庶務"
+                      ]
+                    },
+                    "lineNumber": 24,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "今週やること",
+                      "名刺の発注（営業部5名分）[3]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s2.n4",
+                    "text": "7月の全社カレンダーを共有ドライブへ掲載",
+                    "status": "done",
+                    "children": [],
+                    "meta": {
+                      "schedule": "2026-06-30T16:00/2026-06-30T17:00",
+                      "tags": [
+                        "庶務"
+                      ]
+                    },
+                    "lineNumber": 28,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "今週やること",
+                      "7月の全社カレンダーを共有ドライブへ掲載[4]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-3",
+                "depth": 2,
+                "title": "清掃業者の契約更新",
+                "lineNumber": 32,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s3.q0",
+                    "raw": "グループ（チェックボックスの無い行）の下にタスクをぶら下げると、\nガントチャートではフェーズとして、かんばんでは階層として扱われます。",
+                    "lineNumber": 34,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s3.n1",
+                    "text": "見積の取得と比較",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n0",
+                        "text": "現行契約の条件を洗い出して比較表を作成",
+                        "status": "done",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-01T10:00/2026-07-01T12:00",
+                          "tags": [
+                            "契約"
+                          ]
+                        },
+                        "lineNumber": 38,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "清掃業者の契約更新",
+                          "見積の取得と比較[1]",
+                          "現行契約の条件を洗い出して比較表を作成[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n1",
+                        "text": "見積を3社から取得する",
+                        "status": "doing",
+                        "children": [
+                          {
+                            "type": "list",
+                            "id": "s3.n1.n1.n0",
+                            "text": "クリーンプロ：現行比 +3.2%（受領済み）",
+                            "children": [],
+                            "lineNumber": 46,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "清掃業者の契約更新",
+                              "見積の取得と比較[1]",
+                              "見積を3社から取得する[1]",
+                              "クリーンプロ：現行比 +3.2%（受領済み）[0]"
+                            ]
+                          },
+                          {
+                            "type": "list",
+                            "id": "s3.n1.n1.n1",
+                            "text": "日本メンテ：現行比 -1.5%（受領済み。ただし窓清掃が年2回→年1回）",
+                            "children": [],
+                            "lineNumber": 47,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true,
+                            "depth": 3,
+                            "path": [
+                              "清掃業者の契約更新",
+                              "見積の取得と比較[1]",
+                              "見積を3社から取得する[1]",
+                              "日本メンテ：現行比 -1.5%（受領済み。ただし窓清掃が年2回→年1回）[1]"
+                            ]
+                          },
+                          {
+                            "type": "quote",
+                            "id": "s3.n1.n1.q2",
+                            "raw": "課長「金額だけで決めないこと。窓清掃の回数は入居者クレームに直結する」",
+                            "lineNumber": 48,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "schedule": "2026-07-07T14:00/2026-07-07T17:00",
+                          "due": "2026-07-17",
+                          "priority": 1,
+                          "tags": [
+                            "契約",
+                            "相見積"
+                          ]
+                        },
+                        "lineNumber": 41,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "清掃業者の契約更新",
+                          "見積の取得と比較[1]",
+                          "見積を3社から取得する[1]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n1.n2",
+                        "text": "比較表を課長へ提出して業者を決定する",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "schedule": "2026-07-20T10:00/2026-07-20T11:00",
+                          "due": "2026-07-22",
+                          "tags": [
+                            "契約",
+                            "承認"
+                          ]
+                        },
+                        "lineNumber": 49,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "清掃業者の契約更新",
+                          "見積の取得と比較[1]",
+                          "比較表を課長へ提出して業者を決定する[2]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 37,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "清掃業者の契約更新",
+                      "見積の取得と比較[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s3.n2",
+                    "text": "契約手続き",
+                    "children": [
+                      {
+                        "type": "task",
+                        "id": "s3.n2.n0",
+                        "text": "契約書ドラフトを法務レビューへ回す",
+                        "status": "todo",
+                        "children": [],
+                        "meta": {
+                          "due": "2026-08-14",
+                          "tags": [
+                            "契約",
+                            "法務"
+                          ]
+                        },
+                        "lineNumber": 54,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": true,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "清掃業者の契約更新",
+                          "契約手続き[2]",
+                          "契約書ドラフトを法務レビューへ回す[0]"
+                        ]
+                      },
+                      {
+                        "type": "task",
+                        "id": "s3.n2.n1",
+                        "text": "契約締結（押印・製本・原本送付）",
+                        "status": "todo",
+                        "children": [
+                          {
+                            "type": "quote",
+                            "id": "s3.n2.n1.q0",
+                            "raw": "現行契約の満了日は 2026-08-31。空白期間を作らないこと",
+                            "lineNumber": 61,
+                            "hasTaskDescendant": false,
+                            "isGroup": false,
+                            "isMemo": true
+                          }
+                        ],
+                        "meta": {
+                          "due": "2026-08-31",
+                          "priority": 1,
+                          "tags": [
+                            "契約"
+                          ]
+                        },
+                        "lineNumber": 57,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isLeafTask": false,
+                        "isMemo": false,
+                        "depth": 2,
+                        "path": [
+                          "清掃業者の契約更新",
+                          "契約手続き[2]",
+                          "契約締結（押印・製本・原本送付）[1]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 53,
+                    "hasTaskDescendant": true,
+                    "isGroup": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "清掃業者の契約更新",
+                      "契約手続き[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-4",
+                "depth": 2,
+                "title": "連絡先メモ",
+                "lineNumber": 63,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s4.q0",
+                    "raw": "ここはタスクを含まないリストです。日付を持たないため、カレンダーにもガントにも現れません。",
+                    "lineNumber": 65,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "list",
+                    "id": "s4.n1",
+                    "text": "主要連絡先",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s4.n1.n0",
+                        "text": "清掃：㈱クリーンプロ 松田さん（現場責任者）",
+                        "children": [],
+                        "lineNumber": 68,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "連絡先メモ",
+                          "主要連絡先[1]",
+                          "清掃：㈱クリーンプロ 松田さん（現場責任者）[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s4.n1.n1",
+                        "text": "警備：セントラル警備 24時間窓口",
+                        "children": [],
+                        "lineNumber": 69,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "連絡先メモ",
+                          "主要連絡先[1]",
+                          "警備：セントラル警備 24時間窓口[1]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s4.n1.n2",
+                        "text": "法務：吉田さん（契約レビュー全般）",
+                        "children": [],
+                        "lineNumber": 70,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "連絡先メモ",
+                          "主要連絡先[1]",
+                          "法務：吉田さん（契約レビュー全般）[2]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 67,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true,
+                    "depth": 1,
+                    "path": [
+                      "連絡先メモ",
+                      "主要連絡先[1]"
+                    ]
+                  },
+                  {
+                    "type": "list",
+                    "id": "s4.n2",
+                    "text": "社内ルールの覚書",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s4.n2.n0",
+                        "text": "稟議の決裁区分：10万円未満＝課長、100万円未満＝部長、100万円以上＝役員",
+                        "children": [],
+                        "lineNumber": 72,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "連絡先メモ",
+                          "社内ルールの覚書[2]",
+                          "稟議の決裁区分：10万円未満＝課長、100万円未満＝部長、100万円以上＝役員[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s4.n2.n1",
+                        "text": "郵便物の発送は15時締め（集荷15:30）",
+                        "children": [],
+                        "lineNumber": 73,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "連絡先メモ",
+                          "社内ルールの覚書[2]",
+                          "郵便物の発送は15時締め（集荷15:30）[1]"
+                        ]
+                      }
+                    ],
+                    "lineNumber": 71,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true,
+                    "depth": 1,
+                    "path": [
+                      "連絡先メモ",
+                      "社内ルールの覚書[2]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              },
+              {
+                "type": "section",
+                "id": "section-5",
+                "depth": 2,
+                "title": "備品・修繕の依頼",
+                "lineNumber": 75,
+                "children": [
+                  {
+                    "type": "quote",
+                    "id": "s5.q0",
+                    "raw": "入居者や社員から上がってきた依頼です。1行目がタスク、その下の箇条書きが対応の記録です。",
+                    "lineNumber": 77,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isMemo": true
+                  },
+                  {
+                    "type": "task",
+                    "id": "s5.n1",
+                    "text": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
+                    "status": "doing",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s5.n1.n0",
+                        "text": "備品台帳で購入日を確認 → 2021年4月購入、メーカー保証は切れている",
+                        "children": [],
+                        "lineNumber": 84,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "備品・修繕の依頼",
+                          "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）[1]",
+                          "備品台帳で購入日を確認 → 2021年4月購入、メーカー保証は切れている[0]"
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "id": "s5.n1.n1",
+                        "text": "修理見積 18,000円／新品 24,800円 → 買い替えで課長へ提案する",
+                        "children": [],
+                        "lineNumber": 85,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "備品・修繕の依頼",
+                          "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）[1]",
+                          "修理見積 18,000円／新品 24,800円 → 買い替えで課長へ提案する[1]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-07T16:00/2026-07-07T16:30",
+                      "due": "2026-07-09",
+                      "priority": 2,
+                      "tags": [
+                        "修繕"
+                      ]
+                    },
+                    "lineNumber": 79,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "備品・修繕の依頼",
+                      "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）[1]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s5.n2",
+                    "text": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
+                    "status": "todo",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s5.n2.n0",
+                        "text": "まず電池切れを疑う。改善しなければ設備業者へ連絡する",
+                        "children": [],
+                        "lineNumber": 89,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "備品・修繕の依頼",
+                          "2F 男子トイレの自動水栓が反応しない（3台中1台）[2]",
+                          "まず電池切れを疑う。改善しなければ設備業者へ連絡する[0]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "schedule": "2026-07-09T11:00/2026-07-09T11:30",
+                      "tags": [
+                        "修繕"
+                      ]
+                    },
+                    "lineNumber": 86,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "備品・修繕の依頼",
+                      "2F 男子トイレの自動水栓が反応しない（3台中1台）[2]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s5.n3",
+                    "text": "受付の来客用スリッパを補充する",
+                    "status": "todo",
+                    "children": [
+                      {
+                        "type": "list",
+                        "id": "s5.n3.n0",
+                        "text": "備品庫3段目のストックを出すだけ。発注は不要",
+                        "children": [],
+                        "lineNumber": 92,
+                        "hasTaskDescendant": false,
+                        "isGroup": false,
+                        "isMemo": true,
+                        "depth": 2,
+                        "path": [
+                          "備品・修繕の依頼",
+                          "受付の来客用スリッパを補充する[3]",
+                          "備品庫3段目のストックを出すだけ。発注は不要[0]"
+                        ]
+                      }
+                    ],
+                    "meta": {
+                      "tags": [
+                        "雑務"
+                      ]
+                    },
+                    "lineNumber": 90,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": false,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "備品・修繕の依頼",
+                      "受付の来客用スリッパを補充する[3]"
+                    ]
+                  },
+                  {
+                    "type": "task",
+                    "id": "s5.n4",
+                    "text": "エントランスの掲示物を7月分へ差し替え",
+                    "status": "done",
+                    "children": [],
+                    "meta": {
+                      "schedule": "2026-07-01T09:00/2026-07-01T09:30",
+                      "tags": [
+                        "庶務"
+                      ]
+                    },
+                    "lineNumber": 93,
+                    "hasTaskDescendant": false,
+                    "isGroup": false,
+                    "isLeafTask": true,
+                    "isMemo": false,
+                    "depth": 1,
+                    "path": [
+                      "備品・修繕の依頼",
+                      "エントランスの掲示物を7月分へ差し替え[4]"
+                    ]
+                  }
+                ],
+                "subSections": [],
+                "parentSectionId": "section-1"
+              }
+            ]
+          }
+        ],
+        "nodeLineMap": {
+          "section-1": 0,
+          "s1.q0": 2,
+          "section-2": 7,
+          "s2.q0": 9,
+          "s2.n1": 11,
+          "s2.n1.n0": 16,
+          "s2.n1.n1": 17,
+          "s2.n1.q2": 18,
+          "s2.n2": 19,
+          "s2.n2.n0": 23,
+          "s2.n3": 24,
+          "s2.n4": 28,
+          "section-3": 32,
+          "s3.q0": 34,
+          "s3.n1": 37,
+          "s3.n1.n0": 38,
+          "s3.n1.n1": 41,
+          "s3.n1.n1.n0": 46,
+          "s3.n1.n1.n1": 47,
+          "s3.n1.n1.q2": 48,
+          "s3.n1.n2": 49,
+          "s3.n2": 53,
+          "s3.n2.n0": 54,
+          "s3.n2.n1": 57,
+          "s3.n2.n1.q0": 61,
+          "section-4": 63,
+          "s4.q0": 65,
+          "s4.n1": 67,
+          "s4.n1.n0": 68,
+          "s4.n1.n1": 69,
+          "s4.n1.n2": 70,
+          "s4.n2": 71,
+          "s4.n2.n0": 72,
+          "s4.n2.n1": 73,
+          "section-5": 75,
+          "s5.q0": 77,
+          "s5.n1": 79,
+          "s5.n1.n0": 84,
+          "s5.n1.n1": 85,
+          "s5.n2": 86,
+          "s5.n2.n0": 89,
+          "s5.n3": 90,
+          "s5.n3.n0": 92,
+          "s5.n4": 93
+        }
+      }
+    }
+  ],
+  "projections": {
+    "calendar": [
+      {
+        "id": "demo/sample-s.md::s2.n1",
+        "type": "task",
+        "title": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
+        "status": "doing",
+        "parents": [
+          "今週やること"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T13:00:00.000+09:00",
+          "end": "2026-07-06T14:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s2.n2",
+        "type": "task",
+        "title": "部長会用にプロジェクター2台を7Fへ移設",
+        "status": "todo",
+        "parents": [
+          "今週やること"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-06T17:00:00.000+09:00",
+          "end": "2026-07-06T17:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s2.n3",
+        "type": "task",
+        "title": "名刺の発注（営業部5名分）",
+        "status": "todo",
+        "parents": [
+          "今週やること"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-08T11:00:00.000+09:00",
+          "end": "2026-07-08T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s2.n4",
+        "type": "task",
+        "title": "7月の全社カレンダーを共有ドライブへ掲載",
+        "status": "done",
+        "parents": [
+          "今週やること"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-06-30T16:00:00.000+09:00",
+          "end": "2026-06-30T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n0",
+        "type": "task",
+        "title": "現行契約の条件を洗い出して比較表を作成",
+        "status": "done",
+        "parents": [
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-01T10:00:00.000+09:00",
+          "end": "2026-07-01T12:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n1",
+        "type": "task",
+        "title": "見積を3社から取得する",
+        "status": "doing",
+        "parents": [
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-07T14:00:00.000+09:00",
+          "end": "2026-07-07T17:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n2",
+        "type": "task",
+        "title": "比較表を課長へ提出して業者を決定する",
+        "status": "todo",
+        "parents": [
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-20T10:00:00.000+09:00",
+          "end": "2026-07-20T11:00:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s5.n1",
+        "type": "task",
+        "title": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
+        "status": "doing",
+        "parents": [
+          "備品・修繕の依頼"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-07T16:00:00.000+09:00",
+          "end": "2026-07-07T16:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s5.n2",
+        "type": "task",
+        "title": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
+        "status": "todo",
+        "parents": [
+          "備品・修繕の依頼"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-09T11:00:00.000+09:00",
+          "end": "2026-07-09T11:30:00.000+09:00"
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s5.n4",
+        "type": "task",
+        "title": "エントランスの掲示物を7月分へ差し替え",
+        "status": "done",
+        "parents": [
+          "備品・修繕の依頼"
+        ],
+        "temporal": {
+          "kind": "CalendarDateTimeRange",
+          "start": "2026-07-01T09:00:00.000+09:00",
+          "end": "2026-07-01T09:30:00.000+09:00"
+        }
+      }
+    ],
+    "gantt": [
+      {
+        "id": "demo/sample-s.md::section-1",
+        "parentId": null,
+        "type": "project",
+        "name": "総務タスク 2026年7月（第1週）",
+        "start": "2026-06-30T16:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::section-2",
+        "parentId": "demo/sample-s.md::section-1",
+        "type": "section",
+        "name": "今週やること",
+        "start": "2026-06-30T16:00:00.000+09:00",
+        "end": "2026-07-08T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s2.n1",
+        "parentId": "demo/sample-s.md::section-2",
+        "type": "task",
+        "name": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-06T13:00/2026-07-06T14:30"
+        },
+        "start": "2026-07-06T13:00:00.000+09:00",
+        "end": "2026-07-06T14:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s2.n2",
+        "parentId": "demo/sample-s.md::section-2",
+        "type": "task",
+        "name": "部長会用にプロジェクター2台を7Fへ移設",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-06T17:00/2026-07-06T17:30"
+        },
+        "start": "2026-07-06T17:00:00.000+09:00",
+        "end": "2026-07-06T17:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s2.n3",
+        "parentId": "demo/sample-s.md::section-2",
+        "type": "task",
+        "name": "名刺の発注（営業部5名分）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-08T11:00/2026-07-08T11:30"
+        },
+        "start": "2026-07-08T11:00:00.000+09:00",
+        "end": "2026-07-08T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s2.n4",
+        "parentId": "demo/sample-s.md::section-2",
+        "type": "task",
+        "name": "7月の全社カレンダーを共有ドライブへ掲載",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-06-30T16:00/2026-06-30T17:00"
+        },
+        "start": "2026-06-30T16:00:00.000+09:00",
+        "end": "2026-06-30T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::section-3",
+        "parentId": "demo/sample-s.md::section-1",
+        "type": "section",
+        "name": "清掃業者の契約更新",
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1",
+        "parentId": "demo/sample-s.md::section-3",
+        "type": "subsection",
+        "name": "見積の取得と比較",
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00",
+        "metadata": {
+          "schedule": null
+        }
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n0",
+        "parentId": "demo/sample-s.md::s3.n1",
+        "type": "task",
+        "name": "現行契約の条件を洗い出して比較表を作成",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-07-01T10:00/2026-07-01T12:00"
+        },
+        "start": "2026-07-01T10:00:00.000+09:00",
+        "end": "2026-07-01T12:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n1",
+        "parentId": "demo/sample-s.md::s3.n1",
+        "type": "task",
+        "name": "見積を3社から取得する",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-07T14:00/2026-07-07T17:00"
+        },
+        "start": "2026-07-07T14:00:00.000+09:00",
+        "end": "2026-07-07T17:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n2",
+        "parentId": "demo/sample-s.md::s3.n1",
+        "type": "task",
+        "name": "比較表を課長へ提出して業者を決定する",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-20T10:00/2026-07-20T11:00"
+        },
+        "start": "2026-07-20T10:00:00.000+09:00",
+        "end": "2026-07-20T11:00:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::section-5",
+        "parentId": "demo/sample-s.md::section-1",
+        "type": "section",
+        "name": "備品・修繕の依頼",
+        "start": "2026-07-01T09:00:00.000+09:00",
+        "end": "2026-07-09T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s5.n1",
+        "parentId": "demo/sample-s.md::section-5",
+        "type": "task",
+        "name": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
+        "completed": false,
+        "metadata": {
+          "status": "doing",
+          "schedule": "2026-07-07T16:00/2026-07-07T16:30"
+        },
+        "start": "2026-07-07T16:00:00.000+09:00",
+        "end": "2026-07-07T16:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s5.n2",
+        "parentId": "demo/sample-s.md::section-5",
+        "type": "task",
+        "name": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
+        "completed": false,
+        "metadata": {
+          "status": "todo",
+          "schedule": "2026-07-09T11:00/2026-07-09T11:30"
+        },
+        "start": "2026-07-09T11:00:00.000+09:00",
+        "end": "2026-07-09T11:30:00.000+09:00"
+      },
+      {
+        "id": "demo/sample-s.md::s5.n4",
+        "parentId": "demo/sample-s.md::section-5",
+        "type": "task",
+        "name": "エントランスの掲示物を7月分へ差し替え",
+        "completed": true,
+        "metadata": {
+          "status": "done",
+          "schedule": "2026-07-01T09:00/2026-07-01T09:30"
+        },
+        "start": "2026-07-01T09:00:00.000+09:00",
+        "end": "2026-07-01T09:30:00.000+09:00"
+      }
+    ],
+    "kanban": [
+      {
+        "id": "demo/sample-s.md::s2.n1",
+        "title": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "今週やること"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "今週やること"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "今週やること",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "description": "予約システムから6月分のCSVを出力済み\n会議室Cの改装期間は集計から除外する\n戸田さん「稼働率は小数第1位まで。母数も併記してほしい」",
+        "schedule": "2026-07-06T13:00/2026-07-06T14:30",
+        "due": "2026-07-06",
+        "priority": 1,
+        "tags": [
+          "レポート",
+          "経営企画"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s2.n2",
+        "title": "部長会用にプロジェクター2台を7Fへ移設",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "今週やること"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "今週やること"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "今週やること",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "description": "台車は防災倉庫の左奥。HDMIケーブルも一緒に持っていく",
+        "schedule": "2026-07-06T17:00/2026-07-06T17:30",
+        "due": "2026-07-07",
+        "tags": [
+          "庶務"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s2.n3",
+        "title": "名刺の発注（営業部5名分）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "今週やること"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "今週やること"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "今週やること",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "schedule": "2026-07-08T11:00/2026-07-08T11:30",
+        "due": "2026-07-10",
+        "tags": [
+          "庶務"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s2.n4",
+        "title": "7月の全社カレンダーを共有ドライブへ掲載",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "今週やること"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "今週やること"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "今週やること",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "schedule": "2026-06-30T16:00/2026-06-30T17:00",
+        "tags": [
+          "庶務"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n0",
+        "title": "現行契約の条件を洗い出して比較表を作成",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "清掃業者の契約更新"
+          },
+          {
+            "type": "unit",
+            "name": "見積の取得と比較"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "見積の取得と比較",
+        "depth": 2,
+        "sourcePath": "demo/sample-s.md",
+        "schedule": "2026-07-01T10:00/2026-07-01T12:00",
+        "tags": [
+          "契約"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n1",
+        "title": "見積を3社から取得する",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "清掃業者の契約更新"
+          },
+          {
+            "type": "unit",
+            "name": "見積の取得と比較"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "見積の取得と比較",
+        "depth": 2,
+        "sourcePath": "demo/sample-s.md",
+        "description": "クリーンプロ：現行比 +3.2%（受領済み）\n日本メンテ：現行比 -1.5%（受領済み。ただし窓清掃が年2回→年1回）\n課長「金額だけで決めないこと。窓清掃の回数は入居者クレームに直結する」",
+        "schedule": "2026-07-07T14:00/2026-07-07T17:00",
+        "due": "2026-07-17",
+        "priority": 1,
+        "tags": [
+          "契約",
+          "相見積"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s3.n1.n2",
+        "title": "比較表を課長へ提出して業者を決定する",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "清掃業者の契約更新"
+          },
+          {
+            "type": "unit",
+            "name": "見積の取得と比較"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "清掃業者の契約更新",
+          "見積の取得と比較"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "見積の取得と比較",
+        "depth": 2,
+        "sourcePath": "demo/sample-s.md",
+        "schedule": "2026-07-20T10:00/2026-07-20T11:00",
+        "due": "2026-07-22",
+        "tags": [
+          "契約",
+          "承認"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s3.n2.n0",
+        "title": "契約書ドラフトを法務レビューへ回す",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "清掃業者の契約更新"
+          },
+          {
+            "type": "unit",
+            "name": "契約手続き"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "清掃業者の契約更新",
+          "契約手続き"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "契約手続き",
+        "depth": 2,
+        "sourcePath": "demo/sample-s.md",
+        "due": "2026-08-14",
+        "tags": [
+          "契約",
+          "法務"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s3.n2.n1",
+        "title": "契約締結（押印・製本・原本送付）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "清掃業者の契約更新"
+          },
+          {
+            "type": "unit",
+            "name": "契約手続き"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "清掃業者の契約更新",
+          "契約手続き"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "契約手続き",
+        "depth": 2,
+        "sourcePath": "demo/sample-s.md",
+        "description": "現行契約の満了日は 2026-08-31。空白期間を作らないこと",
+        "due": "2026-08-31",
+        "priority": 1,
+        "tags": [
+          "契約"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s5.n1",
+        "title": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
+        "status": "doing",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "備品・修繕の依頼"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "備品・修繕の依頼"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "備品・修繕の依頼",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "description": "備品台帳で購入日を確認 → 2021年4月購入、メーカー保証は切れている\n修理見積 18,000円／新品 24,800円 → 買い替えで課長へ提案する",
+        "schedule": "2026-07-07T16:00/2026-07-07T16:30",
+        "due": "2026-07-09",
+        "priority": 2,
+        "tags": [
+          "修繕"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s5.n2",
+        "title": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "備品・修繕の依頼"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "備品・修繕の依頼"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "備品・修繕の依頼",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "description": "まず電池切れを疑う。改善しなければ設備業者へ連絡する",
+        "schedule": "2026-07-09T11:00/2026-07-09T11:30",
+        "tags": [
+          "修繕"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s5.n3",
+        "title": "受付の来客用スリッパを補充する",
+        "status": "todo",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "備品・修繕の依頼"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "備品・修繕の依頼"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "備品・修繕の依頼",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "description": "備品庫3段目のストックを出すだけ。発注は不要",
+        "tags": [
+          "雑務"
+        ]
+      },
+      {
+        "id": "demo/sample-s.md::s5.n4",
+        "title": "エントランスの掲示物を7月分へ差し替え",
+        "status": "done",
+        "hierarchy": [
+          {
+            "type": "heading",
+            "level": 1,
+            "name": "総務タスク 2026年7月（第1週）"
+          },
+          {
+            "type": "heading",
+            "level": 2,
+            "name": "備品・修繕の依頼"
+          }
+        ],
+        "section": [
+          "総務タスク 2026年7月（第1週）",
+          "備品・修繕の依頼"
+        ],
+        "sectionTitle": "総務タスク 2026年7月（第1週）",
+        "groupTitle": "備品・修繕の依頼",
+        "depth": 1,
+        "sourcePath": "demo/sample-s.md",
+        "schedule": "2026-07-01T09:00/2026-07-01T09:30",
+        "tags": [
+          "庶務"
+        ]
+      }
+    ],
+    "agenda": {
+      "overdue": [],
+      "today": [
+        {
+          "globalKey": "demo/sample-s.md::s2.n1",
+          "text": "6月度の会議室稼働率レポートを作成して経営企画へ送付",
+          "status": "doing",
+          "date": "2026-07-06",
+          "priority": 1,
+          "path": "demo/sample-s.md",
+          "lineNumber": 11
+        },
+        {
+          "globalKey": "demo/sample-s.md::s2.n2",
+          "text": "部長会用にプロジェクター2台を7Fへ移設",
+          "status": "todo",
+          "date": "2026-07-06",
+          "priority": null,
+          "path": "demo/sample-s.md",
+          "lineNumber": 19
+        }
+      ],
+      "thisWeek": [
+        {
+          "globalKey": "demo/sample-s.md::s3.n1.n1",
+          "text": "見積を3社から取得する",
+          "status": "doing",
+          "date": "2026-07-07",
+          "priority": 1,
+          "path": "demo/sample-s.md",
+          "lineNumber": 41
+        },
+        {
+          "globalKey": "demo/sample-s.md::s5.n1",
+          "text": "給湯室の電子レンジが温まらない（開発部・田辺さんから申告）",
+          "status": "doing",
+          "date": "2026-07-07",
+          "priority": 2,
+          "path": "demo/sample-s.md",
+          "lineNumber": 79
+        },
+        {
+          "globalKey": "demo/sample-s.md::s2.n3",
+          "text": "名刺の発注（営業部5名分）",
+          "status": "todo",
+          "date": "2026-07-08",
+          "priority": null,
+          "path": "demo/sample-s.md",
+          "lineNumber": 24
+        },
+        {
+          "globalKey": "demo/sample-s.md::s5.n2",
+          "text": "2F 男子トイレの自動水栓が反応しない（3台中1台）",
+          "status": "todo",
+          "date": "2026-07-09",
+          "priority": null,
+          "path": "demo/sample-s.md",
+          "lineNumber": 86
+        }
+      ],
+      "undated": [
+        {
+          "globalKey": "demo/sample-s.md::s5.n3",
+          "text": "受付の来客用スリッパを補充する",
+          "status": "todo",
+          "date": null,
+          "priority": null,
+          "path": "demo/sample-s.md",
+          "lineNumber": 90
+        }
+      ]
+    }
+  }
+}

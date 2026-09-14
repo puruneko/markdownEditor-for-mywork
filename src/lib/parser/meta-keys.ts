@@ -1,4 +1,5 @@
 export const META_KEYS = {
+  plan:      'plan',
   schedule:  'schedule',
   due:       'due',
   priority:  'priority',

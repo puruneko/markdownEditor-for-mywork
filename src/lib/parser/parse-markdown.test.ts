@@ -479,4 +479,83 @@ describe('parseMarkdown', () => {
     expect(t1.meta?.due).toBe('2026-06-01')
     expect(t2.meta?.due).toBe('2026-06-02')
   })
+
+  // ──────────────────────────────────────────────────────
+  // issue-phase004-002: @plan・仮置き `?`・@due 期間
+  // ──────────────────────────────────────────────────────
+
+  it('parses @plan with abbreviated range', () => {
+    const md = `- [ ] タスク\n  - @plan: 26-07-07/11\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.plan).toBe('2026-07-07/2026-07-11')
+  })
+
+  it('parses @schedule? and records tentative.schedule', () => {
+    const md = `- [ ] タスク\n  - @schedule?: 2026-07-10T10:00/11:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBe('2026-07-10T10:00/2026-07-10T11:00')
+    expect(node.meta?.tentative?.schedule).toBe(true)
+  })
+
+  it('parses @plan? and records tentative.plan', () => {
+    const md = `- [ ] タスク\n  - @plan?: 2026-07-07/2026-07-11\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.plan).toBe('2026-07-07/2026-07-11')
+    expect(node.meta?.tentative?.plan).toBe(true)
+  })
+
+  it('parses @due? and records tentative.due', () => {
+    const md = `- [ ] タスク\n  - @due?: 2026-07-10\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.due).toBe('2026-07-10')
+    expect(node.meta?.tentative?.due).toBe(true)
+  })
+
+  it('parses @due as a period', () => {
+    const md = `- [ ] タスク\n  - @due: 2026-07-10/15\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.due).toBe('2026-07-10/2026-07-15')
+  })
+
+  it('leaves a single-point @due unaffected (existing behavior)', () => {
+    const md = `- [ ] タスク\n  - @due: 2026-07-10\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.due).toBe('2026-07-10')
+    expect(node.meta?.tentative).toBeUndefined()
+  })
+
+  it('ignores a meta line with `?` in the wrong position (space before ?)', () => {
+    const md = `- [ ] タスク\n  - @schedule ?: 2026-07-10T10:00/11:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBeUndefined()
+  })
+
+  it('ignores a meta line with `?` in the wrong position (before key)', () => {
+    const md = `- [ ] タスク\n  - @?schedule: 2026-07-10T10:00/11:00\n`
+    const { sections } = parseMarkdown(md)
+    const node = sections[0].children[0] as TaskNode
+    expect(node.meta?.schedule).toBeUndefined()
+  })
+
+  it('groups (list nodes) can carry all three time metas', () => {
+    const md = [
+      '- グループ',
+      '  - @plan: 2026-07-01/2026-07-31',
+      '  - @schedule: 2026-07-10T10:00/12:00',
+      '  - @due: 2026-07-31',
+      '  - [ ] タスク',
+    ].join('\n')
+    const { sections } = parseMarkdown(md)
+    const group = sections[0].children[0] as ListNode
+    expect(group.meta?.plan).toBe('2026-07-01/2026-07-31')
+    expect(group.meta?.schedule).toBe('2026-07-10T10:00/2026-07-10T12:00')
+    expect(group.meta?.due).toBe('2026-07-31')
+  })
 })

@@ -114,4 +114,22 @@ describe('normalizeDue', () => {
   it('trims surrounding whitespace', () => {
     expect(normalizeDue('  26-06-15  ')).toBe('2026-06-15')
   })
+
+  // ---- period (issue-phase004-002: due 期間対応) ----
+
+  it('normalizes a full date-range due', () => {
+    expect(normalizeDue('2026-07-10/2026-07-15')).toBe('2026-07-10/2026-07-15')
+  })
+
+  it('expands day-only continuation in a due range', () => {
+    expect(normalizeDue('2026-07-10/15')).toBe('2026-07-10/2026-07-15')
+  })
+
+  it('expands 2-digit year in a due range', () => {
+    expect(normalizeDue('26-07-10/26-07-15')).toBe('2026-07-10/2026-07-15')
+  })
+
+  it('expands 2-digit year + day continuation in a due range', () => {
+    expect(normalizeDue('26-07-10/15')).toBe('2026-07-10/2026-07-15')
+  })
 })

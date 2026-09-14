@@ -19,10 +19,16 @@ function statusToMarker(status: Status): string {
 // Meta serialization
 // ----------------------------------------------------------------
 
+/** `?`（仮置き）修飾子付きのキーは、ラウンドトリップ保証のため `?` 付きのまま出力する（issue-phase004-002）。 */
+function tentativeSuffix(meta: Meta, key: 'plan' | 'schedule' | 'due'): string {
+  return meta.tentative?.[key] ? '?' : ''
+}
+
 function serializeMeta(meta: Meta): string[] {
   const lines: string[] = []
-  if (meta.schedule  !== undefined) lines.push(`- @${META_KEYS.schedule}: ${meta.schedule}`)
-  if (meta.due       !== undefined) lines.push(`- @${META_KEYS.due}: ${meta.due}`)
+  if (meta.plan      !== undefined) lines.push(`- @${META_KEYS.plan}${tentativeSuffix(meta, 'plan')}: ${meta.plan}`)
+  if (meta.schedule  !== undefined) lines.push(`- @${META_KEYS.schedule}${tentativeSuffix(meta, 'schedule')}: ${meta.schedule}`)
+  if (meta.due       !== undefined) lines.push(`- @${META_KEYS.due}${tentativeSuffix(meta, 'due')}: ${meta.due}`)
   if (meta.priority  !== undefined) lines.push(`- @${META_KEYS.priority}: ${meta.priority}`)
   if (meta.dependsOn !== undefined) lines.push(`- @${META_KEYS.dependsOn}: ${meta.dependsOn.join(', ')}`)
   if (meta.tags      !== undefined) lines.push(`- @${META_KEYS.tags}: ${meta.tags.join(', ')}`)

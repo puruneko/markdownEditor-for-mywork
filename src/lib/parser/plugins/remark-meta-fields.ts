@@ -12,15 +12,23 @@ declare module 'mdast' {
   }
 }
 
-const META_LINE_RE = /^@(\w+):\s*(.*)$/
+// キー名の直後・コロンの前にのみ `?`（仮置き）を許す（issue-phase004-002）。
+// `@schedule ?:` や `@?schedule:` はこの正規表現にマッチせず、既存の不正メタと同様に無視される。
+const META_LINE_RE = /^@(\w+)(\?)?:\s*(.*)$/
 
-function applyMetaKey(meta: Partial<Meta>, key: string, value: string): void {
+function applyMetaKey(meta: Partial<Meta>, key: string, value: string, tentative: boolean): void {
   switch (key) {
+    case META_KEYS.plan:
+      meta.plan = normalizeSchedule(value)
+      if (tentative) meta.tentative = { ...meta.tentative, plan: true }
+      break
     case META_KEYS.schedule:
       meta.schedule = normalizeSchedule(value)
+      if (tentative) meta.tentative = { ...meta.tentative, schedule: true }
       break
     case META_KEYS.due:
       meta.due = normalizeDue(value)
+      if (tentative) meta.tentative = { ...meta.tentative, due: true }
       break
     case META_KEYS.priority:
       meta.priority = parseInt(value, 10)
@@ -53,7 +61,7 @@ function extractMetaFromList(
     const text = toString(firstPara)
     const match = text.match(META_LINE_RE)
     if (match) {
-      applyMetaKey(parentMeta, match[1], match[2])
+      applyMetaKey(parentMeta, match[1], match[3], !!match[2])
       // Re-inject any children the @meta item accidentally captured (mixed indent)
       const childBlocks = item.children.filter(c => c.type !== 'paragraph') as BlockContent[]
       if (childBlocks.length > 0) injected.push(childBlocks)

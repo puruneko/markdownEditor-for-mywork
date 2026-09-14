@@ -26,9 +26,13 @@ export function upsertMeta(
 
   const taskIndent = getIndent(lines[taskIdx])
   const childIndent = taskIndent + 2
-  const metaPrefix = `- @${metaKey}:`
+  // `?`（仮置き）付きの既存行も同一メタとして認識する（issue-phase004-002: upsert-meta は
+  // 既存メタ更新時に `?` を保持しなければならない）。
+  const metaPrefixTentative = `- @${metaKey}?:`
+  const metaPrefixPlain = `- @${metaKey}:`
 
   let firstExistingIdx = -1
+  let existingTentative = false
   let insertIdx = taskIdx + 1
 
   for (let i = taskIdx + 1; i < lines.length; i++) {
@@ -37,11 +41,19 @@ export function upsertMeta(
     const lineIndent = getIndent(line)
     if (lineIndent <= taskIndent) break
     insertIdx = i + 1
-    if (firstExistingIdx === -1 && line.trimStart().startsWith(metaPrefix)) {
-      firstExistingIdx = i
+    if (firstExistingIdx === -1) {
+      const trimmedLine = line.trimStart()
+      if (trimmedLine.startsWith(metaPrefixTentative)) {
+        firstExistingIdx = i
+        existingTentative = true
+      } else if (trimmedLine.startsWith(metaPrefixPlain)) {
+        firstExistingIdx = i
+        existingTentative = false
+      }
     }
   }
 
+  const metaPrefix = existingTentative ? metaPrefixTentative : metaPrefixPlain
   const newMetaLine = ' '.repeat(childIndent) + `${metaPrefix} ${metaValue}`
 
   if (firstExistingIdx !== -1) {

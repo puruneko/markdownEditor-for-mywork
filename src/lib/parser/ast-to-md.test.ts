@@ -126,6 +126,74 @@ describe('serializeAst', () => {
     expect(task.meta?.repeat).toBe('FREQ=WEEKLY;BYDAY=MO,FR;INTERVAL=2')
   })
 
+  // ──────────────────────────────────────────────────────
+  // issue-phase004-002: @plan・仮置き `?`・@due 期間のラウンドトリップ
+  // ──────────────────────────────────────────────────────
+
+  it('serializes @plan', () => {
+    const md = `- [ ] タスク\n  - @plan: 2026-07-07/2026-07-11\n`
+    const doc = parseMarkdown(md)
+    expect(serializeAst(doc)).toContain('- @plan: 2026-07-07/2026-07-11')
+  })
+
+  it('roundtrip: @plan?（仮置き）が一字一句戻る', () => {
+    // シリアライザは常にタブでインデントする（既存の tab-based serializer 仕様）ため、
+    // 入力もタブで与えて完全な文字列一致（一字一句）を確認する。
+    const md = '- [ ] タスク\n\t- @plan?: 2026-07-07/2026-07-11\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toBe(md)
+  })
+
+  it('roundtrip: @schedule?（仮置き）が一字一句戻る', () => {
+    const md = '- [ ] タスク\n\t- @schedule?: 2026-07-10T10:00/2026-07-10T11:00\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toBe(md)
+  })
+
+  it('roundtrip: @due?（仮置き）が一字一句戻る', () => {
+    const md = '- [ ] タスク\n\t- @due?: 2026-07-10\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toBe(md)
+  })
+
+  it('roundtrip: 期間の @due が一字一句戻る', () => {
+    const md = '- [ ] タスク\n\t- @due: 2026-07-10/2026-07-15\n'
+    const doc = parseMarkdown(md)
+    const result = serializeAst(doc)
+    expect(result).toBe(md)
+  })
+
+  it('serializes plan/schedule/due together in plan → schedule → due order', () => {
+    const doc: Document = {
+      type: 'document',
+      sections: [{
+        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1,
+        children: [{
+          type: 'task', id: 'n1', text: 'タスク',
+          status: 'todo', children: [], lineNumber: 0,
+          meta: {
+            plan: '2026-07-01/2026-07-31',
+            schedule: '2026-07-10T10:00/2026-07-10T12:00',
+            due: '2026-07-31',
+          },
+          hasTaskDescendant: false, isGroup: false, isLeafTask: true, isMemo: false,
+          depth: 1, path: ['タスク[0]'],
+        }],
+        subSections: [],
+      }],
+      nodeLineMap: new Map(),
+    }
+    const lines = serializeAst(doc).split('\n')
+    const planIdx = lines.findIndex(l => l.includes('@plan'))
+    const scheduleIdx = lines.findIndex(l => l.includes('@schedule'))
+    const dueIdx = lines.findIndex(l => l.includes('@due'))
+    expect(planIdx).toBeLessThan(scheduleIdx)
+    expect(scheduleIdx).toBeLessThan(dueIdx)
+  })
+
   it('roundtrip: MD → AST → MD preserves structure', () => {
     const original = `# Webアプリ開発
 

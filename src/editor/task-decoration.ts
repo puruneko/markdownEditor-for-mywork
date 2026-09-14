@@ -15,7 +15,7 @@ const STATUS_MARK: Record<string, string> = {
   '-': 'task-status-hold',
 }
 
-const META_RE = /^(\s*- )@(schedule|due|priority|tags|dependsOn):/
+const META_RE = /^(\s*- )@(plan|schedule|due|priority|tags|dependsOn)(\?)?:/
 
 // ----------------------------------------------------------------
 // Build decorations for visible lines
@@ -50,15 +50,20 @@ function buildDecorations(view: EditorView): DecorationSet {
           }
         }
 
-        // Check for meta key: @schedule: @due: etc.
+        // Check for meta key: @schedule: @due: @plan: etc. (optionally with `?` — tentative).
         const metaMatch = text.match(META_RE)
         if (metaMatch) {
+          const key = metaMatch[2]
+          const tentative = !!metaMatch[3]
           const keyStart = line.from + text.indexOf('@')
-          const keyEnd = keyStart + `@${metaMatch[2]}:`.length
+          const keyEnd = keyStart + `@${key}${metaMatch[3] ?? ''}:`.length
+          const classes = ['md-ast-meta-key']
+          if (key === 'plan') classes.push('md-ast-meta-key--plan')
+          if (tentative) classes.push('md-ast-meta-tentative')
           builder.add(
             keyStart,
             keyEnd,
-            Decoration.mark({ class: 'md-ast-meta-key' }),
+            Decoration.mark({ class: classes.join(' ') }),
           )
         }
       }

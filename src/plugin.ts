@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView } from 'obsidian'
+import { Plugin, MarkdownView, Notice } from 'obsidian'
 import type { WorkspaceLeaf } from 'obsidian'
 import { AstView, AST_VIEW_TYPE } from './views/AstView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
@@ -13,6 +13,7 @@ import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { createNotationLintExtension } from './editor/notation-lint'
 import { createTaskDragSourceExtension } from './editor/task-drag-source'
+import { reformatMetaLines } from './editor/reformat-meta-lines'
 import { createQueryBlockProcessor } from './views/query-block'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
@@ -155,6 +156,25 @@ export class MdAstEditorPlugin extends Plugin {
       id: 'open-unscheduled-tray',
       name: '未スケジュール・トレイを開く',
       callback: () => void this.openView(UNSCHEDULED_TRAY_VIEW_TYPE),
+    })
+
+    // issue-phase004-005: メタ行を推奨位置（タスク直下）へ一括整形する。
+    // オーナー決定により自動実行・保存時フックは禁止。ユーザーがコマンドを呼んだ時のみ動作する。
+    this.addCommand({
+      id: 'reformat-meta-lines',
+      name: 'メタ行を推奨位置へ整形（現在のファイル）',
+      editorCallback: (editor) => {
+        const original = editor.getValue()
+        const { result, movedCount } = reformatMetaLines(original)
+        if (movedCount > 0 && result !== original) {
+          editor.setValue(result)
+        }
+        new Notice(
+          movedCount > 0
+            ? `${movedCount} 件のメタ行を移動しました。`
+            : '整形が必要なメタ行はありませんでした。',
+        )
+      },
     })
 
     if (this.settings.showRibbonIcon) {

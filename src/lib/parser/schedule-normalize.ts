@@ -13,6 +13,19 @@
 
 /** Normalize a @schedule value: "start/end" with optional abbreviations. */
 export function normalizeSchedule(raw: string): string {
+  return normalizeDateOrRange(raw)
+}
+
+/**
+ * Normalize a @due value: a single point date/datetime, or a "start/end"
+ * period using the same continuation-abbreviation rules as @schedule
+ * (issue-phase004-002: due の期間対応は normalizeSchedule と同じ継続省略を適用する)。
+ */
+export function normalizeDue(raw: string): string {
+  return normalizeDateOrRange(raw)
+}
+
+function normalizeDateOrRange(raw: string): string {
   const slashIdx = raw.indexOf('/')
   if (slashIdx === -1) return expandDateStr(raw.trim())
 
@@ -36,11 +49,6 @@ export function normalizeSchedule(raw: string): string {
 
   // Steps 2 & 3 applied to both halves
   return `${expandDateStr(rawStart)}/${expandDateStr(rawEnd)}`
-}
-
-/** Normalize a @due value (single date). */
-export function normalizeDue(raw: string): string {
-  return expandDateStr(raw.trim())
 }
 
 /** Expand 2-digit year and omitted minutes in a single date/datetime string. */

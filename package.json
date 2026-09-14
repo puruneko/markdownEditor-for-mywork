@@ -16,6 +16,7 @@
     "test:obs:e2e:run": "wdio run wdio.conf.mts",
     "test:obs:e2e:headed": "npm run build && OBS_E2E_HEADED=1 wdio run wdio.conf.mts",
     "test": "npm run test:unit && npm run test:obs:e2e",
+    "gen:samples": "vitest run --config vitest.tools.config.ts",
     "obs:update:manifest": "cp ./main.js ./manifest.json /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
   },
   "devDependencies": {
@@ -58,5 +59,11 @@
     "svelte-kanban-lib": "file:../kanban-for-mywork",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
+  },
+  "allowScripts": {
+    "classic-level@3.0.0": true,
+    "esbuild@0.27.4": true,
+    "esbuild@0.21.5": true,
+    "esbuild@0.25.12": true
   }
 }
