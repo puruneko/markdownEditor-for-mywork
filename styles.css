@@ -1,6 +1,12 @@
+/* このファイルは自動生成です。編集は styles/base.css・styles/heading-emphasis.css・styles/metatag-raw.css・styles/metatag-wysiwyg.css を
+ * 対象に行ってください（esbuild.config.mjs の stylesBundlePlugin が
+ * ビルド時に結合してこのファイルへ書き出します）。 */
+
 /* ============================================================
- * MD AST Editor — Obsidian Plugin Styles
- * Obsidian が自動でロードする。
+ * MD AST Editor — Obsidian Plugin Styles (base)
+ * ビルド時に styles/metatag-raw.css・styles/metatag-wysiwyg.css と
+ * 結合され、リポジトリ直下 styles.css として出力される
+ * （esbuild.config.mjs の stylesBundlePlugin）。
  * ============================================================ */
 
 /* ------------------------------------------------------------
@@ -40,4 +46,300 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+}
+
+
+/* ============================================================
+ * 見出し強調 — 編集モード（Live Preview）のみ
+ * issue-phase003-013（editor-heading-emphasis）。
+ *
+ * Obsidian Live Preview は見出し行に .HyperMD-header-<N>（行全体）と
+ * .cm-header-<N>（テキスト・#マーカーのインラインspan）を自動で付与する
+ * （Obsidian本体の内部実装。本プラグインのコードでは付与していない）。
+ * これらは Reading View には存在しないため、この装飾は編集モードにのみ効く。
+ *
+ * ダーク/ライト対応: issue-phase003-008 と同じ方針で、Obsidian組み込みの
+ * セマンティック変数（--color-blue・--color-blue-rgb）にrgba透過で乗せる。
+ * 独自の .theme-dark 分岐は持たず、Obsidianの外観設定に自動追従する。
+ * ============================================================ */
+
+.HyperMD-header-1 {
+  display: block;
+  background: rgba(var(--color-blue-rgb, 58, 111, 216), 0.12);
+  border-left: 4px solid var(--color-blue, #3a6fd8);
+  border-radius: 4px;
+  padding: 10px 12px;
+  line-height: 1.8;
+}
+
+.cm-header-1 {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+
+/*
+ * H2: H1より目立たせない。下線は行全体ではなく文字の直下のみ・色は灰色（--text-muted）にする
+ * （issue-phase003-008/013 2026-09-17再々増分: 全幅の青い下線がH1より目立ってしまったため変更）。
+ */
+.cm-header-2 {
+  font-size: 1.25em;
+  font-weight: 700;
+  border-bottom: 3px solid var(--text-muted, #888888);
+  padding-bottom: 1px;
+}
+
+
+/* ============================================================
+ * メタタグ装飾 — raw モード（Source Mode／Live Preview中の編集中行）
+ *
+ * issue-phase003-008（2026-09-17再増分）。
+ * ここでのクラスは Decoration.mark（生テキストへの色付け）にのみ使われる。
+ * ウィジェット置換（wysiwygのチップ表示）は styles/metatag-wysiwyg.css を参照。
+ *
+ * ダーク/ライト対応方針: 独自の `.theme-dark` 分岐は持たず、Obsidian組み込みの
+ * セマンティックCSS変数（--color-green-rgb・--color-blue-rgb 等）に乗せる。
+ * これらは Obsidian 本体・使用中のテーマ側でライト/ダークそれぞれに再定義されて
+ * いるため、Obsidianの外観設定（ライト/ダーク）にそのまま追従する。
+ * 変数が存在しない環境向けに固定RGBのフォールバックのみ用意する。
+ *
+ * 日付系以外のメタキー（priority/dependsOn/tags/repeat/condition/purpose/
+ * savepoint/special_note）の緑装飾は、現時点では metatag-wysiwyg.css と
+ * 完全に同一の内容を意図的に重複定義している（ユーザー指示: 日付系以外は
+ * 当面同一のCSS指定でよい）。将来この2ファイルを別々に編集して分岐させて良い。
+ * ============================================================ */
+
+:root {
+  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
+  --metatag-green-fg: var(--color-green, #2f9e44);
+  --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
+  --metatag-date-fg: var(--color-blue, #3a6fd8);
+}
+
+/* ベース: すべての metatag に共通する最小限のリセット。
+   周囲のテキストを邪魔しないよう、行間・フォントサイズは変更しない。 */
+.metatag {
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* 日付系（@plan/@schedule/@due）の生テキスト表示。
+   まだ編集中（カーソルがこの行にある）か Source Mode のときに使われる。 */
+.metatag-value.metatag-plan,
+.metatag-value.metatag-schedule,
+.metatag-value.metatag-due {
+  background: var(--metatag-date-bg);
+  color: var(--metatag-date-fg);
+}
+
+/* 日付系以外の全メタキー（例: @priority, @完了イメージ 等）。
+ * ユーザー指示（2026-09-17再増分）:
+ *   - メタ情報「名」部分（キー）: 非常に薄い緑系の背景のみ（文字色は変えない）。
+ *   - メタ「情報」部分（値）: 緑系の文字色のみ（背景は付けない）。
+ * どちらも周囲のテキストを邪魔しない程度に留める。
+ */
+.metatag-key.metatag-priority,
+.metatag-key.metatag-dependsOn,
+.metatag-key.metatag-tags,
+.metatag-key.metatag-repeat,
+.metatag-key.metatag-condition,
+.metatag-key.metatag-purpose,
+.metatag-key.metatag-savepoint,
+.metatag-key.metatag-special_note,
+.metatag-key.metatag-unknown {
+  background: var(--metatag-green-bg);
+}
+
+.metatag-value.metatag-priority,
+.metatag-value.metatag-dependsOn,
+.metatag-value.metatag-tags,
+.metatag-value.metatag-repeat,
+.metatag-value.metatag-condition,
+.metatag-value.metatag-purpose,
+.metatag-value.metatag-savepoint,
+.metatag-value.metatag-special_note,
+.metatag-value.metatag-unknown {
+  color: var(--metatag-green-fg);
+}
+
+/* 日付系のキー部分（`@plan:` 等）も同様に、背景は薄い青系のみ。 */
+.metatag-key.metatag-plan,
+.metatag-key.metatag-schedule,
+.metatag-key.metatag-due {
+  background: var(--metatag-date-bg);
+}
+
+/* 仮置き（`?`）: 半透明表示 + 末尾に「?」バッジ（BR-010）。 */
+.metatag-tentative {
+  opacity: 0.65;
+}
+.metatag-value.metatag-tentative::after {
+  content: ' ?';
+  opacity: 0.8;
+}
+
+
+/* ============================================================
+ * メタタグ装飾 — wysiwyg モード（Live Preview・カーソルが行外にある時）
+ *
+ * issue-phase003-008（2026-09-17再増分）。
+ * .metatag-date-chip は Decoration.replace のウィジェットに付与されるクラス。
+ * 日付系以外（緑装飾）は metatag-raw.css と意図的に同一内容を重複定義している
+ * （ユーザー指示: 当面は同一のCSS指定でよい。将来ここだけ変更してよい）。
+ *
+ * ダーク/ライト対応方針: metatag-raw.css と同じく、独自の `.theme-dark` 分岐は
+ * 持たず、Obsidian組み込みのセマンティックCSS変数（--color-green-rgb・
+ * --color-blue-rgb 等）に乗せる。Obsidianの外観設定（ライト/ダーク）に自動追従する。
+ *
+ * 非モーダルの日付・時刻ピッカー（metatag-picker.ts の showTooltip）の
+ * UIスタイルも、wysiwygの拡張編集体験の一部としてここに置く
+ * （こちらも background-primary 等の Obsidian 変数を使い、自動でテーマに追従する）。
+ * ============================================================ */
+
+:root {
+  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
+  --metatag-green-fg: var(--color-green, #2f9e44);
+  --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
+  --metatag-date-fg: var(--color-blue, #3a6fd8);
+  --metatag-date-chip-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.18);
+}
+
+.metatag {
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* ------------------------------------------------------------
+ * 日付系メタの「メタタグ表示」チップ
+ * 「ハッシュタグ的だが角丸は控えめ」= border-radius を通常のタグより小さくする。
+ * ------------------------------------------------------------ */
+.metatag-value.metatag-date-chip.metatag-plan,
+.metatag-value.metatag-date-chip.metatag-schedule,
+.metatag-value.metatag-date-chip.metatag-due {
+  display: inline-block;
+  background: var(--metatag-date-chip-bg);
+  color: var(--metatag-date-fg);
+  border-radius: 4px;
+  padding: 0 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.metatag-date-chip:hover {
+  filter: brightness(1.08);
+}
+
+.metatag-date-chip.metatag-tentative {
+  opacity: 0.65;
+}
+
+/* ------------------------------------------------------------
+ * 日付系以外の全メタキー（緑装飾・raw.cssと同一内容）
+ * ------------------------------------------------------------ */
+.metatag-key.metatag-priority,
+.metatag-key.metatag-dependsOn,
+.metatag-key.metatag-tags,
+.metatag-key.metatag-repeat,
+.metatag-key.metatag-condition,
+.metatag-key.metatag-purpose,
+.metatag-key.metatag-savepoint,
+.metatag-key.metatag-special_note,
+.metatag-key.metatag-unknown {
+  background: var(--metatag-green-bg);
+}
+
+.metatag-value.metatag-priority,
+.metatag-value.metatag-dependsOn,
+.metatag-value.metatag-tags,
+.metatag-value.metatag-repeat,
+.metatag-value.metatag-condition,
+.metatag-value.metatag-purpose,
+.metatag-value.metatag-savepoint,
+.metatag-value.metatag-special_note,
+.metatag-value.metatag-unknown {
+  color: var(--metatag-green-fg);
+}
+
+.metatag-key.metatag-plan,
+.metatag-key.metatag-schedule,
+.metatag-key.metatag-due {
+  background: var(--metatag-date-bg);
+}
+
+/* ------------------------------------------------------------
+ * 日付・時刻ピッカー（非モーダル・ポップアップ）
+ * 色は全て Obsidian 変数（テーマの light/dark に自動追従）を使用する。
+ *
+ * 重要: CodeMirror 6 の showTooltip はこの要素に自前のクラス `cm-tooltip` を
+ * 付与し、`.cm-tooltip` に対して背景色・枠線の既定スタイル（baseTheme）を
+ * 動的に注入する。挿入順序次第でそちらが優先されてしまい、ダークモードでも
+ * 常に明るい既定背景のまま（`--background-primary` の変化が反映されない）に
+ * なる実機不具合を確認した。`.cm-tooltip` を含む複合セレクタにして詳細度を
+ * 上げ、確実にこちら側の変数値が勝つようにする。
+ * ------------------------------------------------------------ */
+.metatag-picker-popup.cm-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  min-width: 240px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-s, 0 4px 16px rgba(0, 0, 0, 0.18));
+  font-size: 13px;
+}
+
+.metatag-picker-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--text-normal);
+}
+
+.metatag-picker-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.metatag-picker-row .metatag-picker-date {
+  flex: 1 1 60%;
+}
+
+.metatag-picker-row .metatag-picker-time {
+  flex: 1 1 40%;
+}
+
+.metatag-picker-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-normal);
+}
+
+.metatag-picker-button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.metatag-picker-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.metatag-picker-btn-commit {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+
+.metatag-picker-btn-commit:hover {
+  background: var(--interactive-accent-hover, var(--interactive-accent));
 }
