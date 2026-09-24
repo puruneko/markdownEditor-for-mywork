@@ -1,0 +1,38 @@
+/* ============================================================
+ * 見出し強調 — 編集モード（Live Preview）のみ
+ * issue-phase003-013（editor-heading-emphasis）。
+ *
+ * Obsidian Live Preview は見出し行に .HyperMD-header-<N>（行全体）と
+ * .cm-header-<N>（テキスト・#マーカーのインラインspan）を自動で付与する
+ * （Obsidian本体の内部実装。本プラグインのコードでは付与していない）。
+ * これらは Reading View には存在しないため、この装飾は編集モードにのみ効く。
+ *
+ * ダーク/ライト対応: issue-phase003-008 と同じ方針で、Obsidian組み込みの
+ * セマンティック変数（--color-blue・--color-blue-rgb）にrgba透過で乗せる。
+ * 独自の .theme-dark 分岐は持たず、Obsidianの外観設定に自動追従する。
+ * ============================================================ */
+
+.HyperMD-header-1 {
+  display: block;
+  background: rgba(var(--color-blue-rgb, 58, 111, 216), 0.12);
+  border-left: 4px solid var(--color-blue, #3a6fd8);
+  border-radius: 4px;
+  padding: 10px 12px;
+  line-height: 1.8;
+}
+
+.cm-header-1 {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+
+/*
+ * H2: H1より目立たせない。下線は行全体ではなく文字の直下のみ・色は灰色（--text-muted）にする
+ * （issue-phase003-008/013 2026-09-17再々増分: 全幅の青い下線がH1より目立ってしまったため変更）。
+ */
+.cm-header-2 {
+  font-size: 1.25em;
+  font-weight: 700;
+  border-bottom: 3px solid var(--text-muted, #888888);
+  padding-bottom: 1px;
+}

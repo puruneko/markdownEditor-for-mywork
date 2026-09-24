@@ -1,6 +1,6 @@
 import type { ListItem, List, Blockquote, BlockContent } from 'mdast'
 import { toString } from 'mdast-util-to-string'
-import type { Node, TaskNode, ListNode, QuoteNode } from './types'
+import type { Node, TaskNode, ListNode, QuoteNode, Meta } from './types'
 
 // ----------------------------------------------------------------
 // ID generation — 構造上の位置インデックスをそのまま連結する。
@@ -75,7 +75,7 @@ export function convertListItem(
   const nodePath = [...parentPath, `${text}[${siblingIndex}]`]
 
   // Process non-paragraph block children (lists and blockquotes)
-  const children = convertBlockChildren(
+  const { nodes: children, memo } = convertBlockChildren(
     item.children.filter(c => c.type !== 'paragraph') as BlockContent[],
     depth + 1,
     nodePath,
@@ -83,7 +83,12 @@ export function convertListItem(
   )
 
   const hasTD = hasTaskDescendant(children)
-  const meta = item.data?.meta
+  const rawMeta = item.data?.meta
+  // issue-phase010-markdownEditor-006: 直下の引用（`>`）本文を meta.memo として畳み込む。
+  // QuoteNode（children 内）の生成は置き換えない（併存させる）。
+  const meta: Meta | undefined = (rawMeta !== undefined || memo !== undefined)
+    ? { ...(rawMeta ?? {}), ...(memo !== undefined ? { memo } : {}) }
+    : undefined
   const hasMeta = meta !== undefined && Object.keys(meta).length > 0
   const taskStatus = item.data?.taskStatus ?? null
 
@@ -126,13 +131,19 @@ export function convertListItem(
 // Convert block-level children (lists / blockquotes)
 // ----------------------------------------------------------------
 
+/**
+ * issue-phase010-markdownEditor-006: 直下（子リストの中ではなく直接の子）の引用（`>`）本文を
+ * `memo` として返す。複数ある場合は空行で連結する。`QuoteNode` の生成（`nodes` への追加）は
+ * 置き換えず、`memo` は併存する派生値として返す。
+ */
 function convertBlockChildren(
   blocks: BlockContent[],
   depth: number,
   parentPath: string[],
   posPath: string[],
-): Node[] {
+): { nodes: Node[]; memo?: string } {
   const nodes: Node[] = []
+  const memoParts: string[] = []
   let siblingIndex = 0
 
   for (const block of blocks) {
@@ -143,25 +154,32 @@ function convertBlockChildren(
       }
     } else if (block.type === 'blockquote') {
       const lineNumber = (block.position?.start.line ?? 1) - 1
-      nodes.push(convertBlockquote(block as Blockquote, lineNumber, posPath, siblingIndex))
+      const quoteNode = convertBlockquote(block as Blockquote, lineNumber, posPath, siblingIndex)
+      nodes.push(quoteNode)
+      memoParts.push(quoteNode.raw)
       siblingIndex++
     }
   }
 
-  return nodes
+  return { nodes, memo: memoParts.length > 0 ? memoParts.join('\n\n') : undefined }
 }
 
 // ----------------------------------------------------------------
 // Top-level section content: list of block-level nodes
 // ----------------------------------------------------------------
 
+/**
+ * issue-phase010-markdownEditor-006: 見出し直下（子リストの中ではなく直接の子）の引用（`>`）
+ * 本文を `memo` として返す。複数ある場合は空行で連結する。`QuoteNode` の生成は置き換えない。
+ */
 export function convertSectionContent(
   blocks: BlockContent[],
   depth: number,
   sectionTitle: string,
   posPfx: string[],
-): Node[] {
+): { nodes: Node[]; memo?: string } {
   const nodes: Node[] = []
+  const memoParts: string[] = []
   let siblingIndex = 0
   const parentPath = sectionTitle ? [sectionTitle] : []
 
@@ -173,10 +191,12 @@ export function convertSectionContent(
       }
     } else if (block.type === 'blockquote') {
       const lineNumber = (block.position?.start.line ?? 1) - 1
-      nodes.push(convertBlockquote(block as Blockquote, lineNumber, posPfx, siblingIndex))
+      const quoteNode = convertBlockquote(block as Blockquote, lineNumber, posPfx, siblingIndex)
+      nodes.push(quoteNode)
+      memoParts.push(quoteNode.raw)
       siblingIndex++
     }
   }
 
-  return nodes
+  return { nodes, memo: memoParts.length > 0 ? memoParts.join('\n\n') : undefined }
 }

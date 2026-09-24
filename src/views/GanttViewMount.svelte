@@ -13,9 +13,19 @@
     onReload: () => void
     /** サブタスク展開表示（settings.ganttExpandSubtasks 経由。アプリ既定 true。prop 省略時のみ false）。 */
     expandSubtasks?: boolean
+    /** 外部ドロップ時の既定所要時間（分）。settings.defaultDurationMin 経由（issue-phase010-markdownEditor-005）。 */
+    defaultDurationMin?: number
   }
 
-  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload, expandSubtasks = false }: Props = $props()
+  let {
+    sources: initialSources,
+    registerUpdater,
+    onNodeClick,
+    onNodePatch,
+    onReload,
+    expandSubtasks = false,
+    defaultDurationMin,
+  }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -33,7 +43,7 @@
   <div class="filter-bar-row">
     <FilterBar bind:query {onReload} />
   </div>
-  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} {expandSubtasks} />
+  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} {expandSubtasks} {defaultDurationMin} />
 </div>
 
 <style>

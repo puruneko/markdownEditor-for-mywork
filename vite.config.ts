@@ -23,11 +23,16 @@ export default defineConfig({
         find: /^svelte-kanban-lib$/,
         replacement: resolve(__dirname, 'node_modules/svelte-kanban-lib/src/index.ts'),
       },
+      {
+        // Same Svelte version mismatch workaround for dashboard lib
+        find: /^svelte-dashboard-lib$/,
+        replacement: resolve(__dirname, 'node_modules/svelte-dashboard-lib/src/index.ts'),
+      },
     ],
   },
   optimizeDeps: {
     include: ['monaco-editor'],
-    exclude: ['svelte-calendar-lib', 'svelte-gantt-lib', 'svelte-kanban-lib'],
+    exclude: ['svelte-calendar-lib', 'svelte-gantt-lib', 'svelte-kanban-lib', 'svelte-dashboard-lib'],
   },
   build: {
     rollupOptions: {

@@ -48,6 +48,13 @@ export type QuoteNode = {
 
 export type Node = TaskNode | ListNode | QuoteNode
 
+/**
+ * issue-phase010-markdownEditor-006: 見出し直下のトップレベルメタ用。`Meta` と同じキー集合・
+ * 同じ解析規則を使うが、`close` は Section の場合 `Section.close`（真偽値の専用フィールド）
+ * に昇格させるため、`SectionMeta` には含めない。
+ */
+export type SectionMeta = Omit<Meta, 'close'>
+
 export type Section = {
   type: 'section'
   id: string
@@ -57,6 +64,14 @@ export type Section = {
   parentSectionId?: string
   children: Node[]
   subSections: Section[]
+  /**
+   * issue-phase010-markdownEditor-006: 案件（Section）がクローズしているかどうか。
+   * 見出しタイトル末尾の `#close` タグ、または見出し直下のトップレベルメタ `@close` の
+   * いずれかがあれば true。パース結果からの除外は行わない（常に存在する必須フィールド）。
+   */
+  close: boolean
+  /** 見出し直下のトップレベルメタ（`close` を除く）。1個も無い場合はキー自体が存在しない。 */
+  meta?: SectionMeta
 }
 
 export type Document = {

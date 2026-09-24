@@ -4,6 +4,7 @@
   import { filterNodes, type FilterQuery } from '../lib/query/filter'
   import type { Document, TaskNode } from '../lib/parser/types'
   import type { SourceEntry } from '../lib/viewmodel/contract'
+  import type { KanbanUserConfig } from '../lib/kanban/kanban-user-config'
 
   interface Props {
     sources: SourceEntry[]
@@ -11,9 +12,21 @@
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
     onReload: () => void
+    /** ShadowItemView.getExtraMountProps() 経由で渡される、設定ハブ由来の永続化済みユーザー設定。 */
+    initialUserConfig?: Partial<KanbanUserConfig>
+    /** ユーザー設定変更時に設定ハブへ永続化するコールバック。 */
+    onUserConfigChange?: (config: KanbanUserConfig) => void
   }
 
-  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload }: Props = $props()
+  let {
+    sources: initialSources,
+    registerUpdater,
+    onNodeClick,
+    onNodePatch,
+    onReload,
+    initialUserConfig,
+    onUserConfigChange,
+  }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -32,7 +45,7 @@
   <div class="filter-bar-row">
     <FilterBar bind:query {onReload} />
   </div>
-  <KanbanTab sources={filteredSources} {onNodePatch} {onNodeClick} />
+  <KanbanTab sources={filteredSources} {onNodePatch} {onNodeClick} {initialUserConfig} {onUserConfigChange} />
 </div>
 
 <style>

@@ -622,3 +622,86 @@ describe('parseMarkdown', () => {
     expect(node.children).toHaveLength(0)
   })
 })
+
+// ----------------------------------------------------------------
+// issue-phase010-markdownEditor-006: Section メタ経路 + @close/#close/@memo
+// ----------------------------------------------------------------
+
+describe('Section meta（@close・#close・@memo）', () => {
+  // Issue 本文の「現状の実測結果」に記載された実測入力をそのままフィクスチャとして使う。
+  const FIXTURE_MD = [
+    '# 案件A #close',
+    '- @close:',
+    '- @purpose: テスト',
+    '- [>] タスク1',
+    '  - @schedule: 2026-09-20T10:00/2026-09-20T11:00',
+    '  - @close:',
+    '  > メモ本文',
+    '- 普通のリスト',
+    '  - @due: 2026-09-30',
+    '',
+  ].join('\n')
+
+  it('# 案件名 #close で Section.close が true になり、タイトルから #close が除去される', () => {
+    const { sections } = parseMarkdown(FIXTURE_MD)
+    expect(sections[0].title).toBe('案件A')
+    expect(sections[0].close).toBe(true)
+  })
+
+  it('見出し直下の - @close: / - @purpose: がメタとして格納される（- @purpose: は section.meta、- @close: は section.close に畳み込まれる）', () => {
+    const { sections } = parseMarkdown(FIXTURE_MD)
+    expect(sections[0].meta?.purpose).toBe('テスト')
+    // @close: の list item は消費され、section.children に残存してはならない。
+    const leftoverCloseItem = sections[0].children.find(
+      (n) => n.type === 'list' && n.text === '@close:',
+    )
+    expect(leftoverCloseItem).toBeUndefined()
+  })
+
+  it('タスク配下の - @close: が消えずにメタとして格納される（回帰: 未知キーの静かな消失の防止）', () => {
+    const { sections } = parseMarkdown(FIXTURE_MD)
+    const task = sections[0].children[0] as TaskNode
+    expect(task.text).toBe('タスク1')
+    expect(task.meta?.close).toBe(true)
+    // @schedule は既存どおり正常に機能し続ける（回帰確認）。
+    expect(task.meta?.schedule).toBe('2026-09-20T10:00/2026-09-20T11:00')
+  })
+
+  it('見出し直下・タスク直下の引用（>）が meta.memo として取得できる。QuoteNode は併存する', () => {
+    const { sections } = parseMarkdown(FIXTURE_MD)
+    const task = sections[0].children[0] as TaskNode
+    expect(task.meta?.memo).toBe('メモ本文')
+    const quote = task.children.find((n) => n.type === 'quote') as QuoteNode
+    expect(quote).toBeDefined()
+    expect(quote.raw).toBe('メモ本文')
+  })
+
+  it('通常のリスト項目のメタ（- 普通のリスト配下の @due:）は既存どおり機能する（回帰確認）', () => {
+    const { sections } = parseMarkdown(FIXTURE_MD)
+    const list = sections[0].children[1] as ListNode
+    expect(list.text).toBe('普通のリスト')
+    expect(list.meta?.due).toBe('2026-09-30')
+  })
+
+  it('#close タグが無い見出しでは Section.close が false になる', () => {
+    const { sections } = parseMarkdown('# 案件B\n- [ ] タスク\n')
+    expect(sections[0].title).toBe('案件B')
+    expect(sections[0].close).toBe(false)
+  })
+
+  it('見出しが無い匿名セクションでも Section.close は false で存在する', () => {
+    const { sections } = parseMarkdown('- [ ] タスク\n')
+    expect(sections[0].close).toBe(false)
+  })
+
+  it('見出し直下にメタが無い場合、Section.meta は存在しない', () => {
+    const { sections } = parseMarkdown('# 案件C\n- [ ] タスク\n')
+    expect(sections[0].meta).toBeUndefined()
+  })
+
+  it('#urgent 等、close 以外の見出しタグは Section.close に影響しない（タイトルからは分離される）', () => {
+    const { sections } = parseMarkdown('# 案件D #urgent\n- [ ] タスク\n')
+    expect(sections[0].title).toBe('案件D')
+    expect(sections[0].close).toBe(false)
+  })
+})

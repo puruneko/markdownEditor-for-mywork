@@ -4,28 +4,31 @@ import { AstView, AST_VIEW_TYPE } from './views/AstView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
-import { AgendaView, AGENDA_VIEW_TYPE } from './views/AgendaView'
-import { HealthView, HEALTH_VIEW_TYPE } from './views/HealthView'
-import { UnscheduledTrayView, UNSCHEDULED_TRAY_VIEW_TYPE } from './views/UnscheduledTrayView'
+import { DashboardView, DASHBOARD_VIEW_TYPE } from './views/DashboardView'
 import { FileSync } from './sync/file-sync'
 import { AstIndex } from './sync/ast-index'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
+import { metatagValuePlugin } from './editor/metatag-decoration'
+import { metatagPickerExtension } from './editor/metatag-picker'
 import { createNotationLintExtension } from './editor/notation-lint'
 import { createTaskDragSourceExtension } from './editor/task-drag-source'
 import { reformatMetaLines } from './editor/reformat-meta-lines'
 import { createQueryBlockProcessor } from './views/query-block'
 import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
 import type { MdAstEditorSettings } from './settings'
+import { ViewSettingsHub } from './settings-hub'
 
 export class MdAstEditorPlugin extends Plugin {
   fileSync!: FileSync
   astIndex!: AstIndex
   editorEventBus!: EditorEventBus
   settings!: MdAstEditorSettings
+  settingsHub!: ViewSettingsHub
 
   async onload(): Promise<void> {
     await this.loadSettings()
+    this.settingsHub = new ViewSettingsHub(this)
 
     this.fileSync = new FileSync(this.app, this.settings.debounceMs)
     this.astIndex = new AstIndex(this.app, {
@@ -88,7 +91,7 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       CALENDAR_VIEW_TYPE,
-      (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+      (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus, this.settingsHub, this.astIndex),
     )
 
     this.registerView(
@@ -98,22 +101,12 @@ export class MdAstEditorPlugin extends Plugin {
 
     this.registerView(
       KANBAN_VIEW_TYPE,
-      (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+      (leaf) => new KanbanView(leaf, this.fileSync, this.editorEventBus, this.settingsHub, this.astIndex),
     )
 
     this.registerView(
-      AGENDA_VIEW_TYPE,
-      (leaf) => new AgendaView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
-    )
-
-    this.registerView(
-      HEALTH_VIEW_TYPE,
-      (leaf) => new HealthView(leaf, this.settings, this.fileSync, this.editorEventBus, this.astIndex),
-    )
-
-    this.registerView(
-      UNSCHEDULED_TRAY_VIEW_TYPE,
-      (leaf) => new UnscheduledTrayView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+      DASHBOARD_VIEW_TYPE,
+      (leaf) => new DashboardView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.addCommand({
@@ -141,21 +134,9 @@ export class MdAstEditorPlugin extends Plugin {
     })
 
     this.addCommand({
-      id: 'open-agenda-view',
-      name: 'Agenda View を開く',
-      callback: () => void this.openView(AGENDA_VIEW_TYPE),
-    })
-
-    this.addCommand({
-      id: 'open-health-view',
-      name: 'Health Check を開く',
-      callback: () => void this.openView(HEALTH_VIEW_TYPE),
-    })
-
-    this.addCommand({
-      id: 'open-unscheduled-tray',
-      name: '未スケジュール・トレイを開く',
-      callback: () => void this.openView(UNSCHEDULED_TRAY_VIEW_TYPE),
+      id: 'open-dashboard-view',
+      name: 'Dashboard View を開く',
+      callback: () => void this.openView(DASHBOARD_VIEW_TYPE),
     })
 
     // issue-phase004-005: メタ行を推奨位置（タスク直下）へ一括整形する。
@@ -190,20 +171,17 @@ export class MdAstEditorPlugin extends Plugin {
       this.addRibbonIcon('layout-grid', 'Kanban View を開く', () => {
         void this.openView(KANBAN_VIEW_TYPE)
       })
-      this.addRibbonIcon('calendar-check', 'Agenda View を開く', () => {
-        void this.openView(AGENDA_VIEW_TYPE)
-      })
-      this.addRibbonIcon('stethoscope', 'Health Check を開く', () => {
-        void this.openView(HEALTH_VIEW_TYPE)
-      })
-      this.addRibbonIcon('inbox', '未スケジュール・トレイを開く', () => {
-        void this.openView(UNSCHEDULED_TRAY_VIEW_TYPE)
+      this.addRibbonIcon('layout-dashboard', 'Dashboard View を開く', () => {
+        void this.openView(DASHBOARD_VIEW_TYPE)
       })
     }
 
     if (this.settings.enableTaskHighlight) {
       this.registerEditorExtension(taskDecorationPlugin)
       this.registerEditorExtension(createNotationLintExtension())
+      // issue-phase003-008（2026-09-17増分）: メタタグの緑装飾・日付チップ・ピッカー。
+      this.registerEditorExtension(metatagValuePlugin)
+      this.registerEditorExtension(metatagPickerExtension)
     }
 
     this.registerEditorExtension(
@@ -238,9 +216,7 @@ export class MdAstEditorPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(GANTT_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE)
-    this.app.workspace.detachLeavesOfType(AGENDA_VIEW_TYPE)
-    this.app.workspace.detachLeavesOfType(HEALTH_VIEW_TYPE)
-    this.app.workspace.detachLeavesOfType(UNSCHEDULED_TRAY_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(DASHBOARD_VIEW_TYPE)
   }
 
   async loadSettings(): Promise<void> {

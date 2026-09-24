@@ -39,10 +39,19 @@ function parseMilestone(due: string): DateTime | { start: DateTime; end: DateTim
 
 type DateRange = { start: DateTime; end: DateTime }
 
+/**
+ * 日付メタ（schedule/plan/due のいずれか）を持つかどうか（issue-phase010-markdownEditor-008:
+ * 可視性述語の拡張）。task に限らず、list（DEC-14: 既存の type: 'subsection' で出す）・
+ * Section（見出し。I-07 で Section.meta が入る）のいずれにも適用する。
+ */
+function hasDateMeta(meta: { schedule?: string; plan?: string; due?: string } | undefined): boolean {
+  return !!(meta?.schedule || meta?.plan || meta?.due)
+}
+
 function hasScheduleDescendant(nodes: Node[]): boolean {
   for (const node of nodes) {
     if (node.type === 'quote') continue
-    if (node.type === 'task' && node.meta?.schedule) return true
+    if (hasDateMeta(node.meta)) return true
     if ((node.type === 'task' || node.type === 'list') && node.children.length > 0) {
       if (hasScheduleDescendant(node.children)) return true
     }
@@ -51,6 +60,7 @@ function hasScheduleDescendant(nodes: Node[]): boolean {
 }
 
 function sectionHasSchedule(section: Section): boolean {
+  if (hasDateMeta(section.meta)) return true
   if (hasScheduleDescendant(section.children)) return true
   for (const sub of section.subSections) {
     if (sectionHasSchedule(sub)) return true
@@ -58,28 +68,42 @@ function sectionHasSchedule(section: Section): boolean {
   return false
 }
 
-/** Recursively compute the min start / max end of all scheduled descendant tasks. */
+/**
+ * Recursively compute the min start / max end covered by all descendants' date meta
+ * （issue-phase011-markdownEditor-001: `task` に限定せず、`schedule`/`plan`/`due` の
+ * いずれかを持つ任意のノード（`list` 由来・`task` 由来を問わない）を集計対象とする）。
+ */
 function descendantDateRange(nodes: Node[]): DateRange | null {
   let minStart: DateTime | null = null
   let maxEnd: DateTime | null = null
 
+  const fold = (start: DateTime, end: DateTime): void => {
+    if (!minStart || start < minStart) minStart = start
+    if (!maxEnd || end > maxEnd) maxEnd = end
+  }
+
   for (const node of nodes) {
     if (node.type === 'quote') continue
 
-    if (node.type === 'task' && node.meta?.schedule) {
+    if (node.meta?.schedule) {
       const parsed = parseSchedule(node.meta.schedule)
-      if (parsed) {
-        if (!minStart || parsed.start < minStart) minStart = parsed.start
-        if (!maxEnd || parsed.end > maxEnd) maxEnd = parsed.end
+      if (parsed) fold(parsed.start, parsed.end)
+    }
+    if (node.meta?.plan) {
+      const parsed = parseSchedule(node.meta.plan)
+      if (parsed) fold(parsed.start, parsed.end)
+    }
+    if (node.meta?.due) {
+      const milestone = parseMilestone(node.meta.due)
+      if (milestone) {
+        if (milestone instanceof DateTime) fold(milestone, milestone)
+        else fold(milestone.start, milestone.end)
       }
     }
 
     if ((node.type === 'task' || node.type === 'list') && node.children.length > 0) {
       const child = descendantDateRange(node.children)
-      if (child) {
-        if (!minStart || child.start < minStart) minStart = child.start
-        if (!maxEnd || child.end > maxEnd) maxEnd = child.end
-      }
+      if (child) fold(child.start, child.end)
     }
   }
 
@@ -215,26 +239,51 @@ function extractFromNodes(
       }
     } else if (node.type === 'list') {
       const hasChildSchedule = node.children.length > 0 && hasScheduleDescendant(node.children)
-      if (!hasChildSchedule) continue
+      // issue-phase010-markdownEditor-008: 自身が日付メタ（schedule/plan/due）を持つ場合も
+      // 可視にする（DEC-14: 新種別は作らず、既存の type: 'subsection' のまま出す）。
+      if (!hasChildSchedule && !hasDateMeta(node.meta)) continue
 
-      const range = descendantDateRange(node.children)
       const nodeId = makeGlobalKey(sourcePath, node.id)
       const ganttNode: GanttNode = {
         id: nodeId,
         parentId,
         type: 'subsection',
         name: node.text,
-        ...(range ? { start: range.start, end: range.end } : {}),
         metadata: {
-          schedule: null,
+          schedule: node.meta?.schedule ?? null,
         },
       }
 
-      // list（ListNode）は status を持たないため設定しない。plan のみ対応する
+      // issue-phase011-markdownEditor-001: list（タスクではない）が @schedule を持つ場合、
+      // 通常のタスクバーと同等の図形（start/end）を生成する（従来は plan のみ対応していた）。
+      if (node.meta?.schedule) {
+        const parsed = parseSchedule(node.meta.schedule)
+        if (parsed) {
+          ganttNode.start = parsed.start
+          ganttNode.end = parsed.end
+        }
+      }
+
+      // list（ListNode）は status を持たないため設定しない。plan は従来どおり対応する
       // （issue-phase005-001 C-2。@実施日時 はフェーズに設定しない運用ルールのため schedule は追加しない）。
       if (node.meta?.plan) {
         const plan = parseSchedule(node.meta.plan)
         if (plan) ganttNode.plan = plan
+      }
+
+      // issue-phase011-markdownEditor-001: @due をマイルストーン形状に変換する。
+      if (node.meta?.due) {
+        const milestone = parseMilestone(node.meta.due)
+        if (milestone) ganttNode.milestone = milestone
+      }
+
+      // 自身に start が無い場合のみ、子孫の集計範囲でフォールバックする（グループ表示用）。
+      if (!ganttNode.start) {
+        const range = descendantDateRange(node.children)
+        if (range) {
+          ganttNode.start = range.start
+          ganttNode.end = range.end
+        }
       }
 
       result.push(ganttNode)
@@ -266,6 +315,19 @@ function extractFromSection(
     name: section.title,
     ...(range ? { start: range.start, end: range.end } : {}),
   }
+
+  // issue-phase011-markdownEditor-001: 見出し自身の @plan を点線枠として描画する。
+  if (section.meta?.plan) {
+    const plan = parseSchedule(section.meta.plan)
+    if (plan) ganttNode.plan = plan
+  }
+
+  // issue-phase011-markdownEditor-001: 見出し自身の @due をマイルストーン形状に変換する。
+  if (section.meta?.due) {
+    const milestone = parseMilestone(section.meta.due)
+    if (milestone) ganttNode.milestone = milestone
+  }
+
   result.push(ganttNode)
 
   extractFromNodes(section.children, sectionId, sourcePath, result, viewRange, options)

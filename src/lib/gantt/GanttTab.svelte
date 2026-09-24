@@ -25,6 +25,8 @@
 
   let { sources, onNodePatch, onNodeClick, defaultDurationMin = 60, expandSubtasks = false }: Props = $props()
 
+  // viewRange は常に undefined（@repeat タスクは展開されない）。issue-phase010-markdownEditor-008
+  // で審議し、現状維持を決定した（documents/external-data-contract.spec.md 注釈 A-10 参照）。
   let ganttNodes: GanttNode[] = $derived(extractGanttNodes(sources, undefined, { expandSubtasks }))
 
   const INITIAL_DAY_WIDTH = 30

@@ -4,10 +4,49 @@ import builtins from 'builtin-modules'
 import esbuildSvelte from 'esbuild-svelte'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { copyFile } from 'fs/promises'
+import { copyFile, readFile, writeFile } from 'fs/promises'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const prod = process.argv[2] === 'production'
+
+/**
+ * issue-phase003-008（2026-09-17増分）: メタタグCSSの外だし対応。
+ * issue-phase003-013（2026-09-17）: 見出し強調CSSを結合対象に追加。
+ * styles/*.css を結合し、Obsidian が自動ロードするリポジトリ直下 styles.css へ書き出す。
+ * 各ファイルはユーザーが直接編集する「正の情報源」。styles.css はビルド生成物
+ * （main.js と同様の既存運用）として扱う。
+ */
+const STYLE_SOURCES = [
+  'styles/base.css',
+  'styles/heading-emphasis.css',
+  'styles/metatag-raw.css',
+  'styles/metatag-wysiwyg.css',
+]
+
+const stylesBundlePlugin = {
+  name: 'styles-bundle',
+  setup(build) {
+    const bundleStyles = async () => {
+      const parts = await Promise.all(
+        STYLE_SOURCES.map((p) => readFile(resolve(__dirname, p), 'utf8')),
+      )
+      const banner =
+        `/* このファイルは自動生成です。編集は ${STYLE_SOURCES.join('・')} を\n` +
+        ' * 対象に行ってください（esbuild.config.mjs の stylesBundlePlugin が\n' +
+        ' * ビルド時に結合してこのファイルへ書き出します）。 */\n\n'
+      await writeFile(resolve(__dirname, 'styles.css'), banner + parts.join('\n\n'))
+    }
+    build.onEnd(async (result) => {
+      if (result.errors.length > 0) return
+      try {
+        await bundleStyles()
+        console.log('[styles-bundle] styles.css を再生成しました')
+      } catch (e) {
+        console.error('[styles-bundle] 失敗:', e.message)
+      }
+    })
+  },
+}
 
 const OBSIDIAN_PLUGIN_DIR =
   '/mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor'
@@ -21,6 +60,9 @@ const obsidianCopyPlugin = {
         await Promise.all([
           copyFile('main.js', `${OBSIDIAN_PLUGIN_DIR}/main.js`),
           copyFile('manifest.json', `${OBSIDIAN_PLUGIN_DIR}/manifest.json`),
+          // issue-phase003-008（2026-09-17再増分）: styles.css がコピー対象から漏れており、
+          // メタタグCSSの変更が実機Obsidianへ反映されない不具合があったため追加。
+          copyFile('styles.css', `${OBSIDIAN_PLUGIN_DIR}/styles.css`),
         ])
         console.log('[obsidian-copy] コピー完了')
       } catch (e) {
@@ -31,7 +73,6 @@ const obsidianCopyPlugin = {
 }
 
 import { createRequire } from 'module'
-import { readFile } from 'fs/promises'
 import { realpathSync } from 'fs'
 const require = createRequire(import.meta.url)
 
@@ -85,15 +126,16 @@ const svelteLibSourcePlugin = {
       'svelte-calendar-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-calendar-lib')), 'src/index.ts'),
       'svelte-gantt-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-gantt-lib')), 'src/index.ts'),
       'svelte-kanban-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-kanban-lib')), 'src/index.ts'),
+      'svelte-dashboard-lib': resolve(realpathSync(resolve(__dirname, 'node_modules/svelte-dashboard-lib')), 'src/index.ts'),
     }
 
     // Exact lib package names → source entry
-    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib)$/ }, (args) => {
+    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib|svelte-dashboard-lib)$/ }, (args) => {
       return { path: libs[args.path] }
     })
 
     // Lib subpath CSS imports → return empty module (css injected by esbuild-svelte; require() can't load css)
-    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib)\/.*\.css$/ }, () => {
+    build.onResolve({ filter: /^(svelte-calendar-lib|svelte-gantt-lib|svelte-kanban-lib|svelte-dashboard-lib)\/.*\.css$/ }, () => {
       return { path: 'empty', namespace: 'empty-css' }
     })
     build.onLoad({ filter: /.*/, namespace: 'empty-css' }, () => {
@@ -156,6 +198,7 @@ const context = await esbuild.context({
         // use 'export let' syntax. Svelte 5 auto-detects runes per file.
       },
     }),
+    stylesBundlePlugin,
     ...(prod ? [] : [obsidianCopyPlugin]),
   ],
   format: 'cjs',

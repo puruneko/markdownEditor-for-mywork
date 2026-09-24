@@ -1,7 +1,7 @@
 <script lang="ts">
   import 'svelte-calendar-lib/dist/index.css'
   import { CalendarView, CalendarStorage, LocalStorageBackend, DEFAULT_WEEK_SETTINGS } from 'svelte-calendar-lib'
-  import type { CalendarItem } from 'svelte-calendar-lib'
+  import type { CalendarItem, StorageBackend } from 'svelte-calendar-lib'
   import { DateTime } from 'luxon'
   import { extractCalendarItems } from './ast-to-calendar'
   import { patchScheduleForNode, patchTaskTitle, formatSchedule } from './markdown-patch'
@@ -19,11 +19,17 @@
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
     /** アイテムクリック時に globalKey を通知するコールバック。エディタカーソル移動に使用。 */
     onNodeClick?: (globalKey: string) => void
+    /**
+     * 設定の永続化先。省略時はブラウザ `localStorage`（スタンドアロン開発アプリ用の既定）。
+     * Obsidian プラグイン本体からは設定ハブ経由の `StorageBackend` が渡される
+     * （issue-phase010-markdownEditor-005）。
+     */
+    storageBackend?: StorageBackend
   }
 
-  let { sources, onNodePatch, onNodeClick }: Props = $props()
+  let { sources, onNodePatch, onNodeClick, storageBackend }: Props = $props()
 
-  const storage = new CalendarStorage(new LocalStorageBackend())
+  const storage = new CalendarStorage(storageBackend ?? new LocalStorageBackend())
 
   // 現在表示中の基準日とビュータイプを追跡して @repeat 展開範囲を決定する
   let currentDate = $state(DateTime.now())

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "libs:update": "npm install svelte-calendar-lib svelte-gantt-lib svelte-kanban-lib",
+    "libs:update": "npm install svelte-calendar-lib svelte-gantt-lib svelte-kanban-lib svelte-dashboard-lib",
     "dev": "npm run libs:update && vite",
     "build": "npm run libs:update && node esbuild.config.mjs production",
     "build:dev": "npm run libs:update && node esbuild.config.mjs",
@@ -17,7 +17,7 @@
     "test:obs:e2e:headed": "npm run build && OBS_E2E_HEADED=1 wdio run wdio.conf.mts",
     "test": "npm run test:unit && npm run test:obs:e2e",
     "gen:samples": "vitest run --config vitest.tools.config.ts",
-    "obs:update:manifest": "cp ./main.js ./manifest.json /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
+    "obs:update:manifest": "cp ./main.js ./manifest.json ./styles.css /mnt/c/Users/progp/workspace/obsidian/obsidian_trial/.obsidian/plugins/md-ast-editor/"
   },
   "devDependencies": {
     "@codemirror/lint": "^6.9.7",
@@ -55,6 +55,7 @@
     "remark-parse": "^11.0.0",
     "rrule": "^2.8.1",
     "svelte-calendar-lib": "file:../calendar-for-mywork",
+    "svelte-dashboard-lib": "file:../dashboard-for-mywork",
     "svelte-gantt-lib": "file:../ganttchart-for-mywork",
     "svelte-kanban-lib": "file:../kanban-for-mywork",
     "unified": "^11.0.5",

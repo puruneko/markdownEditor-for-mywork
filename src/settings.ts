@@ -2,7 +2,6 @@ import { PluginSettingTab, Setting } from 'obsidian'
 import type { App } from 'obsidian'
 import type { MdAstEditorPlugin } from './plugin'
 import type { IndexScope } from './sync/ast-index'
-import type { HealthRuleConfig } from './lib/health/rules'
 
 export interface MdAstEditorSettings {
   showRibbonIcon: boolean
@@ -13,14 +12,16 @@ export interface MdAstEditorSettings {
   indexScope: IndexScope
   /** indexScope が 'folder' の場合に対象フォルダのパスを指定する（末尾スラッシュ不要）。 */
   indexScopeFolder: string
-  /** HealthView: doing 停滞判定の閾値（日数）。 */
-  healthStaleDays: number
-  /** HealthView: 各ルールの ON/OFF。 */
-  healthRules: HealthRuleConfig
   /** DnD でタスクをカレンダー時間グリッドにドロップしたときの既定所要時間（分）。 */
   defaultDurationMin: number
   /** Gantt View: サブタスクを個別行として展開表示するかどうか（既定 true）。 */
   ganttExpandSubtasks: boolean
+  /**
+   * 設定ハブ（ViewSettingsHub）が管理する、ビュー別の名前空間ごとの設定値
+   * （issue-phase010-markdownEditor-005）。キーはビュー名（例: 'calendar' / 'kanban'）。
+   * 各ビューが独自の形状のオブジェクトを読み書きするため、ここでは型を specifiy しない。
+   */
+  viewSettings: Record<string, unknown>
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -30,17 +31,9 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   scrollOffsetLines: 4,
   indexScope: 'vault',
   indexScopeFolder: '',
-  healthStaleDays: 7,
   defaultDurationMin: 60,
   ganttExpandSubtasks: true,
-  healthRules: {
-    undated: true,
-    overdue: true,
-    stale: true,
-    unresolvedDeps: true,
-    readyTasks: true,
-    malformed: true,
-  },
+  viewSettings: {},
 }
 
 export class MdAstEditorSettingTab extends PluginSettingTab {
@@ -159,45 +152,20 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
           }),
       )
 
-    containerEl.createEl('h3', { text: 'ヘルスチェック' })
-
     new Setting(containerEl)
-      .setName('停滞判定の閾値（日数）')
-      .setDesc('doing のまま何日経過したら「停滞」と見なすか（既定: 7 日）。')
+      .setName('既定所要時間 (分)')
+      .setDesc('エディタからタスクをガントの時間グリッドへドラッグ＆ドロップした際の既定の所要時間（分）。反映には Gantt View の再オープンが必要です。')
       .addText(text =>
         text
-          .setPlaceholder('7')
-          .setValue(String(this.plugin.settings.healthStaleDays))
+          .setPlaceholder('60')
+          .setValue(String(this.plugin.settings.defaultDurationMin))
           .onChange(async (value) => {
             const num = parseInt(value, 10)
             if (!isNaN(num) && num >= 1) {
-              this.plugin.settings.healthStaleDays = num
+              this.plugin.settings.defaultDurationMin = num
               await this.plugin.saveSettings()
             }
           }),
       )
-
-    const ruleLabels: Array<{ key: keyof typeof this.plugin.settings.healthRules; label: string; desc: string }> = [
-      { key: 'undated',       label: 'ルール1: 日付なし',     desc: '未完なのに @schedule/@due がないタスクを検出' },
-      { key: 'overdue',       label: 'ルール2: 期限超過',     desc: '過去日付なのに未完のタスクを検出' },
-      { key: 'stale',         label: 'ルール3: doing 停滞',   desc: 'doing のまま閾値以上放置されたタスクを検出' },
-      { key: 'unresolvedDeps',label: 'ルール4: 未解決依存',   desc: '@dependsOn の参照先が見つからないタスクを検出' },
-      { key: 'readyTasks',    label: 'ルール5: 着手可能',     desc: '依存先がすべて完了し着手可能になったタスクを検出' },
-      { key: 'malformed',     label: 'ルール6: 形式不正',     desc: 'メタ記法が不正で集計から漏れているタスクを検出' },
-    ]
-
-    for (const { key, label, desc } of ruleLabels) {
-      new Setting(containerEl)
-        .setName(label)
-        .setDesc(desc)
-        .addToggle(toggle =>
-          toggle
-            .setValue(this.plugin.settings.healthRules[key])
-            .onChange(async (value) => {
-              this.plugin.settings.healthRules[key] = value
-              await this.plugin.saveSettings()
-            }),
-        )
-    }
   }
 }

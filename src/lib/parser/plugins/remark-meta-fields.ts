@@ -63,6 +63,10 @@ function applyMetaKey(meta: Partial<Meta>, key: string, value: string, tentative
     case META_KEYS.special_note:
       meta.special_note = value
       break
+    case META_KEYS.close:
+      // issue-phase010-markdownEditor-006: 値の内容に関わらず、キーの存在自体が true を意味する。
+      meta.close = true
+      break
   }
 }
 
@@ -78,7 +82,13 @@ function readChildListAsValues(item: ListItem): string[] {
     .filter(v => v.length > 0)
 }
 
-function extractMetaFromList(
+/**
+ * リスト項目のうち `- @key: value` 形式のメタ行を `parentMeta` へ畳み込み、
+ * 残りを `kept` として返す。listItem の子リスト（ネストされたメタ）だけでなく、
+ * 見出し直下のトップレベルリスト（Section メタ。issue-phase010-markdownEditor-006）
+ * にも同じ抽出規則を適用するため export する（`src/lib/parser/mdast-to-sections.ts` から再利用）。
+ */
+export function extractMetaFromList(
   list: List,
   parentMeta: Partial<Meta>,
 ): { kept: ListItem[]; injected: BlockContent[][] } {

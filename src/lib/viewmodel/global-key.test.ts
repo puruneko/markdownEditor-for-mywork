@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeGlobalKey, parseGlobalKey } from './global-key'
+import { makeGlobalKey, parseGlobalKey, stripOccurrenceSuffix } from './global-key'
 
 describe('makeGlobalKey', () => {
   it('パスとローカルIDを :: で結合する', () => {
@@ -65,5 +65,23 @@ describe('makeGlobalKey + parseGlobalKey 一意性', () => {
     const k1 = makeGlobalKey('file.md', 's1.n0')
     const k2 = makeGlobalKey('file.md', 's1.n1')
     expect(k1).not.toBe(k2)
+  })
+})
+
+describe('stripOccurrenceSuffix', () => {
+  it('末尾の __r<数字> を除去する', () => {
+    expect(stripOccurrenceSuffix('s1.n2__r3')).toBe('s1.n2')
+  })
+
+  it('サフィックスが無ければそのまま返す', () => {
+    expect(stripOccurrenceSuffix('s1.n2')).toBe('s1.n2')
+  })
+
+  it('複数桁のオカレンス番号にも対応する', () => {
+    expect(stripOccurrenceSuffix('s1.n2__r12')).toBe('s1.n2')
+  })
+
+  it('__r を含まない localId には影響しない', () => {
+    expect(stripOccurrenceSuffix('s1.rename')).toBe('s1.rename')
   })
 })

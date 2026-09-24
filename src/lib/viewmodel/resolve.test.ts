@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { resolveRef, patchInFile } from './resolve'
+import { resolveRef, patchInFile, OccurrenceIdRejectedError } from './resolve'
 import { makeGlobalKey } from './global-key'
 import { parseMarkdown } from '../parser/parse-markdown'
 
@@ -63,6 +63,12 @@ describe('resolveRef', () => {
 
     expect(refA?.node.text).toBe('タスクA')
     expect(refB?.node.text).toBe('タスクB')
+  })
+
+  it('オカレンスID（__r 付き localId）は OccurrenceIdRejectedError を投げる（無言の undefined 返却にしない）', () => {
+    const index = makeMockIndex({ 'note.md': MD })
+    const globalKey = makeGlobalKey('note.md', 's1.n0__r3')
+    expect(() => resolveRef(index, globalKey)).toThrow(OccurrenceIdRejectedError)
   })
 })
 
@@ -139,5 +145,19 @@ describe('patchInFile', () => {
     // fileA.md だけが書き換えられる
     expect(writeFile).toHaveBeenCalledTimes(1)
     expect(writeFile).toHaveBeenCalledWith('fileA.md', '- [ ] 完了A\n')
+  })
+
+  it('オカレンスID（__r 付き localId）への書き戻しは OccurrenceIdRejectedError を投げ、readFile/writeFile を一切呼ばない（データ破壊防止）', async () => {
+    const index = makeMockIndex({ 'note.md': MD })
+    const globalKey = makeGlobalKey('note.md', 's1.n0__r3')
+    const readFile = vi.fn()
+    const writeFile = vi.fn()
+
+    await expect(
+      patchInFile(index, globalKey, readFile, writeFile, (md) => md),
+    ).rejects.toThrow(OccurrenceIdRejectedError)
+
+    expect(readFile).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,165 @@
+/* ============================================================
+ * メタタグ装飾 — wysiwyg モード（Live Preview・カーソルが行外にある時）
+ *
+ * issue-phase003-008（2026-09-17再増分）。
+ * .metatag-date-chip は Decoration.replace のウィジェットに付与されるクラス。
+ * 日付系以外（緑装飾）は metatag-raw.css と意図的に同一内容を重複定義している
+ * （ユーザー指示: 当面は同一のCSS指定でよい。将来ここだけ変更してよい）。
+ *
+ * ダーク/ライト対応方針: metatag-raw.css と同じく、独自の `.theme-dark` 分岐は
+ * 持たず、Obsidian組み込みのセマンティックCSS変数（--color-green-rgb・
+ * --color-blue-rgb 等）に乗せる。Obsidianの外観設定（ライト/ダーク）に自動追従する。
+ *
+ * 非モーダルの日付・時刻ピッカー（metatag-picker.ts の showTooltip）の
+ * UIスタイルも、wysiwygの拡張編集体験の一部としてここに置く
+ * （こちらも background-primary 等の Obsidian 変数を使い、自動でテーマに追従する）。
+ * ============================================================ */
+
+:root {
+  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
+  --metatag-green-fg: var(--color-green, #2f9e44);
+  --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
+  --metatag-date-fg: var(--color-blue, #3a6fd8);
+  --metatag-date-chip-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.18);
+}
+
+.metatag {
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* ------------------------------------------------------------
+ * 日付系メタの「メタタグ表示」チップ
+ * 「ハッシュタグ的だが角丸は控えめ」= border-radius を通常のタグより小さくする。
+ * ------------------------------------------------------------ */
+.metatag-value.metatag-date-chip.metatag-plan,
+.metatag-value.metatag-date-chip.metatag-schedule,
+.metatag-value.metatag-date-chip.metatag-due {
+  display: inline-block;
+  background: var(--metatag-date-chip-bg);
+  color: var(--metatag-date-fg);
+  border-radius: 4px;
+  padding: 0 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.metatag-date-chip:hover {
+  filter: brightness(1.08);
+}
+
+.metatag-date-chip.metatag-tentative {
+  opacity: 0.65;
+}
+
+/* ------------------------------------------------------------
+ * 日付系以外の全メタキー（緑装飾・raw.cssと同一内容）
+ * ------------------------------------------------------------ */
+.metatag-key.metatag-priority,
+.metatag-key.metatag-dependsOn,
+.metatag-key.metatag-tags,
+.metatag-key.metatag-repeat,
+.metatag-key.metatag-condition,
+.metatag-key.metatag-purpose,
+.metatag-key.metatag-savepoint,
+.metatag-key.metatag-special_note,
+.metatag-key.metatag-unknown {
+  background: var(--metatag-green-bg);
+}
+
+.metatag-value.metatag-priority,
+.metatag-value.metatag-dependsOn,
+.metatag-value.metatag-tags,
+.metatag-value.metatag-repeat,
+.metatag-value.metatag-condition,
+.metatag-value.metatag-purpose,
+.metatag-value.metatag-savepoint,
+.metatag-value.metatag-special_note,
+.metatag-value.metatag-unknown {
+  color: var(--metatag-green-fg);
+}
+
+.metatag-key.metatag-plan,
+.metatag-key.metatag-schedule,
+.metatag-key.metatag-due {
+  background: var(--metatag-date-bg);
+}
+
+/* ------------------------------------------------------------
+ * 日付・時刻ピッカー（非モーダル・ポップアップ）
+ * 色は全て Obsidian 変数（テーマの light/dark に自動追従）を使用する。
+ *
+ * 重要: CodeMirror 6 の showTooltip はこの要素に自前のクラス `cm-tooltip` を
+ * 付与し、`.cm-tooltip` に対して背景色・枠線の既定スタイル（baseTheme）を
+ * 動的に注入する。挿入順序次第でそちらが優先されてしまい、ダークモードでも
+ * 常に明るい既定背景のまま（`--background-primary` の変化が反映されない）に
+ * なる実機不具合を確認した。`.cm-tooltip` を含む複合セレクタにして詳細度を
+ * 上げ、確実にこちら側の変数値が勝つようにする。
+ * ------------------------------------------------------------ */
+.metatag-picker-popup.cm-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  min-width: 240px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-s, 0 4px 16px rgba(0, 0, 0, 0.18));
+  font-size: 13px;
+}
+
+.metatag-picker-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--text-normal);
+}
+
+.metatag-picker-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.metatag-picker-row .metatag-picker-date {
+  flex: 1 1 60%;
+}
+
+.metatag-picker-row .metatag-picker-time {
+  flex: 1 1 40%;
+}
+
+.metatag-picker-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-normal);
+}
+
+.metatag-picker-button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.metatag-picker-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.metatag-picker-btn-commit {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+
+.metatag-picker-btn-commit:hover {
+  background: var(--interactive-accent-hover, var(--interactive-accent));
+}

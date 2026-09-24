@@ -381,3 +381,135 @@ describe('extractGanttNodes — plan・milestone・tentative・status', () => {
     expect(group.status).toBeUndefined()
   })
 })
+
+// ----------------------------------------------------------------
+// issue-phase010-markdownEditor-008: gantt 投影の可視性述語の拡張
+// ----------------------------------------------------------------
+
+describe('extractGanttNodes — 可視性述語の拡張（issue-phase010-markdownEditor-008）', () => {
+  it('タスクを持たず、@plan のみを持つリスト項目もチャートに出る（従来は非表示だった回帰修正）', () => {
+    const nodes = extractGanttNodes(src('- 案件アイデア\n  - @plan: 2026-05-01/2026-05-10\n'))
+    const node = nodes.find(n => n.name === '案件アイデア')
+    expect(node).toBeDefined()
+    expect(node!.type).toBe('subsection')
+    expect(node!.plan?.start.toISODate()).toBe('2026-05-01')
+  })
+
+  it('タスクを持たず、@due のみを持つリスト項目もチャートに出る（従来は非表示だった回帰修正）', () => {
+    const nodes = extractGanttNodes(src('- 案件アイデア\n  - @due: 2026-05-10\n'))
+    const node = nodes.find(n => n.name === '案件アイデア')
+    expect(node).toBeDefined()
+    expect(node!.type).toBe('subsection')
+  })
+
+  it('タスクを持たず、@schedule のみを持つリスト項目もチャートに出る（従来は非表示だった回帰修正）', () => {
+    const nodes = extractGanttNodes(src('- 案件アイデア\n  - @schedule: 2026-05-01T10:00/2026-05-01T11:00\n'))
+    const node = nodes.find(n => n.name === '案件アイデア')
+    expect(node).toBeDefined()
+    expect(node!.type).toBe('subsection')
+  })
+
+  it('日付メタを一切持たないリスト項目は従来どおり非表示（回帰確認）', () => {
+    const nodes = extractGanttNodes(src('- 普通のリスト\n  - ただの子リスト項目\n'))
+    expect(nodes.find(n => n.name === '普通のリスト')).toBeUndefined()
+  })
+
+  it('タスクを一切持たず、見出し（Section）自身が @plan を持つ場合もチャートに出る（I-07 の Section.meta が前提）', () => {
+    const nodes = extractGanttNodes(src('# 案件A\n- @plan: 2026-06-01/2026-06-30\n- 普通のメモ\n'))
+    const project = nodes.find(n => n.name === '案件A')
+    expect(project).toBeDefined()
+    expect(project!.type).toBe('project')
+  })
+
+  it('タスクを一切持たず、見出し（Section）自身が @due を持つ場合もチャートに出る', () => {
+    const nodes = extractGanttNodes(src('# 案件B\n- @due: 2026-06-30\n- 普通のメモ\n'))
+    const project = nodes.find(n => n.name === '案件B')
+    expect(project).toBeDefined()
+  })
+
+  it('見出し（Section）が日付メタも日付メタを持つ子孫も持たない場合は従来どおり非表示（回帰確認）', () => {
+    const nodes = extractGanttNodes(src('# 案件C\n- 普通のメモ\n'))
+    expect(nodes.find(n => n.name === '案件C')).toBeUndefined()
+  })
+
+  it('新しい GanttNodeType は追加されない（DEC-14: list 由来ノードは既存の type: "subsection" のまま）', () => {
+    const nodes = extractGanttNodes(src('- 案件アイデア\n  - @due: 2026-05-10\n'))
+    const node = nodes.find(n => n.name === '案件アイデア')!
+    expect(['task', 'subsection', 'project', 'section']).toContain(node.type)
+  })
+})
+
+// ----------------------------------------------------------------
+// issue-phase011-markdownEditor-001: チャート領域への実図形描画
+// ----------------------------------------------------------------
+
+describe('extractGanttNodes — チャート領域への実図形描画（issue-phase011-markdownEditor-001）', () => {
+  it('@schedule のみを持つ（タスクではない）リスト項目に、task と同等の start/end 座標が設定される', () => {
+    const nodes = extractGanttNodes(src('- リスト項目\n  - @schedule: 2026-05-01T10:00/2026-05-01T12:00\n'))
+    const node = nodes.find(n => n.name === 'リスト項目')!
+    expect(node.type).toBe('subsection')
+    expect(node.start?.toISO()).toBe(DateTime.fromISO('2026-05-01T10:00').toISO())
+    expect(node.end?.toISO()).toBe(DateTime.fromISO('2026-05-01T12:00').toISO())
+  })
+
+  it('@due のみを持つ（タスクではない）リスト項目に、milestone（単一点）が設定される', () => {
+    const nodes = extractGanttNodes(src('- リスト項目\n  - @due: 2026-05-10\n'))
+    const node = nodes.find(n => n.name === 'リスト項目')!
+    expect(node.milestone).toBeDefined()
+    expect(node.milestone).not.toHaveProperty('start')
+    expect((node.milestone as DateTime).toISODate()).toBe('2026-05-10')
+  })
+
+  it('@due が期間の場合、リスト項目の milestone は {start, end} になる', () => {
+    const nodes = extractGanttNodes(src('- リスト項目\n  - @due: 2026-05-10/2026-05-15\n'))
+    const node = nodes.find(n => n.name === 'リスト項目')!
+    const milestone = node.milestone as { start: DateTime; end: DateTime }
+    expect(milestone.start.toISODate()).toBe('2026-05-10')
+    expect(milestone.end.toISODate()).toBe('2026-05-15')
+  })
+
+  it('@plan を持つ見出しに、点線枠用の plan 図形データが設定される（start/end 未設定でも良い）', () => {
+    const nodes = extractGanttNodes(src('# 案件A\n- @plan: 2026-06-01/2026-06-30\n- 普通のメモ\n'))
+    const project = nodes.find(n => n.name === '案件A')!
+    expect(project.type).toBe('project')
+    expect(project.plan?.start.toISODate()).toBe('2026-06-01')
+    expect(project.plan?.end.toISODate()).toBe('2026-06-30')
+  })
+
+  it('@due を持つ見出しに、マイルストーン形状の図形データが設定される', () => {
+    const nodes = extractGanttNodes(src('# 案件B\n- @due: 2026-06-30\n- 普通のメモ\n'))
+    const project = nodes.find(n => n.name === '案件B')!
+    expect(project.milestone).toBeDefined()
+    expect((project.milestone as DateTime).toISODate()).toBe('2026-06-30')
+  })
+
+  it('list・見出しいずれも task 固有の装飾は付与されない（status フィールドが存在しない）', () => {
+    const nodes = extractGanttNodes(src(
+      '# 案件C\n- @due: 2026-06-30\n- リスト項目\n  - @schedule: 2026-05-01T10:00/2026-05-01T12:00\n',
+    ))
+    const project = nodes.find(n => n.name === '案件C')!
+    const list = nodes.find(n => n.name === 'リスト項目')!
+    expect(project.status).toBeUndefined()
+    expect(list.status).toBeUndefined()
+  })
+
+  it('descendantDateRange の集計対象が拡張され、@schedule を持たず @plan のみを持つ子孫でも祖先グループの範囲に反映される', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] 親タスク\n  - [ ] 子タスク\n    - @plan: 2026-07-01/2026-07-31\n',
+    ))
+    const parent = nodes.find(n => n.name === '親タスク')!
+    expect(parent.start?.toISODate()).toBe('2026-07-01')
+    expect(parent.end?.toISODate()).toBe('2026-07-31')
+  })
+
+  it('既存の task ノードの通常描画（start/end・milestone・plan）に回帰が無い', () => {
+    const nodes = extractGanttNodes(src(
+      '- [ ] タスク\n  - @schedule: 2026-04-01T10:00/2026-04-01T12:00\n  - @plan: 2026-04-01/2026-04-10\n  - @due: 2026-04-15\n',
+    ))
+    const task = nodes.find(n => n.type === 'task')!
+    expect(task.start?.toISODate()).toBe('2026-04-01')
+    expect(task.end?.toISODate()).toBe('2026-04-01')
+    expect(task.plan?.start.toISODate()).toBe('2026-04-01')
+    expect((task.milestone as DateTime).toISODate()).toBe('2026-04-15')
+  })
+})

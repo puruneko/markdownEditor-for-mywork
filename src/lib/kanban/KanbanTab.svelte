@@ -12,6 +12,7 @@
   import { patchNodeStatus } from '../calendar/markdown-patch'
   import type { Document, TaskNode, Status } from '../parser/types'
   import type { SourceEntry } from '../viewmodel/contract'
+  import type { KanbanUserConfig } from './kanban-user-config'
   import { makeGlobalKey } from '../viewmodel/global-key'
   import { MD_TASK_MIME } from '../../editor/task-drag-source'
   import type { TaskDragPayload } from '../../editor/task-drag-source'
@@ -24,9 +25,13 @@
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
     /** カードクリック時に globalKey を通知するコールバック */
     onNodeClick?: (globalKey: string) => void
+    /** 設定ハブから読み込んだ、永続化済みのユーザー設定（レーン・グルーピング等）。 */
+    initialUserConfig?: Partial<KanbanUserConfig>
+    /** ユーザー設定が変化するたびに呼ばれる、設定ハブへの永続化コールバック。 */
+    onUserConfigChange?: (config: KanbanUserConfig) => void
   }
 
-  let { sources, onNodePatch, onNodeClick }: Props = $props()
+  let { sources, onNodePatch, onNodeClick, initialUserConfig, onUserConfigChange }: Props = $props()
 
   // カード抽出（sources 変化のたびに再計算）
   const cards: KanbanCard[] = $derived(extractKanbanCards(sources))
@@ -41,13 +46,14 @@
   })
 
   // ユーザーがカスタマイズできるレーン定義と board 設定
-  let userLanes: LaneDefinition[] = $state([...DEFAULT_KANBAN_CONFIG.lanes])
+  // （issue-phase010-markdownEditor-005: 設定ハブから読み込んだ initialUserConfig で初期化する）
+  let userLanes: LaneDefinition[] = $state(initialUserConfig?.lanes ?? [...DEFAULT_KANBAN_CONFIG.lanes])
   // 既定は階層グルーピング（見出し階層でカードをグループ化）
-  let userGroupBy = $state<string>(HIERARCHY_GROUP_BY)
-  let headingLevel = $state<number>(2)
-  let showUnits = $state<boolean>(false)
-  let allowCrossGroupMove = $state(false)
-  let cardTitleMultiline = $state(false)
+  let userGroupBy = $state<string>(initialUserConfig?.groupBy ?? HIERARCHY_GROUP_BY)
+  let headingLevel = $state<number>(initialUserConfig?.headingLevel ?? 2)
+  let showUnits = $state<boolean>(initialUserConfig?.showUnits ?? false)
+  let allowCrossGroupMove = $state(initialUserConfig?.allowCrossGroupMove ?? false)
+  let cardTitleMultiline = $state(initialUserConfig?.cardTitleMultiline ?? false)
 
   const config: KanbanBoardConfig = $derived({
     ...createKanbanConfig(cards, headingLevel, showUnits),
@@ -57,6 +63,7 @@
     showUnits,
     allowCrossGroupMove,
     cardTitleMultiline,
+    theme: 'light',
   })
 
   function handleCardMove(event: CardMoveEvent): void {
@@ -108,6 +115,14 @@
     showUnits = event.config.showUnits ?? false
     allowCrossGroupMove = event.config.allowCrossGroupMove ?? false
     cardTitleMultiline = event.config.cardTitleMultiline ?? false
+    onUserConfigChange?.({
+      lanes: userLanes,
+      groupBy: userGroupBy,
+      headingLevel,
+      showUnits,
+      allowCrossGroupMove,
+      cardTitleMultiline,
+    })
   }
 </script>
 

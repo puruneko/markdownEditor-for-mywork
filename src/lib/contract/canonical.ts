@@ -60,6 +60,8 @@ export const META_KEYS = {
   purpose: 'purpose',
   savepoint: 'savepoint',
   special_note: 'special_note',
+  /** issue-phase010-markdownEditor-006: @close。値の内容に関わらずキーの存在自体が true を意味する。 */
+  close: 'close',
 } as const
 export type MetaKey = keyof typeof META_KEYS
 
@@ -79,6 +81,18 @@ export type Meta = {
   savepoint?: string | string[]
   /** @特記事項。単一行なら string、子リストなら string[]（優先度C） */
   special_note?: string | string[]
+  /**
+   * issue-phase010-markdownEditor-006: @close。ノード（task/list）レベルでは
+   * 「クローズ」の意味を持たない単なる真偽値フラグ。案件（Section）のクローズ判定は
+   * `Section.close` のみが担う（DEC-05 の投影フィルタも `Section.close` を参照する）。
+   */
+  close?: boolean
+  /**
+   * issue-phase010-markdownEditor-006: 直下（子リストではなく直接の子）の引用（`>`）本文。
+   * `QuoteNode` の生成を置き換えるものではなく、併存する派生フィールドである。
+   * `@memo:` というリスト項目記法では設定されない（blockquote からのみ設定される）。
+   */
+  memo?: string
   /** `?` 修飾子（仮置き）が付与されたメタキー。plan/schedule/due にのみ意味を持つ。 */
   tentative?: {
     plan?: true

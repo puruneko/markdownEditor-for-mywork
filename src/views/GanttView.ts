@@ -5,6 +5,8 @@ import type { FileSync } from '../sync/file-sync'
 import type { AstIndex } from '../sync/ast-index'
 import type { EditorEventBus } from '../sync/editor-event-bus'
 import type { MdAstEditorSettings } from '../settings'
+import type { SourceEntry } from '../lib/viewmodel/contract'
+import { filterClosedProjects } from '../lib/viewmodel/filter-closed-projects'
 import { ShadowItemView } from './ShadowItemView'
 import type { ViewMountProps } from './ShadowItemView'
 
@@ -36,6 +38,14 @@ export class GanttView extends ShadowItemView {
   }
 
   protected getExtraMountProps(): Record<string, unknown> {
-    return { expandSubtasks: this.settings.ganttExpandSubtasks }
+    return {
+      expandSubtasks: this.settings.ganttExpandSubtasks,
+      defaultDurationMin: this.settings.defaultDurationMin,
+    }
+  }
+
+  // issue-phase010-markdownEditor-007: クローズ案件を投影の手前で一括除外する。
+  protected getSources(): SourceEntry[] {
+    return filterClosedProjects(super.getSources())
   }
 }

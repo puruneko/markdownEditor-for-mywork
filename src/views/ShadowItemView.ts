@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, MarkdownView } from 'obsidian'
+import { ItemView, WorkspaceLeaf, MarkdownView, Notice } from 'obsidian'
 import type { TFile } from 'obsidian'
 import { mount, unmount } from 'svelte'
 import type { Component } from 'svelte'
@@ -7,10 +7,10 @@ import type { AstIndex } from '../sync/ast-index'
 import type { EditorEventBus } from '../sync/editor-event-bus'
 import type { Document, TaskNode } from '../lib/parser/types'
 import type { SourceEntry } from '../lib/viewmodel/contract'
-import { parseGlobalKey } from '../lib/viewmodel/global-key'
-import { patchInFile } from '../lib/viewmodel/resolve'
+import { parseGlobalKey, stripOccurrenceSuffix } from '../lib/viewmodel/global-key'
+import { patchInFile, OccurrenceIdRejectedError } from '../lib/viewmodel/resolve'
 
-const SHADOW_RESET_CSS = `
+export const SHADOW_RESET_CSS = `
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -23,6 +23,11 @@ const SHADOW_RESET_CSS = `
     height: 100%;
     overflow: hidden;
     font-family: system-ui, -apple-system, sans-serif;
+    color: #000;
+    background: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: normal;
   }
   button {
     font-family: inherit;
@@ -97,19 +102,27 @@ export abstract class ShadowItemView extends ItemView {
       patcher: (md: string, doc: Document, node: TaskNode) => string,
     ): Promise<void> => {
       if (!this.astIndex) return
-      await patchInFile(
-        this.astIndex,
-        globalKey,
-        (fp) => {
-          const f = this.app.vault.getAbstractFileByPath(fp) as TFile
-          return this.app.vault.read(f)
-        },
-        (fp, content) => {
-          const f = this.app.vault.getAbstractFileByPath(fp) as TFile
-          return this.app.vault.modify(f, content)
-        },
-        patcher,
-      )
+      try {
+        await patchInFile(
+          this.astIndex,
+          globalKey,
+          (fp) => {
+            const f = this.app.vault.getAbstractFileByPath(fp) as TFile
+            return this.app.vault.read(f)
+          },
+          (fp, content) => {
+            const f = this.app.vault.getAbstractFileByPath(fp) as TFile
+            return this.app.vault.modify(f, content)
+          },
+          patcher,
+        )
+      } catch (err) {
+        if (err instanceof OccurrenceIdRejectedError) {
+          new Notice('繰り返しタスクの個別オカレンスは編集できません（元のタスク行を編集してください）。')
+          return
+        }
+        throw err
+      }
     }
 
     const onReload = (): void => {
@@ -159,7 +172,11 @@ export abstract class ShadowItemView extends ItemView {
     }
   }
 
-  private getSources(): SourceEntry[] {
+  /**
+   * サブクラスがオーバーライドしてフィルタ（例: `filterClosedProjects`）を適用できるよう
+   * `protected` にする（issue-phase010-markdownEditor-007）。
+   */
+  protected getSources(): SourceEntry[] {
     if (this.astIndex) {
       const docs = this.astIndex.getDocuments()
       return [...docs.entries()].map(([path, doc]) => ({ path, doc }))
@@ -192,7 +209,7 @@ export abstract class ShadowItemView extends ItemView {
       ? this.astIndex.getDocument(filePath)
       : this.fileSync.getCurrentDocument()
     if (!doc) return
-    const line = doc.nodeLineMap.get(localId)
+    const line = doc.nodeLineMap.get(stripOccurrenceSuffix(localId))
     if (line === undefined) return
 
     const currentFilePath = this.fileSync.getCurrentFile()?.path

@@ -172,7 +172,7 @@ describe('serializeAst', () => {
     const doc: Document = {
       type: 'document',
       sections: [{
-        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1,
+        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1, close: false,
         children: [{
           type: 'task', id: 'n1', text: 'タスク',
           status: 'ready', children: [], lineNumber: 0,
@@ -272,7 +272,7 @@ describe('serializeAst', () => {
     const doc: Document = {
       type: 'document',
       sections: [{
-        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1,
+        type: 'section', id: 's1', depth: 0, title: '', lineNumber: -1, close: false,
         children: [{
           type: 'task', id: 'n1', text: 'タスク',
           status: 'ready', children: [], lineNumber: 0,

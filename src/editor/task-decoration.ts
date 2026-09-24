@@ -1,6 +1,7 @@
 import { ViewPlugin, Decoration, WidgetType } from '@codemirror/view'
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
+import { normalizeMetaKey } from '../lib/parser/meta-keys'
 
 // ----------------------------------------------------------------
 // Status marker patterns
@@ -65,6 +66,11 @@ function buildDecorations(view: EditorView): DecorationSet {
           const classes = ['md-ast-meta-key']
           if (key === 'plan' || key === '想定期間') classes.push('md-ast-meta-key--plan')
           if (tentative) classes.push('md-ast-meta-tentative')
+          // issue-phase003-008（2026-09-17増分）: 全メタキー共通の「メタタグ」視覚装飾クラス。
+          // 未知キーは metatag-unknown とし、生の（日本語を含む）キー文字列をクラス名化しない。
+          const canonicalKey = normalizeMetaKey(key) ?? 'unknown'
+          classes.push('metatag', 'metatag-key', `metatag-${canonicalKey}`)
+          if (tentative) classes.push('metatag-tentative')
           builder.add(
             keyStart,
             keyEnd,

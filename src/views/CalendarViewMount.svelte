@@ -4,6 +4,7 @@
   import { filterNodes, type FilterQuery } from '../lib/query/filter'
   import type { Document, TaskNode } from '../lib/parser/types'
   import type { SourceEntry } from '../lib/viewmodel/contract'
+  import type { StorageBackend } from 'svelte-calendar-lib'
 
   interface Props {
     sources: SourceEntry[]
@@ -11,9 +12,11 @@
     onNodeClick: (globalKey: string) => void
     onNodePatch: (globalKey: string, patcher: (md: string, doc: Document, node: TaskNode) => string) => Promise<void>
     onReload: () => void
+    /** ShadowItemView.getExtraMountProps() 経由で渡される設定ハブの StorageBackend。 */
+    storageBackend?: StorageBackend
   }
 
-  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload }: Props = $props()
+  let { sources: initialSources, registerUpdater, onNodeClick, onNodePatch, onReload, storageBackend }: Props = $props()
 
   let sources = $state(initialSources)
   let query = $state<FilterQuery>({})
@@ -31,7 +34,7 @@
   <div class="filter-bar-row">
     <FilterBar bind:query {onReload} />
   </div>
-  <CalendarTab sources={filteredSources} {onNodePatch} {onNodeClick} />
+  <CalendarTab sources={filteredSources} {onNodePatch} {onNodeClick} {storageBackend} />
 </div>
 
 <style>
