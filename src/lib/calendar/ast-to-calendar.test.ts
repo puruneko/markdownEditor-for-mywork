@@ -5,13 +5,7 @@ import { updateNodeSchedule, updateNodeText } from './calendar-to-ast'
 import { DateTime } from 'luxon'
 import { serializeAst } from '../parser/ast-to-md'
 import { parseGlobalKey } from '../viewmodel/global-key'
-
-// ----------------------------------------------------------------
-// ヘルパー: 単一ファイルソースの作成
-// ----------------------------------------------------------------
-function src(md: string, path = 'test.md') {
-  return [{ path, doc: parseMarkdown(md) }]
-}
+import { src } from '../test-helpers'
 
 // ----------------------------------------------------------------
 // parseSchedule
@@ -262,6 +256,64 @@ describe('extractCalendarItems — @repeat 展開', () => {
     const items = extractCalendarItems(src(md), viewRange)
     expect(items).toHaveLength(1)
     expect(items[0].id).not.toMatch(/__r\d+$/)
+  })
+})
+
+// ----------------------------------------------------------------
+// issue-phase012-markdownEditor-003: @due のみを持つタスクの投影
+// ----------------------------------------------------------------
+
+describe('extractCalendarItems — @due のみを持つタスクの期限項目投影', () => {
+  it('@due: 2026-10-01（日付のみ）を持つタスク → CalendarDatePoint の項目が1件生成され、id に __due が付与される', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-01\n'
+    const items = extractCalendarItems(src(md))
+    expect(items).toHaveLength(1)
+    expect(items[0].temporal.kind).toBe('CalendarDatePoint')
+    expect((items[0].temporal as any).at).toBe('2026-10-01')
+    const { localId } = parseGlobalKey(items[0].id)
+    expect(localId).toMatch(/__due$/)
+  })
+
+  it('@due: 2026-10-01T15:00（日時）を持つタスク → CalendarDateTimePoint の項目が生成される', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-01T15:00\n'
+    const items = extractCalendarItems(src(md))
+    expect(items).toHaveLength(1)
+    expect(items[0].temporal.kind).toBe('CalendarDateTimePoint')
+    expect((items[0].temporal as any).at.toISO()).toContain('2026-10-01T15:00')
+  })
+
+  it('@schedule と @due を両方持つタスク → 期限項目は生成されず、既存の schedule 項目のみが生成される', () => {
+    const md = '- [ ] タスク\n  - @schedule: 2026-10-01T10:00/2026-10-01T11:00\n  - @due: 2026-10-05\n'
+    const items = extractCalendarItems(src(md))
+    expect(items).toHaveLength(1)
+    expect(items[0].temporal.kind).toBe('CalendarDateTimeRange')
+  })
+
+  it('@due が期間形式（2026-10-01/2026-10-03）のタスク → 期限項目は生成されない', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-01/2026-10-03\n'
+    expect(extractCalendarItems(src(md))).toHaveLength(0)
+  })
+
+  it('@due の値が日付としてパースできない文字列のタスク → 期限項目は生成されない', () => {
+    const md = '- [ ] タスク\n  - @due: not-a-date\n'
+    expect(extractCalendarItems(src(md))).toHaveLength(0)
+  })
+
+  it('@due と @repeat を両方持つタスク → 期限項目は生成されない', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-01\n  - @repeat: FREQ=DAILY\n'
+    expect(extractCalendarItems(src(md))).toHaveLength(0)
+  })
+
+  it('viewRange を指定し、期限の日付がその範囲外にあるタスク → 期限項目は生成されない', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-01\n'
+    const viewRange = { start: DateTime.fromISO('2026-11-01'), end: DateTime.fromISO('2026-11-30') }
+    expect(extractCalendarItems(src(md), viewRange)).toHaveLength(0)
+  })
+
+  it('viewRange の範囲内にある @due 項目は生成される（回帰確認）', () => {
+    const md = '- [ ] タスク\n  - @due: 2026-10-15\n'
+    const viewRange = { start: DateTime.fromISO('2026-10-01'), end: DateTime.fromISO('2026-10-31') }
+    expect(extractCalendarItems(src(md), viewRange)).toHaveLength(1)
   })
 })
 

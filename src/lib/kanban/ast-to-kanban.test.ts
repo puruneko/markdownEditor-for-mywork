@@ -3,13 +3,7 @@ import { extractKanbanCards, createKanbanConfig, DEFAULT_KANBAN_CONFIG } from '.
 import { HIERARCHY_GROUP_BY } from 'svelte-kanban-lib'
 import { parseMarkdown } from '../parser/parse-markdown'
 import { parseGlobalKey } from '../viewmodel/global-key'
-
-// ----------------------------------------------------------------
-// ヘルパー: 単一ファイルソースの作成
-// ----------------------------------------------------------------
-function src(md: string, path = 'test.md') {
-  return [{ path, doc: parseMarkdown(md) }]
-}
+import { src } from '../test-helpers'
 
 describe('extractKanbanCards', () => {
   it('空のドキュメントは空配列を返す', () => {

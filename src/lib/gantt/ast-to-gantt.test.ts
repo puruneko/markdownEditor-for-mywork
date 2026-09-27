@@ -3,13 +3,7 @@ import { parseMarkdown } from '../parser/parse-markdown'
 import { extractGanttNodes } from './ast-to-gantt'
 import { parseGlobalKey } from '../viewmodel/global-key'
 import { DateTime } from 'luxon'
-
-// ----------------------------------------------------------------
-// ヘルパー: 単一ファイルソースの作成
-// ----------------------------------------------------------------
-function src(md: string, path = 'test.md') {
-  return [{ path, doc: parseMarkdown(md) }]
-}
+import { src } from '../test-helpers'
 
 // ----------------------------------------------------------------
 // extractGanttNodes
@@ -511,5 +505,56 @@ describe('extractGanttNodes — チャート領域への実図形描画（issue-
     expect(task.end?.toISODate()).toBe('2026-04-01')
     expect(task.plan?.start.toISODate()).toBe('2026-04-01')
     expect((task.milestone as DateTime).toISODate()).toBe('2026-04-15')
+  })
+})
+
+// ----------------------------------------------------------------
+// issue-phase012-markdownEditor-004: hasExplicitSchedule と見出し自身の @schedule
+// ----------------------------------------------------------------
+
+describe('extractGanttNodes — hasExplicitSchedule と見出しの明示的な @schedule（issue-phase012-markdownEditor-004）', () => {
+  it('見出しに @schedule があり、配下に別の日付を持つタスクがある場合、見出しの start/end は @schedule の値になり hasExplicitSchedule: true が設定される', () => {
+    const nodes = extractGanttNodes(src(
+      '# 案件A\n- @schedule: 2026-10-01/2026-10-05\n- [ ] タスク\n  - @schedule: 2026-11-01T09:00/2026-11-01T10:00\n',
+    ))
+    const project = nodes.find(n => n.name === '案件A')!
+    expect(project.start?.toISODate()).toBe('2026-10-01')
+    expect(project.end?.toISODate()).toBe('2026-10-05')
+    expect(project.hasExplicitSchedule).toBe(true)
+  })
+
+  it('見出しに @schedule が無く配下にタスクがある場合、見出しの start/end は配下の集計期間になり hasExplicitSchedule は設定されない', () => {
+    const nodes = extractGanttNodes(src(
+      '# 案件B\n- [ ] タスク\n  - @schedule: 2026-11-01T09:00/2026-11-01T10:00\n',
+    ))
+    const project = nodes.find(n => n.name === '案件B')!
+    expect(project.start?.toISODate()).toBe('2026-11-01')
+    expect(project.hasExplicitSchedule).toBeUndefined()
+  })
+
+  it('見出しの @schedule がパースできない不正な文字列の場合、従来どおり配下の集計期間にフォールバックする', () => {
+    const nodes = extractGanttNodes(src(
+      '# 案件E\n- @schedule: not-a-schedule\n- [ ] タスク\n  - @schedule: 2026-11-01T09:00/2026-11-01T10:00\n',
+    ))
+    const project = nodes.find(n => n.name === '案件E')!
+    expect(project.start?.toISODate()).toBe('2026-11-01')
+    expect(project.hasExplicitSchedule).toBeUndefined()
+  })
+
+  it('リスト項目（@schedule と @plan がある場合）は type: subsection・hasExplicitSchedule: true・plan フィールドが設定される', () => {
+    const nodes = extractGanttNodes(src(
+      '- 項目\n  - @schedule: 2026-11-01T09:00/2026-11-01T10:00\n  - @plan: 2026-10-25/2026-11-05\n',
+    ))
+    const node = nodes.find(n => n.name === '項目')!
+    expect(node.type).toBe('subsection')
+    expect(node.hasExplicitSchedule).toBe(true)
+    expect(node.plan?.start.toISODate()).toBe('2026-10-25')
+  })
+
+  it('通常の task に @schedule がある場合、従来どおり type: task として変換される（既存回帰）', () => {
+    const nodes = extractGanttNodes(src('- [ ] タスク\n  - @schedule: 2026-11-01T09:00/2026-11-01T10:00\n'))
+    const task = nodes.find(n => n.name === 'タスク')!
+    expect(task.type).toBe('task')
+    expect(task.start?.toISODate()).toBe('2026-11-01')
   })
 })
