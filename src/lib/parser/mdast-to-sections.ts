@@ -98,11 +98,18 @@ function buildNodeLineMap(sections: Section[]): Map<string, number> {
   return map
 }
 
+// issue-phase015-markdownEditor-004: 匿名セクション（depth 0）は他の見出しの depth（1〜6）
+// より小さいため、スタック方式のまま処理すると全ての見出しがその子になってしまう。
+// 匿名セクションはスタックに積まず、常に result の最上位に直接追加する（データ契約 BR-014）。
 function nestSections(sections: Section[]): Section[] {
   const result: Section[] = []
   const stack: Section[] = []
 
   for (const section of sections) {
+    if (section.depth === 0) {
+      result.push(section)
+      continue
+    }
     while (stack.length > 0 && stack[stack.length - 1].depth >= section.depth) {
       stack.pop()
     }

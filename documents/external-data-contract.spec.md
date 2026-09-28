@@ -2,8 +2,8 @@ title: 連携アプリ向けデータ契約（ホストが連携アプリへ渡�
 status: draft
 owner: human
 created: 2026-09-12
-updated: 2026-09-14
-related_issues: [issue-phase004-006, issue-phase005-001]
+updated: 2026-09-28
+related_issues: [issue-phase004-006, issue-phase005-001, issue-phase015-markdownEditor-004]
 related_decisions: []
 
 ---
@@ -183,7 +183,7 @@ BR-012 下位の見出しは `subSections` に格納しなければならない�
 
 BR-013 見出しが1個も存在しないファイルの場合、全内容を `id: 'section-0'`・`title: ''`・`depth: 0`・`lineNumber: -1` の匿名セクション1個に格納しなければならない。
 
-BR-014 先頭の見出しより前に内容が存在する場合、その内容を匿名セクション（`section-0`）に格納しなければならない。内容が存在しない場合、匿名セクションを生成してはならない。
+BR-014 先頭の見出しより前に内容が存在する場合、その内容を匿名セクション（`section-0`）に格納しなければならない。内容が存在しない場合、匿名セクションを生成してはならない。匿名セクションは `sections` の最上位に置かなければならない。匿名セクションの `subSections` は常に空配列でなければならない（issue-phase015-markdownEditor-004）。
 
 BR-015 連携アプリは、`title` が空文字のセクションを、表示上の階層として扱ってはならない。
 

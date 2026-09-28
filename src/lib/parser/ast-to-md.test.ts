@@ -227,6 +227,23 @@ describe('serializeAst', () => {
     expect(result).toContain('\t\t- [ ] UIレビュー')
   })
 
+  // issue-phase015-markdownEditor-004: 前文を持つファイルの匿名セクションが H1 の兄弟として
+  // 出力されるようになった後も、parse → serialize の往復で元の Markdown と同じ文字列に戻る。
+  it('roundtrip: 前文を持つファイルの parse → serialize が元の Markdown と一致する', () => {
+    const original = `- [ ] 前文のタスク
+
+# 案件A
+
+- [ ] Aのタスク
+
+# 案件B
+
+- [ ] Bのタスク
+`
+    const doc = parseMarkdown(original)
+    expect(serializeAst(doc)).toBe(original)
+  })
+
   // ──────────────────────────────────────────────────────
   // issue-phase005-001: 7状態のラウンドトリップ・複数行メタ値のラウンドトリップ
   // ──────────────────────────────────────────────────────

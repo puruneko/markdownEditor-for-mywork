@@ -166,6 +166,64 @@ describe('parseMarkdown', () => {
     expect(sections[0].subSections[0].parentSectionId).toBe(sections[0].id)
   })
 
+  // issue-phase015-markdownEditor-004: 前文（最初の見出しより前の内容）を持つファイルでは、
+  // 匿名セクション（section-0）は他の見出しの兄弟として最上位に置かれ、見出しを入れ子にしない。
+  it('前文を持つファイルでは、匿名セクションと H1 が兄弟として最上位に並ぶ（issue-phase015-markdownEditor-004）', () => {
+    const md = `- [ ] 前文のタスク\n\n# 案件A\n## 案件概要\n- 期限：2099-12-31\n## 見出しA\n- [ ] Aのタスク\n\n# 案件B\n- [ ] Bのタスク\n`
+    const { sections } = parseMarkdown(md)
+
+    expect(sections).toHaveLength(3)
+
+    const [preamble, projectA, projectB] = sections
+    expect(preamble.title).toBe('')
+    expect(preamble.depth).toBe(0)
+    expect(preamble.lineNumber).toBe(-1)
+    expect(preamble.subSections).toHaveLength(0)
+    expect(preamble.parentSectionId).toBeUndefined()
+
+    expect(projectA.title).toBe('案件A')
+    expect(projectA.parentSectionId).toBeUndefined()
+    expect(projectA.subSections).toHaveLength(2)
+    expect(projectA.subSections[0].title).toBe('案件概要')
+    expect(projectA.subSections[1].title).toBe('見出しA')
+
+    expect(projectB.title).toBe('案件B')
+    expect(projectB.parentSectionId).toBeUndefined()
+  })
+
+  it('前文を持たないファイルでは、複数 H1 の入れ子が変わらない（回帰確認、issue-phase015-markdownEditor-004）', () => {
+    const md = `# 案件A\n- [ ] Aのタスク\n\n# 案件B\n- [ ] Bのタスク\n`
+    const { sections } = parseMarkdown(md)
+
+    expect(sections).toHaveLength(2)
+    expect(sections[0].title).toBe('案件A')
+    expect(sections[0].parentSectionId).toBeUndefined()
+    expect(sections[1].title).toBe('案件B')
+    expect(sections[1].parentSectionId).toBeUndefined()
+  })
+
+  it('見出しが無いファイルでは、匿名セクション1個のままである（回帰確認、issue-phase015-markdownEditor-004）', () => {
+    const md = `- [ ] タスクのみ\n`
+    const { sections } = parseMarkdown(md)
+
+    expect(sections).toHaveLength(1)
+    expect(sections[0].title).toBe('')
+    expect(sections[0].depth).toBe(0)
+    expect(sections[0].subSections).toHaveLength(0)
+  })
+
+  it('前文の直後が H2（H1 が無い）ファイルでは、匿名セクションと H2 が兄弟として並ぶ（issue-phase015-markdownEditor-004）', () => {
+    const md = `- [ ] 前文のタスク\n\n## 見出しB\n- [ ] Bのタスク\n`
+    const { sections } = parseMarkdown(md)
+
+    expect(sections).toHaveLength(2)
+    expect(sections[0].title).toBe('')
+    expect(sections[0].subSections).toHaveLength(0)
+    expect(sections[1].title).toBe('見出しB')
+    expect(sections[1].depth).toBe(2)
+    expect(sections[1].parentSectionId).toBeUndefined()
+  })
+
   it('parses > blockquote as child comment of a task', () => {
     const md = `- [ ] タスク\n  > コメント行1\n  > コメント行2\n`
     const { sections } = parseMarkdown(md)
