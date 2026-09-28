@@ -18,7 +18,6 @@
  * ============================================================ */
 
 :root {
-  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
   --metatag-green-fg: var(--color-green, #2f9e44);
   --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
   --metatag-date-fg: var(--color-blue, #3a6fd8);
@@ -41,10 +40,8 @@
 }
 
 /* 日付系以外の全メタキー（例: @priority, @完了イメージ 等）。
- * ユーザー指示（2026-09-17再増分）:
- *   - メタ情報「名」部分（キー）: 非常に薄い緑系の背景のみ（文字色は変えない）。
- *   - メタ「情報」部分（値）: 緑系の文字色のみ（背景は付けない）。
- * どちらも周囲のテキストを邪魔しない程度に留める。
+ * issue-phase014-markdownEditor-005: キー・値ともに緑系の文字色のみ（背景は付けない）に
+ * 統一した（以前はキー側のみ薄い緑背景だったが、値側と見た目を揃えるため廃止した）。
  */
 .metatag-key.metatag-priority,
 .metatag-key.metatag-dependsOn,
@@ -55,7 +52,7 @@
 .metatag-key.metatag-savepoint,
 .metatag-key.metatag-special_note,
 .metatag-key.metatag-unknown {
-  background: var(--metatag-green-bg);
+  color: var(--metatag-green-fg);
 }
 
 .metatag-value.metatag-priority,

@@ -175,8 +175,11 @@
 
 <style>
   /* ------------------------------------------------------------------
-   * CSS custom properties — Obsidian変数を優先し、ブラウザダーク環境では
-   * フォールバック値を使用する。
+   * CSS custom properties — issue-phase012-markdownEditor-001: テーマ遮断方針の
+   * 徹底のため、Obsidian の背景・文字・アクセントカラー変数を参照する宣言は削除した
+   * （宣言が無ければ kanban ライブラリ側の既定フォールバック機構により、
+   * ライブラリ自身の明るい既定色がそのまま使われる。ライブラリ側は変更不要）。
+   * レイアウト値（幅・余白・角丸等）は Obsidian 変数を参照していないため残す。
    * ------------------------------------------------------------------ */
   .kanban-tab {
     width: 100%;
@@ -184,17 +187,7 @@
     overflow: hidden;
 
     /* Board */
-    --kanban-bg:               var(--background-primary,     #1e1e1e);
     --kanban-font:             var(--font-interface,         system-ui, sans-serif);
-
-    /* Toolbar */
-    --kanban-toolbar-bg:       var(--background-primary-alt, #252526);
-    --kanban-toolbar-border:   var(--background-modifier-border, #404040);
-
-    /* Buttons */
-    --kanban-btn-bg:           var(--interactive-normal,     #2d2d30);
-    --kanban-btn-hover-bg:     var(--interactive-hover,      #3e3e42);
-    --kanban-btn-color:        var(--text-normal,            #cccccc);
 
     /* Lanes */
     --kanban-lane-width:       220px;
@@ -202,44 +195,14 @@
     --kanban-lanes-padding:    12px;
     --kanban-lane-padding:     8px;
     --kanban-lane-radius:      6px;
-    --kanban-lane-bg:          var(--background-secondary,   #252526);
-    --kanban-lane-border:      var(--background-modifier-border, #404040);
-    --kanban-lane-header-bg:   var(--background-secondary-alt, #2d2d30);
-    --kanban-lane-title-color: var(--text-normal,            #d4d4d4);
-    --kanban-lane-count-bg:    var(--background-modifier-border, #3e3e42);
-    --kanban-lane-count-color: var(--text-muted,             #858585);
 
     /* Cards */
-    --kanban-card-bg:          var(--background-primary,     #1e1e1e);
-    --kanban-card-border:      var(--background-modifier-border, #404040);
     --kanban-card-radius:      4px;
     --kanban-card-padding:     8px 10px;
     --kanban-card-gap:         6px;
-    --kanban-card-key-color:   var(--text-accent,            #9cdcfe);
-    --kanban-card-value-color: var(--text-normal,            #d4d4d4);
-    --kanban-card-id-color:    var(--text-faint,             #4ec9b0);
 
     /* Groups */
-    --kanban-group-border:              var(--background-modifier-border, #404040);
-    --kanban-group-header-bg:           var(--background-secondary-alt,   #2d2d30);
-    --kanban-group-header-hover-bg:     var(--background-modifier-hover,  #3e3e42);
-    --kanban-group-label-color:         var(--text-normal,                #cccccc);
-    --kanban-group-count-bg:            var(--background-modifier-border,  #3e3e42);
-    --kanban-group-count-color:         var(--text-muted,                  #858585);
-    --kanban-group-accent:              var(--interactive-accent,          #4ec9b0);
     --kanban-group-header-height:       43px;
-    --kanban-section-header-bg:         var(--background-primary-alt,     #252526);
-    --kanban-section-header-hover-bg:   var(--background-modifier-hover,  #2d2d30);
-    --kanban-group-children-border:     var(--interactive-accent,         #4ec9b0);
-    --kanban-group-children-border-l2:  var(--background-modifier-border, #404040);
-    --kanban-group-children-border-l3:  var(--background-modifier-border, #3a3a3a);
-
-    /* Accent / Filter */
-    --kanban-accent:               var(--interactive-accent,      #4ec9b0);
-    --kanban-filter-bg:            var(--background-primary,      #252526);
-    --kanban-filter-border:        var(--background-modifier-border, #404040);
-    --kanban-filter-nested-bg:     var(--background-secondary,    #2d2d30);
-    --kanban-filter-nested-border: var(--background-modifier-border, #404040);
   }
 
   .kanban-card-inner {
@@ -249,13 +212,13 @@
   }
 
   .kanban-card-inner:hover .card-title {
-    color: var(--interactive-accent, #4ec9b0);
+    color: var(--host-accent);
   }
 
   .card-title {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-normal, #cccccc);
+    color: var(--host-text);
     line-height: 1.4;
     word-break: break-word;
     transition: color 0.1s;
@@ -263,7 +226,7 @@
 
   .card-meta {
     font-size: 11px;
-    color: var(--text-muted, #888);
+    color: var(--host-text-muted);
     margin-top: 3px;
   }
 </style>

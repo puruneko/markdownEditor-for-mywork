@@ -23,6 +23,18 @@ from this section alone.
 ### Direction
 The latest agreed approach. Key points only. Update as it evolves.
 
+### Existing behavior removed or changed
+List any existing, currently-working behavior that this Issue will remove
+or change. If none, write "None". This section exists because past Issues
+have silently removed behavior the user still relied on (e.g. removing a
+display that coexisted with a new toggle, instead of keeping both).
+
+### Implementer's unconfirmed interpretation
+List any part of the requirement that was ambiguous, where the
+implementer had to choose one interpretation among several plausible
+ones. If none, write "None". If this section is non-empty, the Issue
+must not be closed until the user has confirmed the interpretation.
+
 ---
 
 ## 2. Progress & Implementation Notes  — FOR AI

@@ -158,6 +158,13 @@ If user approval is missing:
 
 Automatic closure is strictly prohibited.
 
+If the Issue's `Existing behavior removed or changed` or
+`Implementer's unconfirmed interpretation` section (see ISSUE_TEMPLATE.md)
+is non-empty:
+→ Before requesting closure approval, present the user with before/after
+  screenshots (or an equivalent comparison) and obtain explicit
+  confirmation of the change, in addition to the closure approval above.
+
 ---
 
 ## 7. Commit Rules

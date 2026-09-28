@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import type { Task, TaskStatus, CalendarItem, TimeSpan } from 'svelte-calendar-lib'
-import type { Document, Section, Node, Status } from '../parser/types'
+import type { Document, Section, Node, TaskNode, Status } from '../parser/types'
 import type { SourceEntry } from '../viewmodel/contract'
 import { makeGlobalKey } from '../viewmodel/global-key'
 import { expandOccurrences } from '../recurrence/expand'
@@ -84,6 +84,50 @@ function resolvePlan(planStr: string | undefined): TimeSpan | undefined {
 
 type ViewRange = { start: DateTime; end: DateTime }
 
+/** 日付のみ（"YYYY-MM-DD"）形式かどうか。 */
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * issue-phase012-markdownEditor-003: `@schedule` を持たず `@due` のみを持つタスクを
+ * 期限項目（`CalendarDatePoint` / `CalendarDateTimePoint`）として生成する。
+ * `@due` が期間形式（`/` を含む）、またはどちらの日時形式にも一致しない場合は生成しない。
+ */
+function buildDueOnlyItem(
+  node: TaskNode,
+  sourcePath: string,
+  viewRange: ViewRange | null,
+): Task | null {
+  const due = node.meta!.due!
+  if (due.includes('/')) return null
+
+  let temporal: CalendarItem['temporal']
+  let atForRangeCheck: DateTime
+
+  if (DATE_ONLY_RE.test(due)) {
+    temporal = { kind: 'CalendarDatePoint' as const, at: due } as CalendarItem['temporal']
+    atForRangeCheck = DateTime.fromISO(due)
+  } else {
+    const dt = DateTime.fromISO(due)
+    if (!dt.isValid) return null
+    temporal = { kind: 'CalendarDateTimePoint' as const, at: dt } as CalendarItem['temporal']
+    atForRangeCheck = dt
+  }
+
+  if (viewRange && (atForRangeCheck < viewRange.start || atForRangeCheck > viewRange.end)) {
+    return null
+  }
+
+  const parents = node.path.slice(0, -1).map(p => p.replace(/\[\d+\]$/, ''))
+  return {
+    id: `${makeGlobalKey(sourcePath, node.id)}__due`,
+    type: 'task',
+    title: node.text,
+    status: mapStatus(node.status),
+    parents,
+    temporal,
+  }
+}
+
 function extractFromNodes(
   nodes: Node[],
   sourcePath: string,
@@ -92,6 +136,11 @@ function extractFromNodes(
 ): void {
   for (const node of nodes) {
     if (node.type === 'quote') continue
+
+    if (node.type === 'task' && !node.meta?.schedule && node.meta?.due && !node.meta?.repeat) {
+      const item = buildDueOnlyItem(node, sourcePath, viewRange)
+      if (item) items.push(item)
+    }
 
     if (node.type === 'task' && node.meta?.schedule) {
       const parents = node.path.slice(0, -1).map(p => p.replace(/\[\d+\]$/, ''))

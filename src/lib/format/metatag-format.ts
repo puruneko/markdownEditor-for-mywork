@@ -93,6 +93,49 @@ export function parseMetaDateValue(value: string): ParsedMetaDate {
   }
 }
 
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function toDateTimeParts(dt: Date): { date: string; time: string } {
+  return {
+    date: `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`,
+    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`,
+  }
+}
+
+/** 分を5分単位へ切り上げる（秒未満の端数があれば0分でも切り上げる）。日跨ぎ・月末・年末をまたぐ場合もDateの繰り上がりに委ねる。 */
+function roundUpDate5Min(dt: Date): Date {
+  const rounded = new Date(dt.getTime())
+  const remainder = rounded.getMinutes() % 5
+  const hasSubMinuteFraction = rounded.getSeconds() > 0 || rounded.getMilliseconds() > 0
+  if (remainder !== 0 || hasSubMinuteFraction) {
+    rounded.setMinutes(rounded.getMinutes() + (5 - remainder))
+  }
+  rounded.setSeconds(0, 0)
+  return rounded
+}
+
+/** "YYYY-MM-DD" と "HH:mm" を受け取り、5分単位に切り上げた日付・時刻を返す。 */
+export function roundUpTo5Min(date: string, time: string): { date: string; time: string } {
+  const [y, mo, d] = date.split('-').map(Number)
+  const [h, mi] = time.split(':').map(Number)
+  return toDateTimeParts(roundUpDate5Min(new Date(y, mo - 1, d, h, mi)))
+}
+
+/** 現在時刻（Date）を受け取り、5分単位に切り上げた日付・時刻を返す。 */
+export function nowRounded(now: Date): { date: string; time: string } {
+  return toDateTimeParts(roundUpDate5Min(now))
+}
+
+/**
+ * issue-phase014-markdownEditor-003: プラグイン設定「5分単位」がOFFのときの
+ * nowボタン用。丸めを行わず、現在時刻をそのまま（分単位）返す。
+ */
+export function nowExact(now: Date): { date: string; time: string } {
+  return toDateTimeParts(now)
+}
+
 /** ピッカー入力から正規形の日付系メタ値を組み立てる。 */
 export function buildMetaDateValue(parsed: {
   startDate: string

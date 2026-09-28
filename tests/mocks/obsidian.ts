@@ -17,6 +17,7 @@ export class Plugin {
   addStatusBarItem = vi.fn()
   addSettingTab = vi.fn()
   registerEditorExtension = vi.fn()
+  registerEditorSuggest = vi.fn()
   registerMarkdownCodeBlockProcessor = vi.fn()
   loadData = vi.fn().mockResolvedValue(null)
   saveData = vi.fn().mockResolvedValue(undefined)
@@ -92,6 +93,27 @@ export class Setting {
   setDesc = vi.fn().mockReturnThis()
   addToggle = vi.fn().mockReturnThis()
   addText = vi.fn().mockReturnThis()
+}
+
+/**
+ * issue-phase013-markdownEditor-002: `@` サジェスト用の最小限のEditorSuggestモック。
+ * 実際の描画・ポップオーバー制御は行わず、サブクラスが継承・onTrigger/getSuggestions等を
+ * 呼び出せることだけを保証する（ユニットテストでは純粋関数 `matchMetaKeyTrigger` を直接
+ * テストするため、これ以上の挙動は不要）。
+ */
+export class EditorSuggest<T> {
+  app: unknown
+  context: unknown = null
+  limit = 10
+  // issue-phase014-markdownEditor-002: Tabキー決定用に`this.scope.register(...)`を
+  // コンストラクタで呼ぶサブクラス（`MetaKeySuggest`）があるため、最小限のスタブを持たせる。
+  scope = { register: vi.fn(), unregister: vi.fn() }
+  constructor(app: unknown) {
+    this.app = app
+  }
+  setInstructions = vi.fn()
+  open = vi.fn()
+  close = vi.fn()
 }
 
 export interface MockVault {

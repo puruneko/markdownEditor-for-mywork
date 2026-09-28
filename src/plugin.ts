@@ -10,7 +10,8 @@ import { AstIndex } from './sync/ast-index'
 import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { metatagValuePlugin } from './editor/metatag-decoration'
-import { metatagPickerExtension } from './editor/metatag-picker'
+import { createMetatagPickerExtension } from './editor/metatag-picker'
+import { MetaKeySuggest } from './editor/metatag-suggest'
 import { createNotationLintExtension } from './editor/notation-lint'
 import { createTaskDragSourceExtension } from './editor/task-drag-source'
 import { reformatMetaLines } from './editor/reformat-meta-lines'
@@ -181,7 +182,9 @@ export class MdAstEditorPlugin extends Plugin {
       this.registerEditorExtension(createNotationLintExtension())
       // issue-phase003-008（2026-09-17増分）: メタタグの緑装飾・日付チップ・ピッカー。
       this.registerEditorExtension(metatagValuePlugin)
-      this.registerEditorExtension(metatagPickerExtension)
+      this.registerEditorExtension(createMetatagPickerExtension(() => this.settings.roundMinuteStep))
+      // issue-phase013-markdownEditor-002: リスト先頭の「@」でschedule/plan/dueをサジェスト。
+      this.registerEditorSuggest(new MetaKeySuggest(this.app))
     }
 
     this.registerEditorExtension(

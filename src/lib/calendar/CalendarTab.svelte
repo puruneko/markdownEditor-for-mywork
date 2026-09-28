@@ -8,7 +8,7 @@
   import { upsertSchedule, upsertDue } from '../patch/upsert-meta'
   import type { Document, TaskNode } from '../parser/types'
   import type { SourceEntry } from '../viewmodel/contract'
-  import { makeGlobalKey } from '../viewmodel/global-key'
+  import { makeGlobalKey, stripDueSuffix } from '../viewmodel/global-key'
   import { MD_TASK_MIME } from '../../editor/task-drag-source'
   import type { TaskDragPayload } from '../../editor/task-drag-source'
 
@@ -53,7 +53,7 @@
 
   function handleItemMove(item: CalendarItem, newStart: DateTime, newEnd: DateTime) {
     if (item.temporal.kind !== 'CalendarDateTimeRange') return
-    void onNodePatch(item.id, (md, _doc, node) => {
+    void onNodePatch(stripDueSuffix(item.id), (md, _doc, node) => {
       const newSchedule = formatSchedule(newStart, newEnd)
       return patchScheduleForNode(md, node, newSchedule)
     })
@@ -65,14 +65,14 @@
 
   function handleItemResizeEnd(item: CalendarItem, finalStart: DateTime, finalEnd: DateTime) {
     if (item.temporal.kind !== 'CalendarDateTimeRange') return
-    void onNodePatch(item.id, (md, _doc, node) => {
+    void onNodePatch(stripDueSuffix(item.id), (md, _doc, node) => {
       const newSchedule = formatSchedule(finalStart, finalEnd)
       return patchScheduleForNode(md, node, newSchedule)
     })
   }
 
   function handleItemClick(item: CalendarItem) {
-    onNodeClick?.(item.id)
+    onNodeClick?.(stripDueSuffix(item.id))
   }
 
   // ----------------------------------------------------------------
@@ -158,7 +158,7 @@
   }
 
   function handleItemUpdate(item: CalendarItem) {
-    void onNodePatch(item.id, (md, _doc, node) => {
+    void onNodePatch(stripDueSuffix(item.id), (md, _doc, node) => {
       let newMd = md
       if (item.title !== node.text) {
         newMd = patchTaskTitle(newMd, node.status, node.text, item.title)

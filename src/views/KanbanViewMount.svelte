@@ -60,6 +60,6 @@
   .filter-bar-row {
     flex-shrink: 0;
     padding: 4px 8px;
-    border-bottom: 1px solid var(--background-modifier-border, #444);
+    border-bottom: 1px solid var(--host-border);
   }
 </style>

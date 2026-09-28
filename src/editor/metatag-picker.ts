@@ -11,16 +11,18 @@ import type { Extension } from '@codemirror/state'
 import { showTooltip, tooltips } from '@codemirror/view'
 import type { EditorView, Tooltip, TooltipView } from '@codemirror/view'
 import {
-  META_DATE_KEY_LABEL,
   buildMetaDateValue,
   parseMetaDateValue,
+  roundUpTo5Min,
+  nowRounded,
+  nowExact,
   type DateMetaKey,
 } from '../lib/format/metatag-format'
 
 export type MetaPickerMode = 'insert' | 'edit'
 
 export interface MetaPickerTarget {
-  /** 書き戻し時の置換開始位置。insert: カーソル位置。edit: キー名直後（`?`/コロンの前）。 */
+  /** 書き戻し時の置換開始位置。insert/edit共通でキー名直後（`?`/コロンの前）。 */
   from: number
   /** 書き戻し時の置換終了位置（行末）。 */
   to: number
@@ -35,81 +37,121 @@ export interface MetaPickerTarget {
 
 export const openMetaPicker = StateEffect.define<MetaPickerTarget | null>()
 
-export const metaPickerField = StateField.define<MetaPickerTarget | null>({
-  create() {
-    return null
-  },
-  update(value, tr) {
-    for (const e of tr.effects) {
-      if (e.is(openMetaPicker)) value = e.value
-    }
-    return value
-  },
-  provide: (f) =>
-    showTooltip.computeN([f], (state) => {
-      const target = state.field(f)
-      if (!target) return []
-      const tooltip: Tooltip = {
-        pos: target.from,
-        above: false,
-        strictSide: false,
-        arrow: true,
-        create: (view) => buildPickerTooltipView(view, target),
-      }
-      return [tooltip]
-    }),
-})
-
 /**
- * tooltips() は showTooltip の描画先（ホスト）を提供する拡張。Obsidian本体が既に
- * 含んでいる可能性があるが、含んでいない場合にピッカーが無言で表示されなくなることを
- * 避けるため、明示的に含める（CodeMirror公式ドキュメント推奨）。
+ * issue-phase014-markdownEditor-003: 「5分単位」はピッカー内のチェックボックスを廃止し、
+ * プラグイン設定（`MdAstEditorSettings.roundMinuteStep`）へ移行した。CM6拡張はプラグイン
+ * 設定を直接参照できないため、`createTaskDragSourceExtension`（`task-drag-source.ts`）と
+ * 同じ「コールバックで都度読み出す」パターンで設定値を受け渡す。
  */
-export const metatagPickerExtension: Extension = [tooltips(), metaPickerField]
+export function createMetatagPickerExtension(getRoundMinuteStep: () => boolean): Extension {
+  const metaPickerField = StateField.define<MetaPickerTarget | null>({
+    create() {
+      return null
+    },
+    update(value, tr) {
+      for (const e of tr.effects) {
+        if (e.is(openMetaPicker)) value = e.value
+      }
+      return value
+    },
+    provide: (f) =>
+      showTooltip.computeN([f], (state) => {
+        const target = state.field(f)
+        if (!target) return []
+        const tooltip: Tooltip = {
+          pos: target.from,
+          above: false,
+          strictSide: false,
+          arrow: true,
+          create: (view) => buildPickerTooltipView(view, target, getRoundMinuteStep()),
+        }
+        return [tooltip]
+      }),
+  })
+  // tooltips() は showTooltip の描画先（ホスト）を提供する拡張。Obsidian本体が既に
+  // 含んでいる可能性があるが、含んでいない場合にピッカーが無言で表示されなくなることを
+  // 避けるため、明示的に含める（CodeMirror公式ドキュメント推奨）。
+  return [tooltips(), metaPickerField]
+}
 
-function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget): TooltipView {
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function formatDateLocal(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
+/** [日付入力][時刻入力][todayボタン][nowボタン] の1行を組み立てる。 */
+function buildDateTimeRow(
+  initialDate: string,
+  initialTime: string,
+  roundMinuteStep: boolean,
+): { row: HTMLDivElement; dateInput: HTMLInputElement; timeInput: HTMLInputElement } {
+  const row = document.createElement('div')
+  row.className = 'metatag-picker-row'
+
+  const dateInput = document.createElement('input')
+  dateInput.type = 'date'
+  dateInput.className = 'metatag-picker-date'
+  dateInput.value = initialDate
+
+  const timeInput = document.createElement('input')
+  timeInput.type = 'time'
+  timeInput.className = 'metatag-picker-time'
+  timeInput.value = initialTime
+
+  const todayBtn = document.createElement('button')
+  todayBtn.type = 'button'
+  todayBtn.className = 'metatag-picker-btn metatag-picker-btn-today'
+  todayBtn.textContent = 'today'
+  todayBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+    dateInput.value = formatDateLocal(new Date())
+  })
+
+  const nowBtn = document.createElement('button')
+  nowBtn.type = 'button'
+  nowBtn.className = 'metatag-picker-btn metatag-picker-btn-now'
+  nowBtn.textContent = 'now'
+  nowBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+    const now = roundMinuteStep ? nowRounded(new Date()) : nowExact(new Date())
+    dateInput.value = now.date
+    timeInput.value = now.time
+  })
+
+  row.append(dateInput, timeInput, todayBtn, nowBtn)
+  return { row, dateInput, timeInput }
+}
+
+function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roundMinuteStep: boolean): TooltipView {
   const parsed = parseMetaDateValue(target.initialValue)
 
   const dom = document.createElement('div')
   dom.className = 'metatag-picker-popup'
 
-  const title = document.createElement('div')
-  title.className = 'metatag-picker-title'
-  title.textContent = `${META_DATE_KEY_LABEL[target.key]}を設定`
-  dom.appendChild(title)
-
-  const startRow = document.createElement('div')
-  startRow.className = 'metatag-picker-row'
-  const startDateInput = document.createElement('input')
-  startDateInput.type = 'date'
-  startDateInput.className = 'metatag-picker-date'
-  startDateInput.value = parsed.startDate
-  const startTimeInput = document.createElement('input')
-  startTimeInput.type = 'time'
-  startTimeInput.className = 'metatag-picker-time'
-  startTimeInput.value = parsed.startTime ?? ''
-  startRow.append(startDateInput, startTimeInput)
+  const { row: startRow, dateInput: startDateInput, timeInput: startTimeInput } = buildDateTimeRow(
+    parsed.startDate,
+    parsed.startTime ?? '',
+    roundMinuteStep,
+  )
   dom.appendChild(startRow)
 
   const rangeToggleRow = document.createElement('label')
   rangeToggleRow.className = 'metatag-picker-checkbox-row'
   const rangeToggle = document.createElement('input')
   rangeToggle.type = 'checkbox'
+  rangeToggle.className = 'metatag-picker-range'
   rangeToggle.checked = parsed.isRange
   rangeToggleRow.append(rangeToggle, document.createTextNode('期間で指定'))
   dom.appendChild(rangeToggleRow)
 
-  const endRow = document.createElement('div')
-  endRow.className = 'metatag-picker-row'
-  const endDateInput = document.createElement('input')
-  endDateInput.type = 'date'
-  endDateInput.className = 'metatag-picker-date'
-  endDateInput.value = parsed.endDate ?? parsed.startDate
-  const endTimeInput = document.createElement('input')
-  endTimeInput.type = 'time'
-  endTimeInput.className = 'metatag-picker-time'
-  endTimeInput.value = parsed.endTime ?? ''
-  endRow.append(endDateInput, endTimeInput)
+  const { row: endRow, dateInput: endDateInput, timeInput: endTimeInput } = buildDateTimeRow(
+    parsed.endDate ?? parsed.startDate,
+    parsed.endTime ?? '',
+    roundMinuteStep,
+  )
   endRow.hidden = !parsed.isRange
   dom.appendChild(endRow)
 
@@ -117,65 +159,69 @@ function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget): Too
     endRow.hidden = !rangeToggle.checked
   })
 
-  let tentativeCheckbox: HTMLInputElement | null = null
-  if (target.mode === 'edit') {
-    const tentativeRow = document.createElement('label')
-    tentativeRow.className = 'metatag-picker-checkbox-row'
-    tentativeCheckbox = document.createElement('input')
-    tentativeCheckbox.type = 'checkbox'
-    tentativeCheckbox.checked = target.initialTentative
-    tentativeRow.append(tentativeCheckbox, document.createTextNode('仮置き（?）'))
-    dom.appendChild(tentativeRow)
+  const bottomRow = document.createElement('div')
+  bottomRow.className = 'metatag-picker-button-row'
+
+  if (roundMinuteStep) {
+    startTimeInput.step = '300'
+    endTimeInput.step = '300'
+  } else {
+    startTimeInput.removeAttribute('step')
+    endTimeInput.removeAttribute('step')
   }
 
-  const buttonRow = document.createElement('div')
-  buttonRow.className = 'metatag-picker-button-row'
-  const cancelBtn = document.createElement('button')
-  cancelBtn.type = 'button'
-  cancelBtn.className = 'metatag-picker-btn metatag-picker-btn-cancel'
-  cancelBtn.textContent = '閉じる'
+  const tentativeRow = document.createElement('label')
+  tentativeRow.className = 'metatag-picker-checkbox-row'
+  const tentativeCheckbox = document.createElement('input')
+  tentativeCheckbox.type = 'checkbox'
+  tentativeCheckbox.className = 'metatag-picker-tentative'
+  tentativeCheckbox.checked = target.initialTentative
+  tentativeRow.append(tentativeCheckbox, document.createTextNode('仮置き（?）'))
+  bottomRow.appendChild(tentativeRow)
+
   const commitBtn = document.createElement('button')
   commitBtn.type = 'button'
   commitBtn.className = 'metatag-picker-btn metatag-picker-btn-commit'
-  commitBtn.textContent = '設定'
-  buttonRow.append(cancelBtn, commitBtn)
-  dom.appendChild(buttonRow)
+  commitBtn.textContent = '決定'
+  bottomRow.appendChild(commitBtn)
+
+  dom.appendChild(bottomRow)
 
   const close = () => {
     view.dispatch({ effects: openMetaPicker.of(null) })
   }
 
-  cancelBtn.addEventListener('mousedown', (e) => {
-    e.preventDefault()
-    close()
-  })
-
   commitBtn.addEventListener('mousedown', (e) => {
     e.preventDefault()
     if (!startDateInput.value) return
     const isRange = rangeToggle.checked
-    const value = buildMetaDateValue({
-      startDate: startDateInput.value,
-      startTime: startTimeInput.value || null,
-      isRange,
-      endDate: isRange ? endDateInput.value || startDateInput.value : null,
-      endTime: isRange ? endTimeInput.value || null : null,
-    })
+    const roundMinutes = roundMinuteStep
 
-    if (target.mode === 'insert') {
-      view.dispatch({
-        changes: { from: target.from, to: target.to, insert: ` ${value}` },
-        effects: openMetaPicker.of(null),
-      })
-    } else {
-      const tentative = tentativeCheckbox?.checked ?? target.initialTentative
-      view.dispatch({
-        changes: { from: target.from, to: target.to, insert: `${tentative ? '?' : ''}: ${value}` },
-        // 書き戻し直後にカーソルを行頭へ逃がし、チップ表示へ即座に戻す。
-        selection: EditorSelection.cursor(target.lineFrom),
-        effects: openMetaPicker.of(null),
-      })
+    let startDate = startDateInput.value
+    let startTime = startTimeInput.value || null
+    if (roundMinutes && startTime) {
+      const rounded = roundUpTo5Min(startDate, startTime)
+      startDate = rounded.date
+      startTime = rounded.time
     }
+
+    let endDate = isRange ? endDateInput.value || startDateInput.value : null
+    let endTime = isRange ? endTimeInput.value || null : null
+    if (roundMinutes && endDate && endTime) {
+      const rounded = roundUpTo5Min(endDate, endTime)
+      endDate = rounded.date
+      endTime = rounded.time
+    }
+
+    const value = buildMetaDateValue({ startDate, startTime, isRange, endDate, endTime })
+    const tentative = tentativeCheckbox.checked
+
+    view.dispatch({
+      changes: { from: target.from, to: target.to, insert: `${tentative ? '?' : ''}: ${value}` },
+      // 書き戻し直後にカーソルを行頭へ逃がし、チップ表示へ即座に戻す。
+      selection: EditorSelection.cursor(target.lineFrom),
+      effects: openMetaPicker.of(null),
+    })
   })
 
   let outsideMouseDown: ((e: MouseEvent) => void) | null = null

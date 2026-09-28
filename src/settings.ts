@@ -17,6 +17,12 @@ export interface MdAstEditorSettings {
   /** Gantt View: サブタスクを個別行として展開表示するかどうか（既定 true）。 */
   ganttExpandSubtasks: boolean
   /**
+   * 日付入力ピッカーの時刻欄を5分単位に丸めるかどうか（既定 true）。
+   * issue-phase014-markdownEditor-003: ピッカー内のチェックボックスを廃止し、
+   * プラグイン設定へ恒久的な設定として移行した。
+   */
+  roundMinuteStep: boolean
+  /**
    * 設定ハブ（ViewSettingsHub）が管理する、ビュー別の名前空間ごとの設定値
    * （issue-phase010-markdownEditor-005）。キーはビュー名（例: 'calendar' / 'kanban'）。
    * 各ビューが独自の形状のオブジェクトを読み書きするため、ここでは型を specifiy しない。
@@ -33,6 +39,7 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   indexScopeFolder: '',
   defaultDurationMin: 60,
   ganttExpandSubtasks: true,
+  roundMinuteStep: true,
   viewSettings: {},
 }
 
@@ -69,6 +76,18 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.enableTaskHighlight)
           .onChange(async (value) => {
             this.plugin.settings.enableTaskHighlight = value
+            await this.plugin.saveSettings()
+          }),
+      )
+
+    new Setting(containerEl)
+      .setName('日付ピッカーの時刻を5分単位に丸める')
+      .setDesc('ONの場合、@plan/@schedule/@due の日付入力ピッカーの時刻欄が5分刻みになり、nowボタンの自動入力も直近の5分単位に切り上げられます。')
+      .addToggle(toggle =>
+        toggle
+          .setValue(this.plugin.settings.roundMinuteStep)
+          .onChange(async (value) => {
+            this.plugin.settings.roundMinuteStep = value
             await this.plugin.saveSettings()
           }),
       )

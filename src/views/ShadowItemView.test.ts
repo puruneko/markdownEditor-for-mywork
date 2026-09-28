@@ -16,6 +16,16 @@ describe('SHADOW_RESET_CSS', () => {
     expect(hostBlock).toContain('line-height:')
     expect(hostBlock).toContain('letter-spacing:')
   })
+
+  it('issue-phase012-markdownEditor-001: :host が color-scheme: light を宣言している', () => {
+    const hostBlock = SHADOW_RESET_CSS.match(/:host\s*{[^}]*}/)?.[0] ?? ''
+    expect(hostBlock).toContain('color-scheme: light')
+  })
+
+  it('issue-phase012-markdownEditor-001: input, select, textarea の規則が color: inherit を含む', () => {
+    const rule = SHADOW_RESET_CSS.match(/input,\s*select,\s*textarea\s*{[^}]*}/)?.[0] ?? ''
+    expect(rule).toContain('color: inherit')
+  })
 })
 
 describe('ShadowItemView.navigateToNode（オカレンスID正規化）', () => {

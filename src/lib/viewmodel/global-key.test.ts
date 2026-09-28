@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeGlobalKey, parseGlobalKey, stripOccurrenceSuffix } from './global-key'
+import { makeGlobalKey, parseGlobalKey, stripOccurrenceSuffix, stripDueSuffix } from './global-key'
 
 describe('makeGlobalKey', () => {
   it('パスとローカルIDを :: で結合する', () => {
@@ -83,5 +83,19 @@ describe('stripOccurrenceSuffix', () => {
 
   it('__r を含まない localId には影響しない', () => {
     expect(stripOccurrenceSuffix('s1.rename')).toBe('s1.rename')
+  })
+})
+
+describe('stripDueSuffix', () => {
+  it('末尾の __due を除去する', () => {
+    expect(stripDueSuffix('note.md::id0__due')).toBe('note.md::id0')
+  })
+
+  it('サフィックスが無ければそのまま返す', () => {
+    expect(stripDueSuffix('note.md::id0')).toBe('note.md::id0')
+  })
+
+  it('stripOccurrenceSuffix は __due サフィックスを除去しない（回帰確認）', () => {
+    expect(stripOccurrenceSuffix('note.md::id0__due')).toBe('note.md::id0__due')
   })
 })

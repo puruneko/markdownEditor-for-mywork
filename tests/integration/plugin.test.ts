@@ -138,6 +138,7 @@ describe('MdAstEditorPlugin', () => {
       showRibbonIcon: true,
       enableTaskHighlight: true,
       debounceMs: 300,
+      roundMinuteStep: true,
     })
 
     await plugin.onunload()

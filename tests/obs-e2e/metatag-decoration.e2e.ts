@@ -65,7 +65,7 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
     await obsidianPage.resetVault()
   })
 
-  it('日付系以外のメタキー（@priority）が緑系装飾（キー=薄い背景／値=緑文字）で実際に見た目が変わる', async function () {
+  it('issue-phase014-markdownEditor-005: 日付系以外のメタキー（@priority）がキー・値ともに緑文字色・背景なしで実際に見た目が変わる', async function () {
     await writeVaultFile('metatag-green.md', ['- [ ] タスク', '  - @priority: 1'].join('\n'))
     await openFile('metatag-green.md')
     await browser.waitUntil(
@@ -77,8 +77,11 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
     await expect(browser.$('.metatag-value.metatag-priority')).toHaveElementClass('metatag')
 
     // クラスの有無だけでなく、CSSが実際に適用され見た目が変化していることを検証する。
+    // issue-phase014-markdownEditor-005: キー側の緑背景は廃止し、値側と同じ緑文字色に統一した。
     const keyBg = await getComputedStyleProp('.metatag-key.metatag-priority', 'background-color')
-    expect(hasVisibleBackground(keyBg)).toBe(true)
+    expect(hasVisibleBackground(keyBg)).toBe(false)
+    const keyColor = await getComputedStyleProp('.metatag-key.metatag-priority', 'color')
+    expect(isGreenish(keyColor)).toBe(true)
     const valueColor = await getComputedStyleProp('.metatag-value.metatag-priority', 'color')
     expect(isGreenish(valueColor)).toBe(true)
   })
@@ -253,12 +256,14 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
   })
 
   // --------------------------------------------------------------
-  // issue-phase011-markdownEditor-002: 非日付メタ情報の＠記号を非表示にする
+  // issue-phase012-markdownEditor-005: 非日付メタ情報の＠記号を再び表示する
+  // （issue-phase011-markdownEditor-002 で非表示にしたものを、ユーザーの
+  //   「＠は消さないで」という要望により取り消した）
   // --------------------------------------------------------------
 
-  it('非日付メタ（@priority）は wysiwygモードで＠記号がDOM上に表示されない。緑装飾は引き続き適用される', async function () {
-    await writeVaultFile('metatag-at-hidden-priority.md', ['- [ ] タスク', '  - @priority: 1'].join('\n'))
-    await openFile('metatag-at-hidden-priority.md')
+  it('非日付メタ（@priority）は wysiwygモードで＠記号がDOM上に表示される。緑装飾も引き続き適用される', async function () {
+    await writeVaultFile('metatag-at-shown-priority.md', ['- [ ] タスク', '  - @priority: 1'].join('\n'))
+    await openFile('metatag-at-shown-priority.md')
     await browser.waitUntil(
       async () => (await browser.$('.metatag-value.metatag-priority')).isExisting(),
       { timeout: 5000, interval: 200, timeoutMsg: '.metatag-value.metatag-priority が見つからない' },
@@ -272,13 +277,12 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
       const line = keyEl?.closest('.cm-line')
       return line?.textContent ?? ''
     })
-    expect(lineText).not.toContain('@')
-    expect(lineText).toContain('priority: 1')
+    expect(lineText).toContain('@priority: 1')
   })
 
-  it('コロンなしの裸の非日付メタ（@memo）も wysiwygモードで＠記号がDOM上に表示されない', async function () {
-    await writeVaultFile('metatag-at-hidden-bare.md', ['- [ ] タスク', '  - @memo', '    - あいうえお'].join('\n'))
-    await openFile('metatag-at-hidden-bare.md')
+  it('コロンなしの裸の非日付メタ（@memo）も wysiwygモードで＠記号がDOM上に表示される', async function () {
+    await writeVaultFile('metatag-at-shown-bare.md', ['- [ ] タスク', '  - @memo', '    - あいうえお'].join('\n'))
+    await openFile('metatag-at-shown-bare.md')
     await browser.waitUntil(
       async () => (await browser.$('.metatag-key.metatag-unknown')).isExisting(),
       { timeout: 5000, interval: 200, timeoutMsg: '.metatag-key.metatag-unknown（@memo）が見つからない' },
@@ -288,16 +292,15 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
       const line = keyEl?.closest('.cm-line')
       return line?.textContent ?? ''
     })
-    expect(lineText).not.toContain('@')
-    expect(lineText).toContain('memo')
+    expect(lineText).toContain('@memo')
   })
 
   it('日付系メタ（@schedule）の＠非表示・チップ表示には変化がない（回帰確認）', async function () {
     await writeVaultFile(
-      'metatag-at-hidden-date-regression.md',
+      'metatag-at-shown-date-regression.md',
       ['- [ ] タスク', '  - @schedule: 2026-09-17T14:00/2026-09-17T16:00'].join('\n'),
     )
-    await openFile('metatag-at-hidden-date-regression.md')
+    await openFile('metatag-at-shown-date-regression.md')
     await browser.waitUntil(async () => (await browser.$('.metatag-date-chip')).isExisting(), {
       timeout: 5000,
       interval: 200,
@@ -307,14 +310,21 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
     expect(text).toBe('予定: 9/17 14:00〜16:00')
   })
 
-  it('カーソルが行に重なると、非日付メタも生テキスト（＠付き）に戻り編集できる', async function () {
-    const fileName = 'metatag-at-hidden-cursor.md'
+  it('カーソルの有無に関わらず、非日付メタの＠の表示は変わらない', async function () {
+    const fileName = 'metatag-at-shown-cursor.md'
     await writeVaultFile(fileName, ['- [ ] タスク', '  - @priority: 1'].join('\n'))
     await openFile(fileName)
     await browser.waitUntil(
       async () => (await browser.$('.metatag-value.metatag-priority')).isExisting(),
       { timeout: 5000, interval: 200, timeoutMsg: '.metatag-value.metatag-priority が見つからない' },
     )
+
+    const lineTextBefore = await browser.execute(() => {
+      const keyEl = document.querySelector('.metatag-key.metatag-priority')
+      const line = keyEl?.closest('.cm-line')
+      return line?.textContent ?? ''
+    })
+    expect(lineTextBefore).toContain('@priority: 1')
 
     // カーソルを対象行（index 1）へ移動する。
     await browser.execute(() => {
@@ -324,16 +334,190 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
       editor.focus()
     })
 
-    await browser.waitUntil(
-      async () => {
-        const lineText = await browser.execute(() => {
-          const el = document.querySelector('.metatag-key.metatag-priority, .metatag-value.metatag-priority')
-          const line = el?.closest('.cm-line')
-          return line?.textContent ?? ''
-        })
-        return lineText.includes('@priority')
-      },
-      { timeout: 3000, interval: 100, timeoutMsg: 'カーソルが行に重なっても＠が復元されない' },
-    )
+    const lineTextAfter = await browser.execute(() => {
+      const keyEl = document.querySelector('.metatag-key.metatag-priority')
+      const line = keyEl?.closest('.cm-line')
+      return line?.textContent ?? ''
+    })
+    expect(lineTextAfter).toContain('@priority: 1')
+  })
+
+})
+
+// --------------------------------------------------------------
+// issue-phase013-markdownEditor-001: 日付入力ピッカーのUI改修
+// --------------------------------------------------------------
+describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-001）', function () {
+  before(async function () {
+    await browser.reloadObsidian({ vault: './test/vaults/simple' })
+  })
+
+  beforeEach(async function () {
+    await obsidianPage.resetVault()
+  })
+
+  async function openPickerOn(fileName: string, content: string): Promise<void> {
+    await writeVaultFile(fileName, content)
+    await openFile(fileName)
+    await browser.waitUntil(async () => (await browser.$('.metatag-date-chip')).isExisting(), {
+      timeout: 5000,
+      interval: 200,
+      timeoutMsg: '.metatag-date-chip が見つからない',
+    })
+    await browser.$('.metatag-date-chip').click()
+    await browser.waitUntil(async () => (await browser.$('.metatag-picker-popup')).isExisting(), {
+      timeout: 3000,
+      interval: 100,
+      timeoutMsg: 'ピッカーポップアップが開かない',
+    })
+  }
+
+  it('タイトル・閉じるボタンが表示されず、決定ボタンの文言が「決定」になっている', async function () {
+    await openPickerOn('metatag-picker-no-title.md', ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
+    await expect(browser.$('.metatag-picker-title')).not.toExist()
+    await expect(browser.$('.metatag-picker-btn-cancel')).not.toExist()
+    expect(await browser.$('.metatag-picker-btn-commit').getText()).toBe('決定')
+
+    // Escキーでは引き続き閉じられる。
+    await browser.keys(['Escape'])
+    await browser.waitUntil(async () => !(await browser.$('.metatag-picker-popup')).isExisting(), {
+      timeout: 3000,
+      interval: 100,
+      timeoutMsg: 'Escキーでピッカーが閉じない',
+    })
+  })
+
+  it('todayボタンは日付のみ、nowボタンは日付と5分単位切り上げの時刻を自動入力する', async function () {
+    const fileName = 'metatag-picker-today-now.md'
+    const before = ['- [ ] タスク', '  - @due: 2026-01-01'].join('\n') + '\n'
+    await openPickerOn(fileName, before)
+
+    // todayボタン: 日付欄のみ更新される（時刻欄は変更されない）。
+    await browser.$('.metatag-picker-btn-today').click()
+    const dateAfterToday = await browser.$('.metatag-picker-date').getValue()
+    expect(dateAfterToday).not.toBe('2026-01-01')
+    const timeAfterToday = await browser.$('.metatag-picker-time').getValue()
+    expect(timeAfterToday).toBe('')
+
+    // nowボタン: 日付・時刻の両方が入力される。
+    await browser.$('.metatag-picker-btn-now').click()
+    const timeAfterNow = await browser.$('.metatag-picker-time').getValue()
+    expect(timeAfterNow).toMatch(/^\d{2}:\d{2}$/)
+    const minutePart = Number(timeAfterNow.split(':')[1])
+    expect(minutePart % 5).toBe(0)
+  })
+
+  it('issue-phase014-markdownEditor-003: 5分単位はピッカー内チェックボックスとしては表示されない', async function () {
+    await openPickerOn('metatag-picker-no-minute-checkbox.md', ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
+    await expect(browser.$('.metatag-picker-minute-step')).not.toExist()
+  })
+
+  it('issue-phase014-markdownEditor-003: プラグイン設定の5分単位は既定でONで、決定時に入力した分が5分単位へ切り上げられる', async function () {
+    const fileName = 'metatag-picker-minute-round.md'
+    const before = ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n'
+    await openPickerOn(fileName, before)
+
+    expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBe('300')
+
+    await setNativeInputValue('.metatag-picker-time', '10:32')
+    await browser.$('.metatag-picker-btn-commit').click()
+
+    const after = await waitForFileContentChange(fileName, before)
+    expect(after).toBe(['- [ ] タスク', '  - @due: 2026-09-20T10:35'].join('\n') + '\n')
+  })
+
+  it('issue-phase014-markdownEditor-003: プラグイン設定で5分単位をOFFにすると時刻入力のstepが外れ、分の値はそのまま確定する', async function () {
+    await browser.execute(() => {
+      // @ts-expect-error app は Obsidian 実行環境のグローバル
+      app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = false
+    })
+
+    const fileName = 'metatag-picker-minute-off.md'
+    const before = ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n'
+    try {
+      await openPickerOn(fileName, before)
+      expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBeNull()
+
+      await setNativeInputValue('.metatag-picker-time', '10:32')
+      await browser.$('.metatag-picker-btn-commit').click()
+
+      const after = await waitForFileContentChange(fileName, before)
+      expect(after).toBe(['- [ ] タスク', '  - @due: 2026-09-20T10:32'].join('\n') + '\n')
+    } finally {
+      await browser.execute(() => {
+        // @ts-expect-error app は Obsidian 実行環境のグローバル
+        app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = true
+      })
+    }
+  })
+
+  it('issue-phase014-markdownEditor-003: プラグイン設定で5分単位をOFFにすると、nowボタンも切り上げを行わない', async function () {
+    await browser.execute(() => {
+      // @ts-expect-error app は Obsidian 実行環境のグローバル
+      app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = false
+    })
+
+    try {
+      await openPickerOn('metatag-picker-now-no-round.md', ['- [ ] タスク', '  - @due: 2026-01-01'].join('\n') + '\n')
+      await browser.$('.metatag-picker-btn-now').click()
+      const timeAfterNow = await browser.$('.metatag-picker-time').getValue()
+      expect(timeAfterNow).toMatch(/^\d{2}:\d{2}$/)
+      // 丸めを行わない: 現在時刻の分がたまたま5の倍数である確率は低いが、決定的な検証にする
+      // ため「stepが外れている（=丸め設定がOFFに反映されている）」ことも合わせて確認する。
+      expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBeNull()
+    } finally {
+      await browser.execute(() => {
+        // @ts-expect-error app は Obsidian 実行環境のグローバル
+        app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = true
+      })
+    }
+  })
+
+  it('insertモードでも仮置きトグルが表示され、ONで決定するとキーに?が付与される', async function () {
+    const fileName = 'metatag-picker-insert-tentative.md'
+    const before = ['- [ ] タスク', '  - @schedule'].join('\n') + '\n'
+    await writeVaultFile(fileName, before)
+    await openFile(fileName)
+
+    await browser.execute(() => {
+      const app = (window as any).app
+      const editor = app.workspace.activeEditor.editor
+      const targetLine = 1
+      const ch = editor.getLine(targetLine).length
+      editor.replaceRange(':', { line: targetLine, ch }, { line: targetLine, ch })
+    })
+    await browser.waitUntil(async () => (await browser.$('.metatag-picker-popup')).isExisting(), {
+      timeout: 3000,
+      interval: 100,
+      timeoutMsg: '@schedule: 確定時にピッカーが自動起動しない',
+    })
+
+    // insertモードでも仮置きトグルが表示され、既定OFF。
+    await expect(browser.$('.metatag-picker-tentative')).toExist()
+    await expect(browser.$('.metatag-picker-tentative')).not.toBeChecked()
+
+    await browser.$('.metatag-picker-tentative').click()
+    await setNativeInputValue('.metatag-picker-date', '2026-09-17')
+    await browser.$('.metatag-picker-btn-commit').click()
+
+    const after = await waitForFileContentChange(fileName, before)
+    expect(after).toBe(['- [ ] タスク', '  - @schedule?: 2026-09-17'].join('\n') + '\n')
+  })
+
+  it('「期間で指定」がOFFのとき終了日時入力は非表示で、決定しても終了値は書き込まれない', async function () {
+    const fileName = 'metatag-picker-range-off.md'
+    const before = ['- [ ] タスク', '  - @schedule: 2026-09-17'].join('\n') + '\n'
+    await openPickerOn(fileName, before)
+
+    const rows = await browser.$$('.metatag-picker-row')
+    expect(rows).toHaveLength(2)
+    await expect(rows[1]).not.toBeDisplayed()
+
+    // 「期間で指定」がOFFのまま開始日だけを変更して決定した場合、終了値（/以降）は
+    // 一切現れず開始日のみが書き込まれることを確認する。
+    await setNativeInputValue('.metatag-picker-date', '2026-09-25')
+    await browser.$('.metatag-picker-btn-commit').click()
+    const after = await waitForFileContentChange(fileName, before)
+    expect(after).toBe(['- [ ] タスク', '  - @schedule: 2026-09-25'].join('\n') + '\n')
   })
 })

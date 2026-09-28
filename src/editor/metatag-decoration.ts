@@ -4,10 +4,9 @@
  * - 日付系（@plan/@schedule/@due）: Live Preview（wysiwyg）かつカーソルが当該行に
  *   重なっていない場合のみ、値を人間可読な「メタタグ表示」チップへ置換する（Decoration.replace）。
  *   それ以外（Source Mode・カーソルが行に重なる）は生テキストへの色付け（Decoration.mark）に留める。
- * - 日付系以外（issue-phase011-markdownEditor-002）: Live Preview かつカーソルが行に重なって
- *   いない場合、＠記号1文字だけを Decoration.replace（widget省略）で非表示にし、キー・値本体は
- *   Decoration.mark による緑系の装飾のまま残す（日付系のような値のフォーマット変換・ピッカーは
- *   行わない軽量な方式）。Source Mode・カーソルが行に重なる場合は＠を含めて生テキストのまま。
+ * - 日付系以外: 常に Decoration.mark で緑系の装飾を与える（＠記号は消さず、そのまま表示する。
+ *   issue-phase011-markdownEditor-002 で一時的に＠を非表示にしたが、issue-phase012-markdownEditor-005
+ *   でユーザーの要望「＠は消さないで」により、この非表示化は取り消された）。
  * - メタ行（コロン付き `@key: value` だけでなく、コロンなしの裸の `@key` も含む）の直下の
  *   ネスト全体（インデントが深い間の子孫行すべて）を「そのメタタグに属する」ものとして同じ
  *   クラスで装飾する（issue-phase003-008 2026-09-17 再々増分: `@memo` の下に平文の子リストが
@@ -181,16 +180,6 @@ function buildValueDecorations(view: EditorView): DecorationSet {
                 )
               }
             } else {
-              // issue-phase011-markdownEditor-002: 日付系と同様に、wysiwyg（Live Preview）かつ
-              // カーソルが行に重なっていない場合のみ ＠ 記号を非表示にする。値のフォーマット
-              // 変換やピッカーは不要なため、＠ 1文字だけを Decoration.replace（widget 省略）で
-              // 消す軽量な方式にする（日付系の MetaDateChipWidget は流用しない）。
-              const overlapsSelection = selection.ranges.some(
-                (r) => r.to >= keyStart && r.from <= valueEnd,
-              )
-              if (livePreview && !overlapsSelection) {
-                builder.add(keyStart, keyStart + 1, Decoration.replace({}))
-              }
               builder.add(
                 valueStart,
                 valueEnd,
@@ -203,18 +192,8 @@ function buildValueDecorations(view: EditorView): DecorationSet {
         } else {
           // コロンなしの裸のメタキー（例: `@memo`）。task-decoration.ts の正規表現はコロン必須
           // のためここでキー部分自体を装飾する。
-          // issue-phase011-markdownEditor-002: 値付きメタと同様に ＠ を非表示にする。
-          // ＠ の Decoration.replace とキー本体の Decoration.mark が同じ開始位置で重なると
-          // RangeSetBuilder がエラーになるため、非表示時はマークの開始位置を1文字分ずらす。
-          const overlapsSelection = selection.ranges.some(
-            (r) => r.to >= keyStart && r.from <= colonPos,
-          )
-          const hideAt = livePreview && !overlapsSelection
-          if (hideAt) {
-            builder.add(keyStart, keyStart + 1, Decoration.replace({}))
-          }
           builder.add(
-            hideAt ? keyStart + 1 : keyStart,
+            keyStart,
             colonPos,
             Decoration.mark({
               class: `metatag metatag-key metatag-${canonicalKey}${tentative ? ' metatag-tentative' : ''}`,
@@ -233,6 +212,39 @@ function buildValueDecorations(view: EditorView): DecorationSet {
   return builder.finish()
 }
 
+/**
+ * 指定行が「日付系メタキー直後・値が空」（`@plan:` 等、コロンで終わる裸のキー行）に一致する
+ * 場合、insertモードの日付ピッカーを開く。一致しなければ何もしない（呼び出し側で事前チェック
+ * 済みかどうかによらず安全に呼べる）。
+ *
+ * issue-phase013-markdownEditor-002: リスト先頭の「@」サジェストで`@plan:`等を一括挿入した
+ * 直後にもピッカーを開けるよう、`maybeAutoOpenPicker`からこの起動処理をexport関数として
+ * 切り出した。
+ */
+export function openDatePickerForLine(view: EditorView, lineFrom: number): void {
+  if (!view.dom.isConnected) return
+  if (lineFrom > view.state.doc.length) return
+  const line = view.state.doc.lineAt(lineFrom)
+  const m = line.text.match(/^(\s*- )@(plan|schedule|due)(\?)?:$/)
+  if (!m) return
+  const key = m[2] as DateMetaKey
+  const tentative = !!m[3]
+  // キー名直後（`?`/コロンの前）の位置。コミット時に `?:`/`:` ごと書き換えるための置換開始位置。
+  const keyNameEndOffset = m[1].length + 1 + key.length
+
+  view.dispatch({
+    effects: openMetaPicker.of({
+      from: line.from + keyNameEndOffset,
+      to: line.to,
+      lineFrom: line.from,
+      key,
+      initialValue: '',
+      initialTentative: tentative,
+      mode: 'insert',
+    }),
+  })
+}
+
 /** 挿入された1文字が ':' で、行が「日付系メタキー確定直後・値が空」に一致する場合のみ発火する。 */
 function maybeAutoOpenPicker(update: ViewUpdate): void {
   let triggeredPos: number | null = null
@@ -248,29 +260,11 @@ function maybeAutoOpenPicker(update: ViewUpdate): void {
   const pos = triggeredPos
   const line = update.state.doc.lineAt(pos)
   if (pos !== line.to) return
-  const m = line.text.match(/^(\s*- )@(plan|schedule|due)(\?)?:$/)
-  if (!m) return
-  const key = m[2] as DateMetaKey
-  const tentative = !!m[3]
-  const lineText = line.text
+  if (!/^(\s*- )@(plan|schedule|due)(\?)?:$/.test(line.text)) return
   const lineFrom = line.from
 
   queueMicrotask(() => {
-    if (!view.dom.isConnected) return
-    if (lineFrom >= view.state.doc.length) return
-    const cur = view.state.doc.lineAt(lineFrom)
-    if (cur.text !== lineText) return
-    view.dispatch({
-      effects: openMetaPicker.of({
-        from: cur.to,
-        to: cur.to,
-        lineFrom: cur.from,
-        key,
-        initialValue: '',
-        initialTentative: tentative,
-        mode: 'insert',
-      }),
-    })
+    openDatePickerForLine(view, lineFrom)
   })
 }
 
@@ -291,3 +285,4 @@ export const metatagValuePlugin = ViewPlugin.fromClass(
   },
   { decorations: (v) => v.decorations },
 )
+

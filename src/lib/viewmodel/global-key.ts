@@ -23,3 +23,13 @@ export function parseGlobalKey(globalKey: string): { filePath: string; localId: 
 export function stripOccurrenceSuffix(localId: string): string {
   return localId.replace(/__r\d+$/, '')
 }
+
+/**
+ * calendar 側で `@due` のみを持つタスクを期限項目として投影する際に付与した
+ * 末尾の `__due` サフィックスを除去する（issue-phase012-markdownEditor-003）。
+ * `@repeat` のオカレンスID（`__r<数字>`）とは無関係の別の接尾辞であり、
+ * `stripOccurrenceSuffix` では除去できないため、専用の関数として用意する。
+ */
+export function stripDueSuffix(localId: string): string {
+  return localId.replace(/__due$/, '')
+}

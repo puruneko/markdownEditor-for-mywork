@@ -109,7 +109,6 @@
  * ============================================================ */
 
 :root {
-  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
   --metatag-green-fg: var(--color-green, #2f9e44);
   --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
   --metatag-date-fg: var(--color-blue, #3a6fd8);
@@ -132,10 +131,8 @@
 }
 
 /* 日付系以外の全メタキー（例: @priority, @完了イメージ 等）。
- * ユーザー指示（2026-09-17再増分）:
- *   - メタ情報「名」部分（キー）: 非常に薄い緑系の背景のみ（文字色は変えない）。
- *   - メタ「情報」部分（値）: 緑系の文字色のみ（背景は付けない）。
- * どちらも周囲のテキストを邪魔しない程度に留める。
+ * issue-phase014-markdownEditor-005: キー・値ともに緑系の文字色のみ（背景は付けない）に
+ * 統一した（以前はキー側のみ薄い緑背景だったが、値側と見た目を揃えるため廃止した）。
  */
 .metatag-key.metatag-priority,
 .metatag-key.metatag-dependsOn,
@@ -146,7 +143,7 @@
 .metatag-key.metatag-savepoint,
 .metatag-key.metatag-special_note,
 .metatag-key.metatag-unknown {
-  background: var(--metatag-green-bg);
+  color: var(--metatag-green-fg);
 }
 
 .metatag-value.metatag-priority,
@@ -196,7 +193,6 @@
  * ============================================================ */
 
 :root {
-  --metatag-green-bg: rgba(var(--color-green-rgb, 40, 167, 69), 0.10);
   --metatag-green-fg: var(--color-green, #2f9e44);
   --metatag-date-bg: rgba(var(--color-blue-rgb, 58, 111, 216), 0.10);
   --metatag-date-fg: var(--color-blue, #3a6fd8);
@@ -244,7 +240,7 @@
 .metatag-key.metatag-savepoint,
 .metatag-key.metatag-special_note,
 .metatag-key.metatag-unknown {
-  background: var(--metatag-green-bg);
+  color: var(--metatag-green-fg);
 }
 
 .metatag-value.metatag-priority,
@@ -281,7 +277,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  min-width: 240px;
+  min-width: 300px;
   background: var(--background-primary);
   color: var(--text-normal);
   border: 1px solid var(--background-modifier-border);
@@ -290,24 +286,31 @@
   font-size: 13px;
 }
 
-.metatag-picker-title {
-  font-weight: 600;
-  margin-bottom: 2px;
-  color: var(--text-normal);
-}
-
 .metatag-picker-row {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+}
+
+/*
+ * issue-phase014-markdownEditor-003: 上の `.metatag-picker-row { display: flex }` は
+ * 詳細度・出自（author stylesheet）の点でユーザーエージェント既定の `[hidden] { display: none }`
+ * より優先されてしまい、`endRow.hidden = true` を設定してもDOM上は非表示にならない
+ * （実機で「期間で指定」OFF時に終了日時欄が消えない不具合の原因）。明示的に上書きする。
+ */
+.metatag-picker-row[hidden] {
+  display: none;
 }
 
 .metatag-picker-row .metatag-picker-date {
   flex: 1 1 60%;
+  min-width: 0;
 }
 
 .metatag-picker-row .metatag-picker-time {
   flex: 1 1 40%;
+  min-width: 0;
 }
 
 .metatag-picker-checkbox-row {
@@ -320,8 +323,10 @@
 
 .metatag-picker-button-row {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 4px;
 }
 
@@ -332,6 +337,22 @@
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: pointer;
+}
+
+.metatag-picker-btn-today,
+.metatag-picker-btn-now {
+  padding: 2px 6px;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------------
+ * issue-phase013-markdownEditor-002: リスト先頭「@」サジェスト候補の補足ラベル
+ * ------------------------------------------------------------ */
+.metatag-suggest-item-label {
+  color: var(--text-muted);
+  margin-left: 4px;
+  font-size: 11px;
 }
 
 .metatag-picker-btn-commit {

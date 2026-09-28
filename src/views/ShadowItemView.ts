@@ -28,12 +28,26 @@ export const SHADOW_RESET_CSS = `
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: normal;
+    color-scheme: light;
+    --host-bg: #fff;
+    --host-bg-secondary: #f3f4f6;
+    --host-bg-hover: #e5e7eb;
+    --host-border: #d1d5db;
+    --host-text: #333;
+    --host-text-muted: #666;
+    --host-accent: #7c6af7;
+    --host-text-on-accent: #fff;
   }
   button {
     font-family: inherit;
     font-size: inherit;
     line-height: normal;
     cursor: pointer;
+    color: inherit;
+  }
+  input, select, textarea {
+    color: inherit;
+    font: inherit;
   }
   [data-is-dnd-shadow-item] {
     opacity: 0.5;

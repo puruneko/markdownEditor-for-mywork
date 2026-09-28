@@ -256,11 +256,13 @@ function extractFromNodes(
 
       // issue-phase011-markdownEditor-001: list（タスクではない）が @schedule を持つ場合、
       // 通常のタスクバーと同等の図形（start/end）を生成する（従来は plan のみ対応していた）。
+      // issue-phase012-markdownEditor-004: 明示的な予定であることを示す hasExplicitSchedule も設定する。
       if (node.meta?.schedule) {
         const parsed = parseSchedule(node.meta.schedule)
         if (parsed) {
           ganttNode.start = parsed.start
           ganttNode.end = parsed.end
+          ganttNode.hasExplicitSchedule = true
         }
       }
 
@@ -306,7 +308,10 @@ function extractFromSection(
   if (!sectionHasSchedule(section)) return
 
   const type: GanttNodeType = section.depth === 1 ? 'project' : 'section'
-  const range = sectionDescendantDateRange(section)
+  // issue-phase012-markdownEditor-004: 見出し自身の @schedule があれば、それをバーの
+  // 期間として優先する（配下の集計期間より優先）。
+  const explicitSchedule = section.meta?.schedule ? parseSchedule(section.meta.schedule) : null
+  const range = explicitSchedule ?? sectionDescendantDateRange(section)
   const sectionId = makeGlobalKey(sourcePath, section.id)
   const ganttNode: GanttNode = {
     id: sectionId,
@@ -314,6 +319,7 @@ function extractFromSection(
     type,
     name: section.title,
     ...(range ? { start: range.start, end: range.end } : {}),
+    ...(explicitSchedule ? { hasExplicitSchedule: true } : {}),
   }
 
   // issue-phase011-markdownEditor-001: 見出し自身の @plan を点線枠として描画する。

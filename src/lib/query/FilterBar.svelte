@@ -168,9 +168,9 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 1px solid var(--background-modifier-border, #444);
-    background: var(--background-secondary, #2d2d2d);
-    color: var(--text-muted, #999);
+    border: 1px solid var(--host-border);
+    background: var(--host-bg-secondary);
+    color: var(--host-text-muted);
     font-size: 14px;
     cursor: pointer;
     line-height: 1;
@@ -178,8 +178,8 @@
   }
 
   .reload-btn:hover {
-    background: var(--background-modifier-hover, #3a3a3a);
-    color: var(--text-normal, #d4d4d4);
+    background: var(--host-bg-hover);
+    color: var(--host-text);
   }
 
   .filter-chip {
@@ -188,17 +188,17 @@
     gap: 4px;
     padding: 3px 10px;
     border-radius: 12px;
-    border: 1px solid var(--background-modifier-border, #444);
-    background: var(--background-secondary, #2d2d2d);
-    color: var(--text-muted, #999);
+    border: 1px solid var(--host-border);
+    background: var(--host-bg-secondary);
+    color: var(--host-text-muted);
     font-size: 12px;
     cursor: pointer;
     line-height: 1.4;
   }
 
   .filter-chip.active {
-    border-color: var(--interactive-accent, #7c6af7);
-    color: var(--interactive-accent, #7c6af7);
+    border-color: var(--host-accent);
+    color: var(--host-accent);
   }
 
   .badge {
@@ -209,8 +209,8 @@
     height: 16px;
     padding: 0 3px;
     border-radius: 8px;
-    background: var(--interactive-accent, #7c6af7);
-    color: var(--text-on-accent, #fff);
+    background: var(--host-accent);
+    color: var(--host-text-on-accent);
     font-size: 10px;
   }
 
@@ -220,8 +220,8 @@
     left: 0;
     z-index: 100;
     padding: 8px;
-    background: var(--background-primary, #1e1e1e);
-    border: 1px solid var(--background-modifier-border, #444);
+    background: var(--host-bg);
+    border: 1px solid var(--host-border);
     border-radius: 6px;
     min-width: 260px;
     display: flex;
@@ -241,7 +241,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: var(--text-muted, #999);
+    color: var(--host-text-muted);
   }
 
   .filter-field span {
@@ -253,10 +253,10 @@
   .filter-field input {
     flex: 1;
     padding: 2px 6px;
-    background: var(--background-secondary, #2d2d2d);
-    border: 1px solid var(--background-modifier-border, #444);
+    background: var(--host-bg-secondary);
+    border: 1px solid var(--host-border);
     border-radius: 4px;
-    color: var(--text-normal, #d4d4d4);
+    color: var(--host-text);
     font-size: 12px;
     font-family: inherit;
   }
@@ -266,8 +266,8 @@
     padding: 3px 12px;
     border-radius: 4px;
     border: none;
-    background: var(--interactive-accent, #7c6af7);
-    color: var(--text-on-accent, #fff);
+    background: var(--host-accent);
+    color: var(--host-text-on-accent);
     font-size: 11px;
     cursor: pointer;
     font-family: inherit;

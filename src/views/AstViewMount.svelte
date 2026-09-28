@@ -61,14 +61,14 @@
   .filter-bar-row {
     flex-shrink: 0;
     padding: 4px 8px;
-    border-bottom: 1px solid var(--background-modifier-border, #444);
-    background: var(--background-primary, #1e1e1e);
+    border-bottom: 1px solid var(--host-border);
+    background: var(--host-bg);
   }
 
   .ast-view {
     flex: 1;
     overflow: auto;
-    background: var(--background-primary, #1e1e1e);
+    background: var(--host-bg);
   }
 
   .ast-json {
@@ -76,7 +76,7 @@
     font-size: 12px;
     white-space: pre-wrap;
     word-break: break-all;
-    color: var(--text-normal, #d4d4d4);
+    color: var(--host-text);
     font-family: var(--font-monospace, 'Consolas', monospace);
     margin: 0;
     line-height: 1.5;
