@@ -36,3 +36,8 @@
   border-bottom: 3px solid var(--text-muted, #888888);
   padding-bottom: 1px;
 }
+
+/* issue-phase017-markdownEditor-for-mywork-001: 下線が次行の文字に重ならないよう、H2行の下に余白を足す。 */
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-2 {
+  padding-bottom: 16px;
+}

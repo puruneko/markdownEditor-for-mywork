@@ -1,4 +1,5 @@
 import type { TaskNode } from '../parser/types'
+import { getMetaKeyNames } from '../parser/meta-keys'
 
 function getIndent(line: string): number {
   return line.length - line.trimStart().length
@@ -17,7 +18,7 @@ function getIndent(line: string): number {
 export function upsertMeta(
   md: string,
   node: TaskNode,
-  metaKey: 'schedule' | 'due',
+  metaKey: 'schedule' | 'plan' | 'due',
   metaValue: string,
 ): string {
   const lines = md.split('\n')
@@ -28,8 +29,10 @@ export function upsertMeta(
   const childIndent = taskIndent + 2
   // `?`（仮置き）付きの既存行も同一メタとして認識する（issue-phase004-002: upsert-meta は
   // 既存メタ更新時に `?` を保持しなければならない）。
-  const metaPrefixTentative = `- @${metaKey}?:`
-  const metaPrefixPlain = `- @${metaKey}:`
+  // issue-phase019-markdownEditor-for-mywork-001: 別名（組込・ユーザー）の行も同一メタとして認識し、
+  // 書かれたキー名を保持する。
+  const names = getMetaKeyNames(metaKey)
+  let writtenKey: string = metaKey
 
   let firstExistingIdx = -1
   let existingTentative = false
@@ -43,17 +46,16 @@ export function upsertMeta(
     insertIdx = i + 1
     if (firstExistingIdx === -1) {
       const trimmedLine = line.trimStart()
-      if (trimmedLine.startsWith(metaPrefixTentative)) {
+      const mm = /^- @([\p{L}\p{N}_]+)(\?)?:/u.exec(trimmedLine)
+      if (mm && names.includes(mm[1])) {
         firstExistingIdx = i
-        existingTentative = true
-      } else if (trimmedLine.startsWith(metaPrefixPlain)) {
-        firstExistingIdx = i
-        existingTentative = false
+        existingTentative = !!mm[2]
+        writtenKey = mm[1]
       }
     }
   }
 
-  const metaPrefix = existingTentative ? metaPrefixTentative : metaPrefixPlain
+  const metaPrefix = `- @${writtenKey}${existingTentative ? '?' : ''}:`
   const newMetaLine = ' '.repeat(childIndent) + `${metaPrefix} ${metaValue}`
 
   if (firstExistingIdx !== -1) {
@@ -71,4 +73,8 @@ export function upsertSchedule(md: string, node: TaskNode, scheduleValue: string
 
 export function upsertDue(md: string, node: TaskNode, dueValue: string): string {
   return upsertMeta(md, node, 'due', dueValue)
+}
+
+export function upsertPlan(md: string, node: TaskNode, planValue: string): string {
+  return upsertMeta(md, node, 'plan', planValue)
 }

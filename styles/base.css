@@ -43,3 +43,30 @@
   min-width: 0;
   overflow: hidden;
 }
+
+/* issue-phase016-markdownEditor-002: リスト直後の → / -> の強調 */
+.md-ast-list-arrow {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: var(--color-blue);
+}
+
+/* issue-phase020-markdownEditor-for-mywork-005: 設定タブのスリム化（本プラグインの設定タブのみ） */
+.md-ast-editor-settings .setting-item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.md-ast-editor-settings .setting-item-name {
+  line-height: 1.3;
+}
+.md-ast-editor-settings .setting-item-description {
+  padding-top: 0;
+  line-height: 1.3;
+}
+.md-ast-editor-settings h2,
+.md-ast-editor-settings h3,
+.md-ast-editor-settings .setting-item-heading {
+  margin: 12px 0 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}

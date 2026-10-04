@@ -5,6 +5,8 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [svelte()],
   resolve: {
+    // Vitest で Svelte コンポーネントを直接 mount するため、クライアント版ビルドを解決させる。
+    conditions: process.env.VITEST ? ['browser'] : undefined,
     alias: [
       {
         // Exact match only (not sub-paths like /dist/index.css)
@@ -45,6 +47,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // plugin.ts 全体の初回 import（Svelte クライアント版の変換を含む）が高負荷時に 5 秒を超えるため。
+    testTimeout: 20000,
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     exclude: ['tests/e2e/**', 'tests/obs-e2e/**', 'node_modules/**'],
     alias: [

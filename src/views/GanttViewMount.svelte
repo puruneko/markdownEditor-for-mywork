@@ -3,6 +3,7 @@
   import FilterBar from '../lib/query/FilterBar.svelte'
   import { filterNodes, type FilterQuery } from '../lib/query/filter'
   import type { Document, TaskNode } from '../lib/parser/types'
+  import type { GanttConfig } from 'svelte-gantt-lib'
   import type { SourceEntry } from '../lib/viewmodel/contract'
 
   interface Props {
@@ -15,6 +16,10 @@
     expandSubtasks?: boolean
     /** 外部ドロップ時の既定所要時間（分）。settings.defaultDurationMin 経由（issue-phase010-markdownEditor-005）。 */
     defaultDurationMin?: number
+    minuteStep?: number
+    /** issue-phase017-004: 保存済み Gantt 設定と保存コールバック。 */
+    initialGanttConfig?: Partial<GanttConfig>
+    onGanttConfigChange?: (cfg: Partial<GanttConfig>) => void
   }
 
   let {
@@ -25,6 +30,9 @@
     onReload,
     expandSubtasks = false,
     defaultDurationMin,
+    minuteStep,
+    initialGanttConfig,
+    onGanttConfigChange,
   }: Props = $props()
 
   let sources = $state(initialSources)
@@ -43,7 +51,7 @@
   <div class="filter-bar-row">
     <FilterBar bind:query {onReload} />
   </div>
-  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} {expandSubtasks} {defaultDurationMin} />
+  <GanttTab sources={filteredSources} {onNodePatch} {onNodeClick} {expandSubtasks} {defaultDurationMin} {minuteStep} {initialGanttConfig} {onGanttConfigChange} />
 </div>
 
 <style>

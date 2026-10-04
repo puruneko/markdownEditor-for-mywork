@@ -1,6 +1,9 @@
+import { setUserMetaKeyAliases, validateUserMetaKeyAliases } from './lib/parser/meta-keys'
 import { Plugin, MarkdownView, Notice } from 'obsidian'
 import type { WorkspaceLeaf } from 'obsidian'
+import type { EditorView } from '@codemirror/view'
 import { AstView, AST_VIEW_TYPE } from './views/AstView'
+import { ParseDebugView, PARSE_DEBUG_VIEW_TYPE } from './views/ParseDebugView'
 import { CalendarView, CALENDAR_VIEW_TYPE } from './views/CalendarView'
 import { GanttView, GANTT_VIEW_TYPE } from './views/GanttView'
 import { KanbanView, KANBAN_VIEW_TYPE } from './views/KanbanView'
@@ -11,12 +14,13 @@ import { EditorEventBus } from './sync/editor-event-bus'
 import { taskDecorationPlugin } from './editor/task-decoration'
 import { metatagValuePlugin } from './editor/metatag-decoration'
 import { createMetatagPickerExtension } from './editor/metatag-picker'
+import { createMetaFoldExtension, toggleMetaFoldAtCursor, foldAllMeta, unfoldAllMeta } from './editor/meta-fold'
 import { MetaKeySuggest } from './editor/metatag-suggest'
 import { createNotationLintExtension } from './editor/notation-lint'
 import { createTaskDragSourceExtension } from './editor/task-drag-source'
 import { reformatMetaLines } from './editor/reformat-meta-lines'
 import { createQueryBlockProcessor } from './views/query-block'
-import { MdAstEditorSettingTab, DEFAULT_SETTINGS } from './settings'
+import { MdAstEditorSettingTab, DEFAULT_SETTINGS, migrateSettings } from './settings'
 import type { MdAstEditorSettings } from './settings'
 import { ViewSettingsHub } from './settings-hub'
 
@@ -29,6 +33,7 @@ export class MdAstEditorPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings()
+    setUserMetaKeyAliases(validateUserMetaKeyAliases(this.settings.metaKeyAliases).aliases) // issue-phase019-markdownEditor-for-mywork-001
     this.settingsHub = new ViewSettingsHub(this)
 
     this.fileSync = new FileSync(this.app, this.settings.debounceMs)
@@ -91,13 +96,18 @@ export class MdAstEditorPlugin extends Plugin {
     )
 
     this.registerView(
+      PARSE_DEBUG_VIEW_TYPE,
+      (leaf) => new ParseDebugView(leaf, this.fileSync, this.editorEventBus, this.astIndex),
+    )
+
+    this.registerView(
       CALENDAR_VIEW_TYPE,
       (leaf) => new CalendarView(leaf, this.fileSync, this.editorEventBus, this.settingsHub, this.astIndex),
     )
 
     this.registerView(
       GANTT_VIEW_TYPE,
-      (leaf) => new GanttView(leaf, this.settings, this.fileSync, this.editorEventBus, this.astIndex),
+      (leaf) => new GanttView(leaf, this.settings, this.settingsHub, this.fileSync, this.editorEventBus, this.astIndex),
     )
 
     this.registerView(
@@ -114,6 +124,12 @@ export class MdAstEditorPlugin extends Plugin {
       id: 'open-ast-view',
       name: 'AST View を開く',
       callback: () => void this.openView(AST_VIEW_TYPE),
+    })
+
+    this.addCommand({
+      id: 'open-parse-debug-view',
+      name: 'Parse Debug を開く',
+      callback: () => void this.openView(PARSE_DEBUG_VIEW_TYPE),
     })
 
     this.addCommand({
@@ -140,6 +156,32 @@ export class MdAstEditorPlugin extends Plugin {
       callback: () => void this.openView(DASHBOARD_VIEW_TYPE),
     })
 
+    // issue-phase017-003: メタ情報ブロックの折りたたみコマンド。
+    this.addCommand({
+      id: 'toggle-meta-fold-at-cursor',
+      name: 'カーソル位置のタスクのメタ情報を折りたたむ/展開',
+      editorCallback: (editor) => {
+        const cm = (editor as unknown as { cm?: EditorView }).cm
+        if (cm) toggleMetaFoldAtCursor(cm)
+      },
+    })
+    this.addCommand({
+      id: 'fold-all-meta',
+      name: 'すべてのメタ情報を折りたたむ',
+      editorCallback: (editor) => {
+        const cm = (editor as unknown as { cm?: EditorView }).cm
+        cm?.dispatch({ effects: foldAllMeta.of(null) })
+      },
+    })
+    this.addCommand({
+      id: 'unfold-all-meta',
+      name: 'すべてのメタ情報を展開',
+      editorCallback: (editor) => {
+        const cm = (editor as unknown as { cm?: EditorView }).cm
+        cm?.dispatch({ effects: unfoldAllMeta.of(null) })
+      },
+    })
+
     // issue-phase004-005: メタ行を推奨位置（タスク直下）へ一括整形する。
     // オーナー決定により自動実行・保存時フックは禁止。ユーザーがコマンドを呼んだ時のみ動作する。
     this.addCommand({
@@ -163,6 +205,9 @@ export class MdAstEditorPlugin extends Plugin {
       this.addRibbonIcon('code-2', 'AST View を開く', () => {
         void this.openView(AST_VIEW_TYPE)
       })
+      this.addRibbonIcon('bug', 'Parse Debug を開く', () => {
+        void this.openView(PARSE_DEBUG_VIEW_TYPE)
+      })
       this.addRibbonIcon('calendar', 'Calendar View を開く', () => {
         void this.openView(CALENDAR_VIEW_TYPE)
       })
@@ -182,9 +227,11 @@ export class MdAstEditorPlugin extends Plugin {
       this.registerEditorExtension(createNotationLintExtension())
       // issue-phase003-008（2026-09-17増分）: メタタグの緑装飾・日付チップ・ピッカー。
       this.registerEditorExtension(metatagValuePlugin)
-      this.registerEditorExtension(createMetatagPickerExtension(() => this.settings.roundMinuteStep))
+      // issue-phase017-003: メタ情報ブロックの折りたたみ。
+      this.registerEditorExtension(createMetaFoldExtension())
+      this.registerEditorExtension(createMetatagPickerExtension(() => this.settings.minuteStep))
       // issue-phase013-markdownEditor-002: リスト先頭の「@」でschedule/plan/dueをサジェスト。
-      this.registerEditorSuggest(new MetaKeySuggest(this.app))
+      this.registerEditorSuggest(new MetaKeySuggest(this.app, () => this.settings.frequentMetaKeys))
     }
 
     this.registerEditorExtension(
@@ -216,6 +263,7 @@ export class MdAstEditorPlugin extends Plugin {
     this.fileSync.stop()
     this.astIndex.stop()
     this.app.workspace.detachLeavesOfType(AST_VIEW_TYPE)
+    this.app.workspace.detachLeavesOfType(PARSE_DEBUG_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(GANTT_VIEW_TYPE)
     this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE)
@@ -223,7 +271,7 @@ export class MdAstEditorPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, migrateSettings(await this.loadData()))
   }
 
   async saveSettings(): Promise<void> {

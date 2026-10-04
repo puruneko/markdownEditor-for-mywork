@@ -10,12 +10,12 @@ import { StateEffect, StateField, EditorSelection } from '@codemirror/state'
 import type { Extension } from '@codemirror/state'
 import { showTooltip, tooltips } from '@codemirror/view'
 import type { EditorView, Tooltip, TooltipView } from '@codemirror/view'
+import { buildRepeatPicker } from './repeat-picker'
 import {
   buildMetaDateValue,
   parseMetaDateValue,
-  roundUpTo5Min,
+  roundUpToStep,
   nowRounded,
-  nowExact,
   type DateMetaKey,
 } from '../lib/format/metatag-format'
 
@@ -28,7 +28,7 @@ export interface MetaPickerTarget {
   to: number
   /** 対象行の先頭位置。コミット後にカーソルをここへ逃がしてチップ表示へ即座に戻すために使う。 */
   lineFrom: number
-  key: DateMetaKey
+  key: DateMetaKey | 'repeat'
   initialValue: string
   initialTentative: boolean
   /** insert: 新規挿入（`?` は変更不可）。edit: 既存値の再編集（`?` トグルを表示）。 */
@@ -38,12 +38,12 @@ export interface MetaPickerTarget {
 export const openMetaPicker = StateEffect.define<MetaPickerTarget | null>()
 
 /**
- * issue-phase014-markdownEditor-003: 「5分単位」はピッカー内のチェックボックスを廃止し、
- * プラグイン設定（`MdAstEditorSettings.roundMinuteStep`）へ移行した。CM6拡張はプラグイン
+ * issue-phase014-markdownEditor-003: 「分刻み」はピッカー内のチェックボックスを廃止し、
+ * プラグイン設定（`MdAstEditorSettings.minuteStep`）へ移行した。CM6拡張はプラグイン
  * 設定を直接参照できないため、`createTaskDragSourceExtension`（`task-drag-source.ts`）と
  * 同じ「コールバックで都度読み出す」パターンで設定値を受け渡す。
  */
-export function createMetatagPickerExtension(getRoundMinuteStep: () => boolean): Extension {
+export function createMetatagPickerExtension(getMinuteStep: () => number): Extension {
   const metaPickerField = StateField.define<MetaPickerTarget | null>({
     create() {
       return null
@@ -63,7 +63,7 @@ export function createMetatagPickerExtension(getRoundMinuteStep: () => boolean):
           above: false,
           strictSide: false,
           arrow: true,
-          create: (view) => buildPickerTooltipView(view, target, getRoundMinuteStep()),
+          create: (view) => buildPickerTooltipView(view, target, getMinuteStep()),
         }
         return [tooltip]
       }),
@@ -82,12 +82,86 @@ function formatDateLocal(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
-/** [日付入力][時刻入力][todayボタン][nowボタン] の1行を組み立てる。 */
+/** 分の選択肢（00 から step 刻みで 60 未満）。 */
+export function minuteOptions(step: number): string[] {
+  const out: string[] = []
+  for (let m = 0; m < 60; m += step) out.push(pad2(m))
+  return out
+}
+
+export interface TimeSelect {
+  wrap: HTMLElement
+  getTime(): string
+  setTime(time: string): void
+}
+
+function attachWheel(sel: HTMLSelectElement): void {
+  sel.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault()
+      if (sel.disabled) return
+      const next = sel.selectedIndex + (e.deltaY > 0 ? 1 : -1)
+      if (next < 0 || next >= sel.options.length) return
+      sel.selectedIndex = next
+      sel.dispatchEvent(new Event('change'))
+    },
+    { passive: false },
+  )
+}
+
+/** 時・分の2つの選択欄。時が空（--）なら時刻なし。分は刻みの倍数だけを表示する。 */
+function buildTimeSelect(initialTime: string, minuteStep: number): TimeSelect {
+  const wrap = document.createElement('span')
+  wrap.className = 'metatag-picker-time'
+  const hour = document.createElement('select')
+  hour.className = 'metatag-picker-hour'
+  const minute = document.createElement('select')
+  minute.className = 'metatag-picker-minute'
+  const addOpt = (sel: HTMLSelectElement, v: string, label = v) => {
+    const o = document.createElement('option')
+    o.value = v
+    o.textContent = label
+    sel.appendChild(o)
+  }
+  addOpt(hour, '', '--')
+  for (let h = 0; h < 24; h++) addOpt(hour, pad2(h))
+  for (const m of minuteOptions(minuteStep)) addOpt(minute, m)
+  const sep = document.createElement('span')
+  sep.textContent = ':'
+  const sync = () => {
+    minute.disabled = hour.value === ''
+  }
+  hour.addEventListener('change', sync)
+  attachWheel(hour)
+  attachWheel(minute)
+  const setTime = (time: string) => {
+    const m = /^(\d{2}):(\d{2})$/.exec(time)
+    if (!m) {
+      hour.value = ''
+      minute.value = minute.options[0].value
+    } else {
+      hour.value = m[1]
+      minute.value = m[2]
+      if (minute.value !== m[2]) minute.value = minute.options[0].value
+    }
+    sync()
+  }
+  setTime(initialTime)
+  wrap.append(hour, sep, minute)
+  return {
+    wrap,
+    getTime: () => (hour.value === '' ? '' : `${hour.value}:${minute.value}`),
+    setTime,
+  }
+}
+
+/** [日付入力][時刻選択][todayボタン][nowボタン] の1行を組み立てる。 */
 function buildDateTimeRow(
   initialDate: string,
   initialTime: string,
-  roundMinuteStep: boolean,
-): { row: HTMLDivElement; dateInput: HTMLInputElement; timeInput: HTMLInputElement } {
+  minuteStep: number,
+): { row: HTMLDivElement; dateInput: HTMLInputElement; time: TimeSelect } {
   const row = document.createElement('div')
   row.className = 'metatag-picker-row'
 
@@ -96,10 +170,14 @@ function buildDateTimeRow(
   dateInput.className = 'metatag-picker-date'
   dateInput.value = initialDate
 
-  const timeInput = document.createElement('input')
-  timeInput.type = 'time'
-  timeInput.className = 'metatag-picker-time'
-  timeInput.value = initialTime
+  // 既存値の分が刻みの倍数でない場合は切り上げて初期表示する（日付の繰り上がりも反映）。
+  if (initialDate && initialTime) {
+    const r = roundUpToStep(initialDate, initialTime, minuteStep)
+    initialDate = r.date
+    initialTime = r.time
+    dateInput.value = initialDate
+  }
+  const time = buildTimeSelect(initialTime, minuteStep)
 
   const todayBtn = document.createElement('button')
   todayBtn.type = 'button'
@@ -116,25 +194,36 @@ function buildDateTimeRow(
   nowBtn.textContent = 'now'
   nowBtn.addEventListener('mousedown', (e) => {
     e.preventDefault()
-    const now = roundMinuteStep ? nowRounded(new Date()) : nowExact(new Date())
+    const now = nowRounded(new Date(), minuteStep)
     dateInput.value = now.date
-    timeInput.value = now.time
+    time.setTime(now.time)
   })
 
-  row.append(dateInput, timeInput, todayBtn, nowBtn)
-  return { row, dateInput, timeInput }
+  row.append(dateInput, time.wrap, todayBtn, nowBtn)
+  return { row, dateInput, time }
 }
 
-function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roundMinuteStep: boolean): TooltipView {
-  const parsed = parseMetaDateValue(target.initialValue)
+export interface MetaDatePickerOptions {
+  initialValue: string
+  initialTentative: boolean
+  showTentative: boolean
+  minuteStep: number
+  onCommit: (value: string, tentative: boolean) => void
+  onClose: () => void
+}
+
+/** CM6 に依存しないピッカー DOM。エディタの tooltip と Gantt ツリーの浮動表示の両方で使う。 */
+export function buildMetaDatePicker(opts: MetaDatePickerOptions): { dom: HTMLElement; mount(): void; destroy(): void } {
+  const { minuteStep } = opts
+  const parsed = parseMetaDateValue(opts.initialValue)
 
   const dom = document.createElement('div')
   dom.className = 'metatag-picker-popup'
 
-  const { row: startRow, dateInput: startDateInput, timeInput: startTimeInput } = buildDateTimeRow(
+  const { row: startRow, dateInput: startDateInput, time: startTime } = buildDateTimeRow(
     parsed.startDate,
     parsed.startTime ?? '',
-    roundMinuteStep,
+    minuteStep,
   )
   dom.appendChild(startRow)
 
@@ -147,10 +236,10 @@ function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roun
   rangeToggleRow.append(rangeToggle, document.createTextNode('期間で指定'))
   dom.appendChild(rangeToggleRow)
 
-  const { row: endRow, dateInput: endDateInput, timeInput: endTimeInput } = buildDateTimeRow(
+  const { row: endRow, dateInput: endDateInput, time: endTime } = buildDateTimeRow(
     parsed.endDate ?? parsed.startDate,
     parsed.endTime ?? '',
-    roundMinuteStep,
+    minuteStep,
   )
   endRow.hidden = !parsed.isRange
   dom.appendChild(endRow)
@@ -162,22 +251,16 @@ function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roun
   const bottomRow = document.createElement('div')
   bottomRow.className = 'metatag-picker-button-row'
 
-  if (roundMinuteStep) {
-    startTimeInput.step = '300'
-    endTimeInput.step = '300'
-  } else {
-    startTimeInput.removeAttribute('step')
-    endTimeInput.removeAttribute('step')
-  }
-
-  const tentativeRow = document.createElement('label')
-  tentativeRow.className = 'metatag-picker-checkbox-row'
   const tentativeCheckbox = document.createElement('input')
   tentativeCheckbox.type = 'checkbox'
   tentativeCheckbox.className = 'metatag-picker-tentative'
-  tentativeCheckbox.checked = target.initialTentative
-  tentativeRow.append(tentativeCheckbox, document.createTextNode('仮置き（?）'))
-  bottomRow.appendChild(tentativeRow)
+  tentativeCheckbox.checked = opts.initialTentative
+  if (opts.showTentative) {
+    const tentativeRow = document.createElement('label')
+    tentativeRow.className = 'metatag-picker-checkbox-row'
+    tentativeRow.append(tentativeCheckbox, document.createTextNode('仮置き（?）'))
+    bottomRow.appendChild(tentativeRow)
+  }
 
   const commitBtn = document.createElement('button')
   commitBtn.type = 'button'
@@ -187,58 +270,48 @@ function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roun
 
   dom.appendChild(bottomRow)
 
-  const close = () => {
-    view.dispatch({ effects: openMetaPicker.of(null) })
+  /** 決定ボタンと外側クリックで共通の保存処理。保存できたら true。 */
+  const commitCurrent = (): boolean => {
+    if (!startDateInput.value) return false
+    const isRange = rangeToggle.checked
+    const value = buildMetaDateValue({
+      startDate: startDateInput.value,
+      startTime: startTime.getTime() || null,
+      isRange,
+      endDate: isRange ? endDateInput.value || startDateInput.value : null,
+      endTime: isRange ? endTime.getTime() || null : null,
+    })
+    opts.onCommit(value, tentativeCheckbox.checked)
+    return true
   }
-
   commitBtn.addEventListener('mousedown', (e) => {
     e.preventDefault()
-    if (!startDateInput.value) return
-    const isRange = rangeToggle.checked
-    const roundMinutes = roundMinuteStep
-
-    let startDate = startDateInput.value
-    let startTime = startTimeInput.value || null
-    if (roundMinutes && startTime) {
-      const rounded = roundUpTo5Min(startDate, startTime)
-      startDate = rounded.date
-      startTime = rounded.time
-    }
-
-    let endDate = isRange ? endDateInput.value || startDateInput.value : null
-    let endTime = isRange ? endTimeInput.value || null : null
-    if (roundMinutes && endDate && endTime) {
-      const rounded = roundUpTo5Min(endDate, endTime)
-      endDate = rounded.date
-      endTime = rounded.time
-    }
-
-    const value = buildMetaDateValue({ startDate, startTime, isRange, endDate, endTime })
-    const tentative = tentativeCheckbox.checked
-
-    view.dispatch({
-      changes: { from: target.from, to: target.to, insert: `${tentative ? '?' : ''}: ${value}` },
-      // 書き戻し直後にカーソルを行頭へ逃がし、チップ表示へ即座に戻す。
-      selection: EditorSelection.cursor(target.lineFrom),
-      effects: openMetaPicker.of(null),
-    })
+    commitCurrent()
   })
 
   let outsideMouseDown: ((e: MouseEvent) => void) | null = null
   let keyDown: ((e: KeyboardEvent) => void) | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let done = false
 
   return {
     dom,
     mount() {
       // 起動をトリガーしたクリック自体で即座に閉じてしまわないよう、リスナー登録を1tick遅らせる。
-      setTimeout(() => {
+      timer = setTimeout(() => {
         outsideMouseDown = (e: MouseEvent) => {
-          if (!dom.contains(e.target as Node)) close()
+          if (dom.contains(e.target as Node)) return
+          // issue-phase020-002: 外側クリックは保存して閉じる（保存不可なら破棄して閉じる）。Esc は破棄。
+          if (done) return
+          done = true
+          if (!commitCurrent()) opts.onClose()
         }
         keyDown = (e: KeyboardEvent) => {
           if (e.key === 'Escape') {
             e.preventDefault()
-            close()
+            if (done) return
+            done = true
+            opts.onClose()
           }
         }
         document.addEventListener('mousedown', outsideMouseDown, true)
@@ -246,8 +319,41 @@ function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, roun
       }, 0)
     },
     destroy() {
+      if (timer) clearTimeout(timer)
       if (outsideMouseDown) document.removeEventListener('mousedown', outsideMouseDown, true)
       if (keyDown) document.removeEventListener('keydown', keyDown, true)
     },
   }
+}
+
+function buildPickerTooltipView(view: EditorView, target: MetaPickerTarget, minuteStep: number): TooltipView {
+  if (target.key === 'repeat') {
+    // issue-phase020-004: @repeat は繰り返し設定ピッカー（仮置き `?` は持たない）。
+    return buildRepeatPicker({
+      initialValue: target.initialValue,
+      onCommit: (value) => {
+        view.dispatch({
+          changes: { from: target.from, to: target.to, insert: `: ${value}` },
+          selection: EditorSelection.cursor(target.lineFrom),
+          effects: openMetaPicker.of(null),
+        })
+      },
+      onClose: () => view.dispatch({ effects: openMetaPicker.of(null) }),
+    })
+  }
+  return buildMetaDatePicker({
+    initialValue: target.initialValue,
+    initialTentative: target.initialTentative,
+    showTentative: true,
+    minuteStep,
+    onCommit: (value, tentative) => {
+      view.dispatch({
+        changes: { from: target.from, to: target.to, insert: `${tentative ? '?' : ''}: ${value}` },
+        // 書き戻し直後にカーソルを行頭へ逃がし、チップ表示へ即座に戻す。
+        selection: EditorSelection.cursor(target.lineFrom),
+        effects: openMetaPicker.of(null),
+      })
+    },
+    onClose: () => view.dispatch({ effects: openMetaPicker.of(null) }),
+  })
 }

@@ -76,6 +76,21 @@ describe('編集モードの見出し強調（issue-phase003-013）', function (
     expect(parseFloat(fontSize)).toBeGreaterThan(parseFloat(bodyFontSize))
   })
 
+  it('issue-phase018-004: H2の下線の下端から次行の文字の上端まで12px以上あく', async function () {
+    await writeVaultFile('heading-h2-gap.md', ['# セクション', '## サブセクション', '本文'].join('\n'))
+    await openFile('heading-h2-gap.md')
+    await browser.waitUntil(async () => (await browser.$('.HyperMD-header-2')).isExisting(), { timeout: 5000, interval: 200 })
+    expect(parseFloat(await getComputedStyleProp('.HyperMD-header-2', 'padding-bottom'))).toBe(16)
+    const gap = await browser.execute(() => {
+      const u = document.querySelector('.cm-header-2') as HTMLElement
+      const line = document.querySelector('.HyperMD-header-2') as HTMLElement
+      const next = line.nextElementSibling as HTMLElement
+      const pt = parseFloat(getComputedStyle(next).paddingTop) || 0
+      return next.getBoundingClientRect().top + pt - u.getBoundingClientRect().bottom
+    })
+    expect(gap).toBeGreaterThanOrEqual(12)
+  })
+
   it('H3行にはH1/H2向けの背景・下線が付与されない', async function () {
     await writeVaultFile('heading-h3.md', ['### 小見出し', '本文'].join('\n'))
     await openFile('heading-h3.md')

@@ -90,9 +90,10 @@ const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
 /**
  * issue-phase012-markdownEditor-003: `@schedule` を持たず `@due` のみを持つタスクを
  * 期限項目（`CalendarDatePoint` / `CalendarDateTimePoint`）として生成する。
+ * issue-phase020-markdownEditor-for-mywork-001: `@schedule` の有無に関わらず生成する（repeat 付きを除く）。
  * `@due` が期間形式（`/` を含む）、またはどちらの日時形式にも一致しない場合は生成しない。
  */
-function buildDueOnlyItem(
+function buildDueItem(
   node: TaskNode,
   sourcePath: string,
   viewRange: ViewRange | null,
@@ -137,8 +138,8 @@ function extractFromNodes(
   for (const node of nodes) {
     if (node.type === 'quote') continue
 
-    if (node.type === 'task' && !node.meta?.schedule && node.meta?.due && !node.meta?.repeat) {
-      const item = buildDueOnlyItem(node, sourcePath, viewRange)
+    if (node.type === 'task' && node.meta?.due && !node.meta?.repeat) {
+      const item = buildDueItem(node, sourcePath, viewRange)
       if (item) items.push(item)
     }
 

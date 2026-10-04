@@ -3,7 +3,7 @@ import {
   formatMetaDateValue,
   parseMetaDateValue,
   buildMetaDateValue,
-  roundUpTo5Min,
+  roundUpToStep,
   nowRounded,
   nowExact,
 } from './metatag-format'
@@ -81,47 +81,47 @@ describe('parseMetaDateValue / buildMetaDateValue の往復', () => {
   })
 })
 
-describe('roundUpTo5Min', () => {
+describe('roundUpToStep(step=5)', () => {
   it(':00 はそのまま', () => {
-    expect(roundUpTo5Min('2026-09-17', '10:00')).toEqual({ date: '2026-09-17', time: '10:00' })
+    expect(roundUpToStep('2026-09-17', '10:00', 5)).toEqual({ date: '2026-09-17', time: '10:00' })
   })
 
   it(':01 は :05 へ切り上げ', () => {
-    expect(roundUpTo5Min('2026-09-17', '10:01')).toEqual({ date: '2026-09-17', time: '10:05' })
+    expect(roundUpToStep('2026-09-17', '10:01', 5)).toEqual({ date: '2026-09-17', time: '10:05' })
   })
 
   it(':55 はそのまま（既に5分単位）', () => {
-    expect(roundUpTo5Min('2026-09-17', '10:55')).toEqual({ date: '2026-09-17', time: '10:55' })
+    expect(roundUpToStep('2026-09-17', '10:55', 5)).toEqual({ date: '2026-09-17', time: '10:55' })
   })
 
   it(':58 は翌時0分へ切り上げ', () => {
-    expect(roundUpTo5Min('2026-09-17', '10:58')).toEqual({ date: '2026-09-17', time: '11:00' })
+    expect(roundUpToStep('2026-09-17', '10:58', 5)).toEqual({ date: '2026-09-17', time: '11:00' })
   })
 
   it('23:58 は日をまたいで翌日00:00へ切り上げ', () => {
-    expect(roundUpTo5Min('2026-09-17', '23:58')).toEqual({ date: '2026-09-18', time: '00:00' })
+    expect(roundUpToStep('2026-09-17', '23:58', 5)).toEqual({ date: '2026-09-18', time: '00:00' })
   })
 
   it('月末23:58は翌月1日00:00へ切り上げ', () => {
-    expect(roundUpTo5Min('2026-09-30', '23:58')).toEqual({ date: '2026-10-01', time: '00:00' })
+    expect(roundUpToStep('2026-09-30', '23:58', 5)).toEqual({ date: '2026-10-01', time: '00:00' })
   })
 
   it('年末23:58は翌年1月1日00:00へ切り上げ', () => {
-    expect(roundUpTo5Min('2026-12-31', '23:58')).toEqual({ date: '2027-01-01', time: '00:00' })
+    expect(roundUpToStep('2026-12-31', '23:58', 5)).toEqual({ date: '2027-01-01', time: '00:00' })
   })
 })
 
 describe('nowRounded', () => {
   it('秒未満の端数があれば5分単位に切り上げる', () => {
-    expect(nowRounded(new Date(2026, 8, 17, 10, 32, 10))).toEqual({ date: '2026-09-17', time: '10:35' })
+    expect(nowRounded(new Date(2026, 8, 17, 10, 32, 10), 5)).toEqual({ date: '2026-09-17', time: '10:35' })
   })
 
   it('ちょうど5分単位・秒0なら切り上げない', () => {
-    expect(nowRounded(new Date(2026, 8, 17, 10, 30, 0))).toEqual({ date: '2026-09-17', time: '10:30' })
+    expect(nowRounded(new Date(2026, 8, 17, 10, 30, 0), 5)).toEqual({ date: '2026-09-17', time: '10:30' })
   })
 
   it('年末23:58台は翌年1月1日00:00へ切り上げる', () => {
-    expect(nowRounded(new Date(2026, 11, 31, 23, 58, 30))).toEqual({ date: '2027-01-01', time: '00:00' })
+    expect(nowRounded(new Date(2026, 11, 31, 23, 58, 30), 5)).toEqual({ date: '2027-01-01', time: '00:00' })
   })
 })
 
@@ -132,5 +132,21 @@ describe('nowExact（issue-phase014-markdownEditor-003: 5分単位OFF時のnow�
 
   it('秒が0でもそのまま（境界での丸め上げが起きない）', () => {
     expect(nowExact(new Date(2026, 8, 17, 10, 31, 0))).toEqual({ date: '2026-09-17', time: '10:31' })
+  })
+})
+
+describe('roundUpToStep（step=1/15/30）', () => {
+  it.each([
+    [1, '10:00', '10:00'], [1, '10:01', '10:01'],
+    [15, '10:15', '10:15'], [15, '10:16', '10:30'],
+    [30, '10:30', '10:30'], [30, '10:31', '11:00'],
+  ])('step=%i %s → %s', (step, input, expected) => {
+    expect(roundUpToStep('2026-09-17', input, step)).toEqual({ date: '2026-09-17', time: expected })
+  })
+  it.each([1, 15, 30])('step=%i 日付またぎ・年末', (step) => {
+    const t = step === 1 ? '23:58' : '23:58'
+    expect(roundUpToStep('2026-09-17', t, step).date).toBe(step === 1 ? '2026-09-17' : '2026-09-18')
+    const r = roundUpToStep('2026-12-31', '23:58', step)
+    expect(r).toEqual(step === 1 ? { date: '2026-12-31', time: '23:58' } : { date: '2027-01-01', time: '00:00' })
   })
 })

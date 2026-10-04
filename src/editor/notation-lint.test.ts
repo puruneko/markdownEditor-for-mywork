@@ -354,3 +354,28 @@ describe('Quickfix produces canonical form after replacement', () => {
     expect(fixedResults.find(r => r.actions?.length)).toBeUndefined()
   })
 })
+
+import { setUserMetaKeyAliases } from '../lib/parser/meta-keys'
+describe('lint aliases (issue-phase019-002)', () => {
+  it('builtin alias schedule', () => {
+    const r = lintLine('  - @実施日時: 2026-10-07T10:00〜12:00', 0)
+    expect(r[0].actions?.[0].replacement).toBe('/')
+  })
+  it('plan/due alias messages use written name', () => {
+    expect(lintLine('  - @想定期間: 2026-10-07', 0)[0].message).toContain('@想定期間')
+    expect(lintLine('  - @期限: 2026/13/40', 0)[0].message).toContain('@期限')
+  })
+  it('user alias', () => {
+    setUserMetaKeyAliases({ schedule: ['作業時間'] })
+    expect(lintLine('  - @作業時間: 2026-10-07', 0)).toHaveLength(1)
+    expect(lintLine('- [ ] t @作業時間: x', 0)).toHaveLength(1)
+    setUserMetaKeyAliases({})
+  })
+  it('inline all keys, tentative jp, unknown', () => {
+    expect(lintLine('- [ ] t @repeat: x', 0)).toHaveLength(1)
+    expect(lintLine('- [ ] t @目的: x', 0)).toHaveLength(1)
+    expect(lintLine('  - @実施日時 ?: x', 0)[0].actions?.[0].name).toContain('@実施日時?:')
+    expect(lintLine('  - @?実施日時: x', 0)).toHaveLength(1)
+    expect(lintLine('  - @memo: x', 0)).toEqual([])
+  })
+})

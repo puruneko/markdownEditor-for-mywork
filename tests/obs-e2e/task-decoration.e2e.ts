@@ -37,6 +37,17 @@ describe('タスクデコレーション', function () {
     await expect(doneLine).toExist()
   })
 
+  it('issue-phase016-markdownEditor-002: リスト直後の矢印にmd-ast-list-arrowクラスが付与される', async function () {
+    const fileName = 'phase016-list-arrow.md'
+    await writeVaultFile(fileName, ['- → a', '- b -> c', ''].join('\n'))
+    await openFile(fileName)
+    await browser.waitUntil(async () => (await browser.$$('.md-ast-list-arrow')).length === 1, {
+      timeout: 5000,
+      interval: 200,
+    })
+    await expect(browser.$('.md-ast-list-arrow')).toHaveText('→')
+  })
+
   it('@メタキーにmd-ast-meta-keyクラスが付与される', async function () {
     await openFile('test-tasks.md')
     await browser.waitUntil(

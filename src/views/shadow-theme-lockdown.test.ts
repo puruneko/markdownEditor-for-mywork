@@ -15,6 +15,8 @@ const TARGET_FILES = [
   'src/views/CalendarViewMount.svelte',
   'src/views/GanttViewMount.svelte',
   'src/views/KanbanViewMount.svelte',
+  'src/views/ParseDebugViewMount.svelte',
+  'src/lib/debug/DebugTreeNode.svelte',
 ]
 
 const OBSIDIAN_VAR_RE = /var\(--(background|text|interactive)-/

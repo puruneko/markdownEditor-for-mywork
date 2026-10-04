@@ -5,6 +5,8 @@ import type { FileSync } from '../sync/file-sync'
 import type { AstIndex } from '../sync/ast-index'
 import type { EditorEventBus } from '../sync/editor-event-bus'
 import type { MdAstEditorSettings } from '../settings'
+import type { ViewSettingsHub } from '../settings-hub'
+import type { GanttConfig } from 'svelte-gantt-lib'
 import type { SourceEntry } from '../lib/viewmodel/contract'
 import { filterClosedProjects } from '../lib/viewmodel/filter-closed-projects'
 import { ShadowItemView } from './ShadowItemView'
@@ -18,6 +20,7 @@ export class GanttView extends ShadowItemView {
   constructor(
     leaf: WorkspaceLeaf,
     settings: MdAstEditorSettings,
+    private readonly settingsHub: ViewSettingsHub,
     fileSync: FileSync,
     editorEventBus: EditorEventBus,
     astIndex?: AstIndex,
@@ -41,6 +44,9 @@ export class GanttView extends ShadowItemView {
     return {
       expandSubtasks: this.settings.ganttExpandSubtasks,
       defaultDurationMin: this.settings.defaultDurationMin,
+      minuteStep: this.settings.minuteStep,
+      initialGanttConfig: this.settingsHub.get<GanttConfig>('gantt'),
+      onGanttConfigChange: (cfg: Partial<GanttConfig>) => this.settingsHub.set('gantt', cfg),
     }
   }
 

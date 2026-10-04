@@ -29,17 +29,17 @@ describe('リスト先頭「@」サジェスト（issue-phase013-markdownEditor-
     await obsidianPage.resetVault()
   })
 
-  it('リスト先頭で「@」を入力するとschedule/plan/dueの3候補が表示される', async function () {
+  it('リスト先頭で「@」を入力するとschedule/plan/due+よく使うmemoの4候補が表示される', async function () {
     const fileName = 'metatag-suggest-open.md'
     await writeVaultFile(fileName, ['- [ ] タスク', '  - '].join('\n'))
     await openFile(fileName)
 
     await typeAtEndOfLine(1, '@')
 
-    await browser.waitUntil(async () => (await browser.$$('.suggestion-item')).length === 3, {
+    await browser.waitUntil(async () => (await browser.$$('.suggestion-item')).length === 4, {
       timeout: 3000,
       interval: 100,
-      timeoutMsg: '「@」入力で3件の候補（schedule/plan/due）が表示されない',
+      timeoutMsg: '「@」入力で4件の候補（schedule/plan/due/memo）が表示されない',
     })
   })
 
@@ -53,18 +53,18 @@ describe('リスト先頭「@」サジェスト（issue-phase013-markdownEditor-
     expect((await browser.$$('.suggestion-item')).length).toBe(0)
   })
 
-  it('候補にない文字列（@memo）を入力するとサジェストが表示されない（自由入力できる）', async function () {
+  it('候補にない文字列（@xyz）を入力するとサジェストが表示されない（自由入力できる）', async function () {
     const fileName = 'metatag-suggest-memo.md'
     const before = ['- [ ] タスク', '  - '].join('\n') + '\n'
     await writeVaultFile(fileName, before)
     await openFile(fileName)
 
-    await typeAtEndOfLine(1, '@memo')
+    await typeAtEndOfLine(1, '@xyz')
     await browser.pause(300)
     expect((await browser.$$('.suggestion-item')).length).toBe(0)
 
     const after = await waitForFileContentChange(fileName, before)
-    expect(after).toBe(['- [ ] タスク', '  - @memo'].join('\n') + '\n')
+    expect(after).toBe(['- [ ] タスク', '  - @xyz'].join('\n') + '\n')
   })
 
   it('候補からplanを選択すると @plan: が挿入され、日付ピッカーが自動的に開く', async function () {
@@ -150,5 +150,43 @@ describe('リスト先頭「@」サジェスト（issue-phase013-markdownEditor-
       },
       { timeout: 3000, interval: 100, timeoutMsg: 'サジェスト非表示時にTabキーがインデント操作として機能しない' },
     )
+  })
+
+  it('issue-phase020-003: memo を選ぶと `@memo: ` が挿入され、ピッカーは開かない', async function () {
+    const fileName = 'metatag-suggest-memo-frequent.md'
+    await writeVaultFile(fileName, ['- [ ] タスク', '  - '].join('\n'))
+    await openFile(fileName)
+
+    await typeAtEndOfLine(1, '@m')
+    await browser.waitUntil(async () => (await browser.$$('.suggestion-item')).length === 1, { timeout: 3000, interval: 100 })
+    await browser.$('.suggestion-item').click()
+    await browser.pause(500)
+
+    const lineText = await browser.execute(() => (window as any).app.workspace.activeEditor.editor.getLine(1) as string)
+    expect(lineText).toBe('  - @memo: ')
+    expect(await (await browser.$('.metatag-picker-popup')).isExisting()).toBe(false)
+  })
+
+  it('issue-phase020-002/004: repeat ピッカーが開き、外側クリックで保存される', async function () {
+    const fileName = 'repeat-picker.md'
+    await writeVaultFile(fileName, ['- [ ] タスク', '  - @schedule: 2026-10-05T10:00/2026-10-05T11:00', '  - '].join('\n'))
+    await openFile(fileName)
+
+    await typeAtEndOfLine(2, '@repeat:')
+    await browser.waitUntil(async () => (await browser.$('.metatag-repeat-picker')).isExisting(), {
+      timeout: 3000, interval: 100, timeoutMsg: 'repeat ピッカーが開かない',
+    })
+    await browser.execute(() => {
+      const sel = document.querySelector('.metatag-repeat-freq') as HTMLSelectElement
+      sel.value = 'DAILY'
+      sel.dispatchEvent(new Event('change'))
+    })
+    // 外側（ファイル名タイトルなど）をクリックして保存
+    await browser.execute(() => {
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    })
+    await browser.waitUntil(async () => !(await (await browser.$('.metatag-repeat-picker')).isExisting()), { timeout: 3000 })
+    const lineText = await browser.execute(() => (window as any).app.workspace.activeEditor.editor.getLine(2) as string)
+    expect(lineText).toBe('  - @repeat: FREQ=DAILY')
   })
 })

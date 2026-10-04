@@ -48,6 +48,33 @@
   overflow: hidden;
 }
 
+/* issue-phase016-markdownEditor-002: リスト直後の → / -> の強調 */
+.md-ast-list-arrow {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: var(--color-blue);
+}
+
+/* issue-phase020-markdownEditor-for-mywork-005: 設定タブのスリム化（本プラグインの設定タブのみ） */
+.md-ast-editor-settings .setting-item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.md-ast-editor-settings .setting-item-name {
+  line-height: 1.3;
+}
+.md-ast-editor-settings .setting-item-description {
+  padding-top: 0;
+  line-height: 1.3;
+}
+.md-ast-editor-settings h2,
+.md-ast-editor-settings h3,
+.md-ast-editor-settings .setting-item-heading {
+  margin: 12px 0 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 
 /* ============================================================
  * 見出し強調 — 編集モード（Live Preview）のみ
@@ -86,6 +113,11 @@
   font-weight: 700;
   border-bottom: 3px solid var(--text-muted, #888888);
   padding-bottom: 1px;
+}
+
+/* issue-phase017-markdownEditor-for-mywork-001: 下線が次行の文字に重ならないよう、H2行の下に余白を足す。 */
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-2 {
+  padding-bottom: 16px;
 }
 
 
@@ -172,6 +204,14 @@
 .metatag-value.metatag-tentative::after {
   content: ' ?';
   opacity: 0.8;
+}
+
+/* issue-phase018-003: メタ項目ごとの折りたたみボタン */
+.metatag-fold-toggle {
+  cursor: pointer;
+  color: var(--text-muted, #888888);
+  font-size: 0.8em;
+  margin-left: 4px;
 }
 
 
@@ -272,7 +312,8 @@
  * なる実機不具合を確認した。`.cm-tooltip` を含む複合セレクタにして詳細度を
  * 上げ、確実にこちら側の変数値が勝つようにする。
  * ------------------------------------------------------------ */
-.metatag-picker-popup.cm-tooltip {
+.metatag-picker-popup.cm-tooltip,
+.metatag-picker-popup.metatag-picker-popup--floating {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -284,6 +325,11 @@
   border-radius: 6px;
   box-shadow: var(--shadow-s, 0 4px 16px rgba(0, 0, 0, 0.18));
   font-size: 13px;
+}
+
+.metatag-picker-popup.metatag-picker-popup--floating {
+  position: fixed;
+  z-index: var(--layer-popover, 30);
 }
 
 .metatag-picker-row {
@@ -311,6 +357,17 @@
 .metatag-picker-row .metatag-picker-time {
   flex: 1 1 40%;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.metatag-picker-time .metatag-picker-hour,
+.metatag-picker-time .metatag-picker-minute {
+  width: 3.6em;
+  min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .metatag-picker-checkbox-row {
@@ -349,6 +406,9 @@
 /* ------------------------------------------------------------
  * issue-phase013-markdownEditor-002: リスト先頭「@」サジェスト候補の補足ラベル
  * ------------------------------------------------------------ */
+.suggestion-item.metatag-suggest-item--divider {
+  border-top: 1px solid var(--background-modifier-border);
+}
 .metatag-suggest-item-label {
   color: var(--text-muted);
   margin-left: 4px;
@@ -364,3 +424,12 @@
 .metatag-picker-btn-commit:hover {
   background: var(--interactive-accent-hover, var(--interactive-accent));
 }
+
+/* issue-phase020-markdownEditor-for-mywork-004: repeat ピッカー */
+.metatag-repeat-picker .metatag-repeat-interval,
+.metatag-repeat-picker .metatag-repeat-monthday,
+.metatag-repeat-picker .metatag-repeat-count { width: 4.5em; }
+.metatag-repeat-picker .metatag-repeat-text { width: 100%; font-family: var(--font-monospace); }
+.metatag-repeat-picker .metatag-repeat-wd.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.metatag-repeat-picker .metatag-repeat-summary { color: var(--text-muted); margin: 4px 0; }
+.metatag-repeat-picker .metatag-repeat-note { color: var(--text-muted); font-size: 11px; }

@@ -104,28 +104,32 @@ function toDateTimeParts(dt: Date): { date: string; time: string } {
   }
 }
 
-/** 分を5分単位へ切り上げる（秒未満の端数があれば0分でも切り上げる）。日跨ぎ・月末・年末をまたぐ場合もDateの繰り上がりに委ねる。 */
-function roundUpDate5Min(dt: Date): Date {
+/** 分をstep分単位へ切り上げる。step<=1 は秒切り捨てのみ。日跨ぎ・月末・年末をまたぐ場合もDateの繰り上がりに委ねる。 */
+function roundUpDateToStep(dt: Date, step: number): Date {
   const rounded = new Date(dt.getTime())
-  const remainder = rounded.getMinutes() % 5
+  if (step <= 1) {
+    rounded.setSeconds(0, 0)
+    return rounded
+  }
+  const remainder = rounded.getMinutes() % step
   const hasSubMinuteFraction = rounded.getSeconds() > 0 || rounded.getMilliseconds() > 0
   if (remainder !== 0 || hasSubMinuteFraction) {
-    rounded.setMinutes(rounded.getMinutes() + (5 - remainder))
+    rounded.setMinutes(rounded.getMinutes() + (step - remainder))
   }
   rounded.setSeconds(0, 0)
   return rounded
 }
 
-/** "YYYY-MM-DD" と "HH:mm" を受け取り、5分単位に切り上げた日付・時刻を返す。 */
-export function roundUpTo5Min(date: string, time: string): { date: string; time: string } {
+/** "YYYY-MM-DD" と "HH:mm" を受け取り、step分単位に切り上げた日付・時刻を返す。 */
+export function roundUpToStep(date: string, time: string, step: number): { date: string; time: string } {
   const [y, mo, d] = date.split('-').map(Number)
   const [h, mi] = time.split(':').map(Number)
-  return toDateTimeParts(roundUpDate5Min(new Date(y, mo - 1, d, h, mi)))
+  return toDateTimeParts(roundUpDateToStep(new Date(y, mo - 1, d, h, mi), step))
 }
 
-/** 現在時刻（Date）を受け取り、5分単位に切り上げた日付・時刻を返す。 */
-export function nowRounded(now: Date): { date: string; time: string } {
-  return toDateTimeParts(roundUpDate5Min(now))
+/** 現在時刻（Date）を受け取り、step分単位に切り上げた日付・時刻を返す。 */
+export function nowRounded(now: Date, step: number): { date: string; time: string } {
+  return toDateTimeParts(roundUpDateToStep(now, step))
 }
 
 /**

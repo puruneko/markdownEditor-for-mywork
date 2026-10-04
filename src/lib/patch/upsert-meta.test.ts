@@ -203,3 +203,16 @@ describe('upsertMeta — 他行への影響なし', () => {
     expect(result).toContain('- [ ] タスクB')
   })
 })
+
+import { setUserMetaKeyAliases } from '../parser/meta-keys'
+describe('upsertMeta aliases (issue-phase019-001)', () => {
+  const node = { lineNumber: 0 } as never
+  it('keeps builtin alias and ?', () => {
+    expect(upsertMeta('- [ ] t\n  - @実施日時?: a', node, 'schedule', 'b')).toBe('- [ ] t\n  - @実施日時?: b')
+  })
+  it('keeps user alias without duplicating', () => {
+    setUserMetaKeyAliases({ schedule: ['作業時間'] })
+    expect(upsertMeta('- [ ] t\n  - @作業時間: a', node, 'schedule', 'b')).toBe('- [ ] t\n  - @作業時間: b')
+    setUserMetaKeyAliases({})
+  })
+})

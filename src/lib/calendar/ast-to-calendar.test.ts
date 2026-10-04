@@ -282,11 +282,25 @@ describe('extractCalendarItems — @due のみを持つタスクの期限項目�
     expect((items[0].temporal as any).at.toISO()).toContain('2026-10-01T15:00')
   })
 
-  it('@schedule と @due を両方持つタスク → 期限項目は生成されず、既存の schedule 項目のみが生成される', () => {
+  it('@schedule と @due（日付のみ）を両方持つタスク → 予定項目と __due の CalendarDatePoint の2件', () => {
     const md = '- [ ] タスク\n  - @schedule: 2026-10-01T10:00/2026-10-01T11:00\n  - @due: 2026-10-05\n'
     const items = extractCalendarItems(src(md))
-    expect(items).toHaveLength(1)
-    expect(items[0].temporal.kind).toBe('CalendarDateTimeRange')
+    expect(items).toHaveLength(2)
+    expect(items.some(i => i.temporal.kind === 'CalendarDateTimeRange')).toBe(true)
+    const due = items.find(i => i.id.endsWith('__due'))!
+    expect(due.temporal.kind).toBe('CalendarDatePoint')
+  })
+
+  it('@schedule と @due（日時）を両方持つタスク → 期限は CalendarDateTimePoint', () => {
+    const md = '- [ ] タスク\n  - @schedule: 2026-10-01T10:00/2026-10-01T11:00\n  - @due: 2026-10-05T17:00\n'
+    const items = extractCalendarItems(src(md))
+    expect(items.find(i => i.id.endsWith('__due'))!.temporal.kind).toBe('CalendarDateTimePoint')
+  })
+
+  it('@schedule + @due + @repeat → 期限項目は生成されない', () => {
+    const md = '- [ ] タスク\n  - @schedule: 2026-10-01T10:00/2026-10-01T11:00\n  - @due: 2026-10-05\n  - @repeat: FREQ=DAILY\n'
+    const items = extractCalendarItems(src(md))
+    expect(items.some(i => i.id.endsWith('__due'))).toBe(false)
   })
 
   it('@due が期間形式（2026-10-01/2026-10-03）のタスク → 期限項目は生成されない', () => {

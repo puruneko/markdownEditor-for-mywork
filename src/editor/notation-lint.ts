@@ -2,6 +2,7 @@ import { linter } from '@codemirror/lint'
 import type { Diagnostic } from '@codemirror/lint'
 import type { EditorView } from '@codemirror/view'
 import { normalizeSchedule, normalizeDue } from '../lib/parser/schedule-normalize'
+import { normalizeMetaKey } from '../lib/parser/meta-keys'
 import { findMisplacedMetaLineIndices } from './reformat-meta-lines'
 
 // ──────────────────────────────────────────────────────
@@ -35,13 +36,14 @@ const TASK_LINE_RE = /^\s*- \[[ xX>!\-]\] /
  * Child-list meta line: "  - @key: value" or "  - @key?: value".
  * `?`（仮置き）はキー直後・コロン直前のみ有効（remark-meta-fields.ts と整合）。
  */
-const META_LINE_RE = /^(\s*- )@(plan|schedule|due|priority|tags|dependsOn)(\?)?:\s*(.*)/
+// issue-phase019-markdownEditor-for-mywork-002: キー判定は normalizeMetaKey（標準・組込別名・ユーザー別名）に揃える
+const META_LINE_RE = /^(\s*- )@([\p{L}\p{N}_]+)(\?)?:\s*(.*)/u
 
 /** `?` がキー直後・コロン直前以外の位置にある不正な形（例: "@schedule ?:"）。 */
-const TENTATIVE_BAD_SPACE_RE = /^(\s*- )@(\w+)\s+\?:/
+const TENTATIVE_BAD_SPACE_RE = /^(\s*- )@([\p{L}\p{N}_]+)\s+\?:/u
 
 /** `?` がキー名の前にある不正な形（例: "@?schedule:"）。 */
-const TENTATIVE_BAD_PREFIX_RE = /^(\s*- )@\?(\w+):/
+const TENTATIVE_BAD_PREFIX_RE = /^(\s*- )@\?([\p{L}\p{N}_]+):/u
 
 /** Wrong separators between start and end datetime. */
 const WRONG_SEP_RE = /[〜～／]|から/
@@ -87,7 +89,7 @@ function validateScheduleFormat(rawValue: string, valueDocFrom: number): LintRes
  * @schedule と @plan は同じ期間形式・同じ正規化（normalizeSchedule）を使う
  * （time-meta-model.spec.md BR-012）ため、値チェックロジックを共有する。
  */
-function checkScheduleLikeValue(rawValue: string, valueDocFrom: number, keyLabel: 'schedule' | 'plan'): LintResult[] {
+function checkScheduleLikeValue(rawValue: string, valueDocFrom: number, keyLabel: string, canonical: 'schedule' | 'plan'): LintResult[] {
   // Rule 4: wrong separator → quickfix
   const sepMatch = WRONG_SEP_RE.exec(rawValue)
   if (sepMatch) {
@@ -108,7 +110,7 @@ function checkScheduleLikeValue(rawValue: string, valueDocFrom: number, keyLabel
 
   // Rule 1: no slash → missing end, warning only
   if (!rawValue.includes('/')) {
-    const displayTarget = keyLabel === 'plan' ? '枠として' : 'カレンダー等に'
+    const displayTarget = canonical === 'plan' ? '枠として' : 'カレンダー等に'
     return [
       {
         from: valueDocFrom,
@@ -123,7 +125,7 @@ function checkScheduleLikeValue(rawValue: string, valueDocFrom: number, keyLabel
   return validateScheduleFormat(rawValue, valueDocFrom)
 }
 
-function checkDueValue(rawValue: string, valueDocFrom: number): LintResult[] {
+function checkDueValue(rawValue: string, valueDocFrom: number, keyLabel = 'due'): LintResult[] {
   const normalized = normalizeDue(rawValue)
   const slashIdx = normalized.indexOf('/')
 
@@ -134,7 +136,7 @@ function checkDueValue(rawValue: string, valueDocFrom: number): LintResult[] {
         {
           from: valueDocFrom,
           to: valueDocFrom + rawValue.length,
-          message: `@due の日付が ISO 形式（YYYY-MM-DD）ではありません（正規化後: ${normalized}）。`,
+          message: `@${keyLabel} の日付が ISO 形式（YYYY-MM-DD）ではありません（正規化後: ${normalized}）。`,
         },
       ]
     }
@@ -150,7 +152,7 @@ function checkDueValue(rawValue: string, valueDocFrom: number): LintResult[] {
       {
         from: valueDocFrom,
         to: valueDocFrom + rawValue.length,
-        message: `@due の期間が ISO 形式（YYYY-MM-DD または YYYY-MM-DD/YYYY-MM-DD）ではありません（正規化後: ${normalized}）。`,
+        message: `@${keyLabel} の期間が ISO 形式（YYYY-MM-DD または YYYY-MM-DD/YYYY-MM-DD）ではありません（正規化後: ${normalized}）。`,
       },
     ]
   }
@@ -160,7 +162,7 @@ function checkDueValue(rawValue: string, valueDocFrom: number): LintResult[] {
       {
         from: valueDocFrom,
         to: valueDocFrom + rawValue.length,
-        message: '@due の期間が逆順です（終了が開始より前になっています）。',
+        message: `@${keyLabel} の期間が逆順です（終了が開始より前になっています）。`,
       },
     ]
   }
@@ -176,7 +178,7 @@ function checkDueValue(rawValue: string, valueDocFrom: number): LintResult[] {
 function checkTentativeMarkerPosition(lineText: string, lineFrom: number): LintResult[] {
   let m = TENTATIVE_BAD_SPACE_RE.exec(lineText)
   if (!m) m = TENTATIVE_BAD_PREFIX_RE.exec(lineText)
-  if (!m) return []
+  if (!m || normalizeMetaKey(m[2]) === null) return []
 
   const key = m[2]
   const matchFrom = lineFrom + m.index + m[1].length
@@ -208,8 +210,9 @@ export function lintLine(lineText: string, lineFrom: number): LintResult[] {
 
   // Rule 3: @key: written inline on a task checkbox line
   if (TASK_LINE_RE.test(lineText)) {
-    const inlineRe = /@(plan|schedule|due|priority|tags|dependsOn)\??:/
-    const m = inlineRe.exec(lineText)
+    const inlineRe = /@([\p{L}\p{N}_]+)\??:/gu
+    let m: RegExpExecArray | null
+    while ((m = inlineRe.exec(lineText)) !== null && normalizeMetaKey(m[1]) === null) { /* skip unknown */ }
     if (m) {
       const from = lineFrom + m.index
       return [
@@ -236,9 +239,10 @@ export function lintLine(lineText: string, lineFrom: number): LintResult[] {
   const valueDocFrom = lineFrom + metaMatch[0].length - metaMatch[4].length
   const rawValue = metaMatch[4].trimEnd()
 
-  if (key === 'schedule') return checkScheduleLikeValue(rawValue, valueDocFrom, 'schedule')
-  if (key === 'plan') return checkScheduleLikeValue(rawValue, valueDocFrom, 'plan')
-  if (key === 'due') return checkDueValue(rawValue, valueDocFrom)
+  const canonical = normalizeMetaKey(key)
+  if (canonical === 'schedule') return checkScheduleLikeValue(rawValue, valueDocFrom, key, 'schedule')
+  if (canonical === 'plan') return checkScheduleLikeValue(rawValue, valueDocFrom, key, 'plan')
+  if (canonical === 'due') return checkDueValue(rawValue, valueDocFrom, key)
   return []
 }
 

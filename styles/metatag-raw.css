@@ -82,3 +82,11 @@
   content: ' ?';
   opacity: 0.8;
 }
+
+/* issue-phase018-003: メタ項目ごとの折りたたみボタン */
+.metatag-fold-toggle {
+  cursor: pointer;
+  color: var(--text-muted, #888888);
+  font-size: 0.8em;
+  margin-left: 4px;
+}

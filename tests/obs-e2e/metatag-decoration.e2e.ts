@@ -1,6 +1,6 @@
 import { browser, expect } from '@wdio/globals'
 import { obsidianPage } from 'wdio-obsidian-service'
-import { openFile, writeVaultFile, waitForFileContentChange } from './helpers/obsidian-helpers'
+import { openFile, writeVaultFile, waitForFileContentChange, readVaultFile } from './helpers/obsidian-helpers'
 
 /**
  * <input type="date"|"time"> はネイティブのセグメント入力のため、WebdriverIOの setValue（キー入力
@@ -19,6 +19,33 @@ async function setNativeInputValue(selector: string, value: string): Promise<voi
     },
     selector,
     value,
+  )
+}
+
+/** 時刻選択欄（時・分の select）に HH:mm を設定する。空文字で時を「--」にする。 */
+async function setPickerTime(time: string): Promise<void> {
+  await browser.execute((t: string) => {
+    const h = document.querySelector('.metatag-picker-hour') as HTMLSelectElement
+    const m = document.querySelector('.metatag-picker-minute') as HTMLSelectElement
+    const [hh, mm] = t ? t.split(':') : ['', '']
+    h.value = hh
+    h.dispatchEvent(new Event('change', { bubbles: true }))
+    if (mm) m.value = mm
+    m.dispatchEvent(new Event('change', { bubbles: true }))
+  }, time)
+}
+
+async function getPickerTime(): Promise<string> {
+  return browser.execute(() => {
+    const h = (document.querySelector('.metatag-picker-hour') as HTMLSelectElement).value
+    const m = (document.querySelector('.metatag-picker-minute') as HTMLSelectElement).value
+    return h === '' ? '' : `${h}:${m}`
+  })
+}
+
+async function getMinuteOptions(): Promise<string[]> {
+  return browser.execute(() =>
+    Array.from((document.querySelector('.metatag-picker-minute') as HTMLSelectElement).options).map(o => o.value),
   )
 }
 
@@ -201,7 +228,7 @@ describe('メタタグ装飾・日付ピッカー（issue-phase003-008 2026-09-1
     })
 
     await setNativeInputValue('.metatag-picker-date', '2026-09-17')
-    await setNativeInputValue('.metatag-picker-time', '09:00')
+    await setPickerTime('09:00')
     await browser.$('.metatag-picker-btn-commit').click()
 
     const after = await waitForFileContentChange(fileName, before)
@@ -380,14 +407,14 @@ describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-00
 
     // Escキーでは引き続き閉じられる。
     await browser.keys(['Escape'])
-    await browser.waitUntil(async () => !(await browser.$('.metatag-picker-popup')).isExisting(), {
+    await browser.waitUntil(async () => !(await browser.$('.metatag-picker-popup').isExisting()), {
       timeout: 3000,
       interval: 100,
       timeoutMsg: 'Escキーでピッカーが閉じない',
     })
   })
 
-  it('todayボタンは日付のみ、nowボタンは日付と5分単位切り上げの時刻を自動入力する', async function () {
+  it('todayボタンは日付のみ、nowボタンは日付と15分単位切り上げの時刻を自動入力する', async function () {
     const fileName = 'metatag-picker-today-now.md'
     const before = ['- [ ] タスク', '  - @due: 2026-01-01'].join('\n') + '\n'
     await openPickerOn(fileName, before)
@@ -396,49 +423,49 @@ describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-00
     await browser.$('.metatag-picker-btn-today').click()
     const dateAfterToday = await browser.$('.metatag-picker-date').getValue()
     expect(dateAfterToday).not.toBe('2026-01-01')
-    const timeAfterToday = await browser.$('.metatag-picker-time').getValue()
+    const timeAfterToday = await getPickerTime()
     expect(timeAfterToday).toBe('')
 
     // nowボタン: 日付・時刻の両方が入力される。
     await browser.$('.metatag-picker-btn-now').click()
-    const timeAfterNow = await browser.$('.metatag-picker-time').getValue()
+    const timeAfterNow = await getPickerTime()
     expect(timeAfterNow).toMatch(/^\d{2}:\d{2}$/)
     const minutePart = Number(timeAfterNow.split(':')[1])
-    expect(minutePart % 5).toBe(0)
+    expect(minutePart % 15).toBe(0)
   })
 
-  it('issue-phase014-markdownEditor-003: 5分単位はピッカー内チェックボックスとしては表示されない', async function () {
+  it('issue-phase014-markdownEditor-003: 分刻みはピッカー内チェックボックスとしては表示されない', async function () {
     await openPickerOn('metatag-picker-no-minute-checkbox.md', ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
     await expect(browser.$('.metatag-picker-minute-step')).not.toExist()
   })
 
-  it('issue-phase014-markdownEditor-003: プラグイン設定の5分単位は既定でONで、決定時に入力した分が5分単位へ切り上げられる', async function () {
+  it('issue-phase014-markdownEditor-003: プラグイン設定の分刻みは既定15分で、分の選択肢は15分刻みだけである', async function () {
     const fileName = 'metatag-picker-minute-round.md'
     const before = ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n'
     await openPickerOn(fileName, before)
 
-    expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBe('300')
+    expect(await getMinuteOptions()).toEqual(['00', '15', '30', '45'])
 
-    await setNativeInputValue('.metatag-picker-time', '10:32')
+    await setPickerTime('10:45')
     await browser.$('.metatag-picker-btn-commit').click()
 
     const after = await waitForFileContentChange(fileName, before)
-    expect(after).toBe(['- [ ] タスク', '  - @due: 2026-09-20T10:35'].join('\n') + '\n')
+    expect(after).toBe(['- [ ] タスク', '  - @due: 2026-09-20T10:45'].join('\n') + '\n')
   })
 
-  it('issue-phase014-markdownEditor-003: プラグイン設定で5分単位をOFFにすると時刻入力のstepが外れ、分の値はそのまま確定する', async function () {
+  it('issue-phase014-markdownEditor-003: プラグイン設定で分刻みを丸めなし(1)にすると分の選択肢が00〜59になり、分の値はそのまま確定する', async function () {
     await browser.execute(() => {
       // @ts-expect-error app は Obsidian 実行環境のグローバル
-      app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = false
+      app.plugins.plugins['md-ast-editor'].settings.minuteStep = 1
     })
 
     const fileName = 'metatag-picker-minute-off.md'
     const before = ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n'
     try {
       await openPickerOn(fileName, before)
-      expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBeNull()
+      expect((await getMinuteOptions()).length).toBe(60)
 
-      await setNativeInputValue('.metatag-picker-time', '10:32')
+      await setPickerTime('10:32')
       await browser.$('.metatag-picker-btn-commit').click()
 
       const after = await waitForFileContentChange(fileName, before)
@@ -446,29 +473,45 @@ describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-00
     } finally {
       await browser.execute(() => {
         // @ts-expect-error app は Obsidian 実行環境のグローバル
-        app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = true
+        app.plugins.plugins['md-ast-editor'].settings.minuteStep = 15
       })
     }
   })
 
-  it('issue-phase014-markdownEditor-003: プラグイン設定で5分単位をOFFにすると、nowボタンも切り上げを行わない', async function () {
+  it('issue-phase014-markdownEditor-003: プラグイン設定で分刻みを丸めなし(1)にすると、nowボタンも切り上げを行わない', async function () {
     await browser.execute(() => {
       // @ts-expect-error app は Obsidian 実行環境のグローバル
-      app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = false
+      app.plugins.plugins['md-ast-editor'].settings.minuteStep = 1
     })
 
     try {
       await openPickerOn('metatag-picker-now-no-round.md', ['- [ ] タスク', '  - @due: 2026-01-01'].join('\n') + '\n')
       await browser.$('.metatag-picker-btn-now').click()
-      const timeAfterNow = await browser.$('.metatag-picker-time').getValue()
+      const timeAfterNow = await getPickerTime()
       expect(timeAfterNow).toMatch(/^\d{2}:\d{2}$/)
       // 丸めを行わない: 現在時刻の分がたまたま5の倍数である確率は低いが、決定的な検証にする
       // ため「stepが外れている（=丸め設定がOFFに反映されている）」ことも合わせて確認する。
-      expect(await browser.$('.metatag-picker-time').getAttribute('step')).toBeNull()
+      expect((await getMinuteOptions()).length).toBe(60)
     } finally {
       await browser.execute(() => {
         // @ts-expect-error app は Obsidian 実行環境のグローバル
-        app.plugins.plugins['md-ast-editor'].settings.roundMinuteStep = true
+        app.plugins.plugins['md-ast-editor'].settings.minuteStep = 15
+      })
+    }
+  })
+
+  it('issue-phase016-markdownEditor-001: 分刻みを30に変更すると次回ピッカーの分の選択肢が00/30だけになる', async function () {
+    await browser.execute(() => {
+      // @ts-expect-error app は Obsidian 実行環境のグローバル
+      app.plugins.plugins['md-ast-editor'].settings.minuteStep = 30
+    })
+    try {
+      await openPickerOn('metatag-picker-minute-30.md', ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
+      expect(await getMinuteOptions()).toEqual(['00', '30'])
+    } finally {
+      await browser.execute(() => {
+        // @ts-expect-error app は Obsidian 実行環境のグローバル
+        app.plugins.plugins['md-ast-editor'].settings.minuteStep = 15
       })
     }
   })
@@ -500,8 +543,13 @@ describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-00
     await setNativeInputValue('.metatag-picker-date', '2026-09-17')
     await browser.$('.metatag-picker-btn-commit').click()
 
-    const after = await waitForFileContentChange(fileName, before)
-    expect(after).toBe(['- [ ] タスク', '  - @schedule?: 2026-09-17'].join('\n') + '\n')
+    // 入力した ':' の自動保存が先に走るため、最終内容に一致するまで待つ。
+    const expected = ['- [ ] タスク', '  - @schedule?: 2026-09-17'].join('\n') + '\n'
+    await browser.waitUntil(async () => (await readVaultFile(fileName)) === expected, {
+      timeout: 10000,
+      interval: 300,
+      timeoutMsg: '仮置き付きの値が書き込まれない',
+    })
   })
 
   it('「期間で指定」がOFFのとき終了日時入力は非表示で、決定しても終了値は書き込まれない', async function () {
@@ -519,5 +567,46 @@ describe('日付入力ピッカーのUI改修（issue-phase013-markdownEditor-00
     await browser.$('.metatag-picker-btn-commit').click()
     const after = await waitForFileContentChange(fileName, before)
     expect(after).toBe(['- [ ] タスク', '  - @schedule: 2026-09-25'].join('\n') + '\n')
+  })
+  it('issue-phase018-001: 刻み20分では分の選択肢が00/20/40だけになる', async function () {
+    await browser.execute(() => {
+      // @ts-expect-error app は Obsidian 実行環境のグローバル
+      app.plugins.plugins['md-ast-editor'].settings.minuteStep = 20
+    })
+    try {
+      await openPickerOn('metatag-picker-minute-20.md', ['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
+      expect(await getMinuteOptions()).toEqual(['00', '20', '40'])
+    } finally {
+      await browser.execute(() => {
+        // @ts-expect-error app は Obsidian 実行環境のグローバル
+        app.plugins.plugins['md-ast-editor'].settings.minuteStep = 15
+      })
+    }
+  })
+
+  it('issue-phase018-001: ホイールで時・分の選択肢が1つずつ切り替わり、時を「--」にすると日付のみ書き込まれる', async function () {
+    const fileName = 'metatag-picker-wheel.md'
+    const before = ['- [ ] タスク', '  - @due: 2026-09-20T10:00'].join('\n') + '\n'
+    await openPickerOn(fileName, before)
+    await browser.execute(() => {
+      const m = document.querySelector('.metatag-picker-minute') as HTMLSelectElement
+      m.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }))
+    })
+    expect(await getPickerTime()).toBe('10:15')
+    await browser.execute(() => {
+      const m = document.querySelector('.metatag-picker-minute') as HTMLSelectElement
+      m.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }))
+    })
+    expect(await getPickerTime()).toBe('10:00')
+    await setPickerTime('')
+    expect(await browser.$('.metatag-picker-minute').isEnabled()).toBe(false)
+    await browser.$('.metatag-picker-btn-commit').click()
+    const after = await waitForFileContentChange(fileName, before)
+    expect(after).toBe(['- [ ] タスク', '  - @due: 2026-09-20'].join('\n') + '\n')
+  })
+
+  it('issue-phase018-001: 既存値の分が刻みの倍数でないと切り上げて初期表示する', async function () {
+    await openPickerOn('metatag-picker-init-round.md', ['- [ ] タスク', '  - @due: 2026-09-20T10:07'].join('\n') + '\n')
+    expect(await getPickerTime()).toBe('10:15')
   })
 })

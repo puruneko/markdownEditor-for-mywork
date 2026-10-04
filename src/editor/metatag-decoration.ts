@@ -24,6 +24,7 @@ import { editorLivePreviewField } from 'obsidian'
 import { normalizeMetaKey } from '../lib/parser/meta-keys'
 import { formatMetaDateValue, isDateMetaKey } from '../lib/format/metatag-format'
 import type { DateMetaKey } from '../lib/format/metatag-format'
+import { describeRepeat } from '../lib/format/repeat-format'
 import { openMetaPicker, type MetaPickerTarget } from './metatag-picker'
 
 // コロンは任意（`@key: value` と、コロンなしの裸の `@key` の両方にマッチする）。
@@ -36,7 +37,7 @@ function getIndent(text: string): number {
 
 class MetaDateChipWidget extends WidgetType {
   constructor(
-    private readonly key: DateMetaKey,
+    private readonly key: DateMetaKey | 'repeat',
     private readonly value: string,
     private readonly tentative: boolean,
     private readonly target: MetaPickerTarget,
@@ -65,8 +66,8 @@ class MetaDateChipWidget extends WidgetType {
     span.className = `${legacyClasses.join(' ')} metatag metatag-value metatag-${this.key} metatag-date-chip${
       this.tentative ? ' metatag-tentative' : ''
     }`
-    const labelByKey: Record<DateMetaKey, string> = { plan: '計画', schedule: '予定', due: '期限' }
-    const formatted = formatMetaDateValue(this.value)
+    const labelByKey: Record<DateMetaKey | 'repeat', string> = { plan: '計画', schedule: '予定', due: '期限', repeat: '繰り返し' }
+    const formatted = this.key === 'repeat' ? describeRepeat(this.value) : formatMetaDateValue(this.value)
     span.textContent = `${labelByKey[this.key]}: ${formatted}${this.tentative ? ' ?' : ''}`
     span.setAttribute('role', 'button')
     span.tabIndex = 0
@@ -147,7 +148,7 @@ function buildValueDecorations(view: EditorView): DecorationSet {
           const valueText = valueEnd > valueStart ? doc.sliceString(valueStart, valueEnd) : ''
 
           if (valueText.length > 0) {
-            if (isDateMetaKey(canonicalKey)) {
+            if (isDateMetaKey(canonicalKey) || canonicalKey === 'repeat') {
               const replaceFrom = keyStart
               const replaceTo = line.to
               const overlapsSelection = selection.ranges.some(
@@ -225,12 +226,14 @@ export function openDatePickerForLine(view: EditorView, lineFrom: number): void 
   if (!view.dom.isConnected) return
   if (lineFrom > view.state.doc.length) return
   const line = view.state.doc.lineAt(lineFrom)
-  const m = line.text.match(/^(\s*- )@(plan|schedule|due)(\?)?:$/)
+  // issue-phase019-markdownEditor-for-mywork-001: 別名キーでもピッカーを開く
+  const m = line.text.match(/^(\s*- )@([\p{L}\p{N}_]+)(\?)?:$/u)
   if (!m) return
-  const key = m[2] as DateMetaKey
+  const key = normalizeMetaKey(m[2]) as DateMetaKey | 'repeat'
+  if (key !== 'plan' && key !== 'schedule' && key !== 'due' && key !== 'repeat') return
   const tentative = !!m[3]
   // キー名直後（`?`/コロンの前）の位置。コミット時に `?:`/`:` ごと書き換えるための置換開始位置。
-  const keyNameEndOffset = m[1].length + 1 + key.length
+  const keyNameEndOffset = m[1].length + 1 + m[2].length
 
   view.dispatch({
     effects: openMetaPicker.of({
@@ -260,7 +263,10 @@ function maybeAutoOpenPicker(update: ViewUpdate): void {
   const pos = triggeredPos
   const line = update.state.doc.lineAt(pos)
   if (pos !== line.to) return
-  if (!/^(\s*- )@(plan|schedule|due)(\?)?:$/.test(line.text)) return
+  const am = /^(\s*- )@([\p{L}\p{N}_]+)(\?)?:$/u.exec(line.text)
+  if (!am) return
+  const ak = normalizeMetaKey(am[2])
+  if (ak !== 'plan' && ak !== 'schedule' && ak !== 'due' && ak !== 'repeat') return
   const lineFrom = line.from
 
   queueMicrotask(() => {

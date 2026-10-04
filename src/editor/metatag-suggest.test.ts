@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { matchMetaKeyTrigger, MetaKeySuggest } from './metatag-suggest'
+import { matchMetaKeyTrigger, buildSuggestItems, MetaKeySuggest } from './metatag-suggest'
 
 describe('matchMetaKeyTrigger', () => {
   it('リスト先頭の「@」のみ（インデントなし）でマッチする', () => {
@@ -22,8 +22,9 @@ describe('matchMetaKeyTrigger', () => {
     expect(matchMetaKeyTrigger('- text @')).toBeNull()
   })
 
-  it('大文字を含む場合はマッチしない（[a-z]のみ許容）', () => {
-    expect(matchMetaKeyTrigger('- @Plan')).toBeNull()
+  it('日本語名・大文字もトリガー対象（候補の有無は別判定）', () => {
+    expect(matchMetaKeyTrigger('- @メモ')).toEqual({ indent: '', query: 'メモ' })
+    expect(matchMetaKeyTrigger('- @Plan')).toEqual({ indent: '', query: 'Plan' })
   })
 
   it('「@」が無い行はマッチしない', () => {
@@ -62,5 +63,24 @@ describe('MetaKeySuggest（issue-phase014-markdownEditor-002: Tabキー決定）
     const tabHandler = scope.register.mock.calls[0][2] as (evt: unknown) => unknown
 
     expect(() => tabHandler({})).not.toThrow()
+  })
+})
+
+describe('buildSuggestItems（issue-phase020-003）', () => {
+  it('日付系 → 仕切り付きでよく使う名前の順', () => {
+    const items = buildSuggestItems('', ['memo'])
+    expect(items.map((i) => i.key)).toEqual(['schedule', 'plan', 'due', 'memo'])
+    expect(items[3]).toMatchObject({ kind: 'frequent', dividerBefore: true })
+    expect(items[0].dividerBefore).toBeUndefined()
+  })
+  it('前方一致で絞り込み、日付系0件なら仕切りなし', () => {
+    const items = buildSuggestItems('m', ['memo', 'メモ'])
+    expect(items).toEqual([{ key: 'memo', kind: 'frequent' }])
+  })
+  it('日本語名の前方一致', () => {
+    expect(buildSuggestItems('メ', ['memo', 'メモ']).map((i) => i.key)).toEqual(['メモ'])
+  })
+  it('候補なし → 空', () => {
+    expect(buildSuggestItems('zzz', ['memo'])).toEqual([])
   })
 })

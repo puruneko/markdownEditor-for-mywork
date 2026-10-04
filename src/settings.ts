@@ -1,7 +1,44 @@
-import { PluginSettingTab, Setting } from 'obsidian'
+import { Notice, PluginSettingTab, Setting } from 'obsidian'
+import { META_KEYS, normalizeMetaKey, META_KEY_ALIASES, setUserMetaKeyAliases, validateUserMetaKeyAliases } from './lib/parser/meta-keys'
+import type { MetaKey, UserMetaKeyAliases } from './lib/parser/meta-keys'
 import type { App } from 'obsidian'
 import type { MdAstEditorPlugin } from './plugin'
+import { renderViewSettingsSections } from './settings-view-sections'
 import type { IndexScope } from './sync/ast-index'
+
+export type MinuteStep = 1 | 5 | 10 | 15 | 20 | 30
+
+const MINUTE_STEPS: readonly number[] = [1, 5, 10, 15, 20, 30]
+
+/** 生の保存データから minuteStep を決定する（旧 roundMinuteStep の移行を含む）。Object.assign の前に呼ぶこと。 */
+export function migrateSettings(raw: unknown): Partial<MdAstEditorSettings> {
+  const obj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const { roundMinuteStep: legacy, ...rest } = obj
+  let minuteStep: MinuteStep = 15
+  if (typeof obj.minuteStep === 'number' && MINUTE_STEPS.includes(obj.minuteStep)) {
+    minuteStep = obj.minuteStep as MinuteStep
+  } else if (obj.minuteStep === undefined && legacy === false) {
+    minuteStep = 1
+  }
+  const metaKeyAliases = obj.metaKeyAliases && typeof obj.metaKeyAliases === 'object' && !Array.isArray(obj.metaKeyAliases) ? obj.metaKeyAliases : {}
+  const frequentMetaKeys =
+    Array.isArray(obj.frequentMetaKeys) && obj.frequentMetaKeys.every((v) => typeof v === 'string')
+      ? (obj.frequentMetaKeys as string[])
+      : ['memo']
+  return { ...rest, minuteStep, metaKeyAliases, frequentMetaKeys } as Partial<MdAstEditorSettings>
+}
+
+/** カンマ区切り入力を整形する。空要素・重複・日付系（別名含む）を除く。 */
+export function parseFrequentMetaKeys(input: string): string[] {
+  const out: string[] = []
+  for (const k of input.split(/[,、]/).map(s => s.trim())) {
+    if (!k || out.includes(k)) continue
+    const n = normalizeMetaKey(k)
+    if (n === 'schedule' || n === 'plan' || n === 'due') continue
+    out.push(k)
+  }
+  return out
+}
 
 export interface MdAstEditorSettings {
   showRibbonIcon: boolean
@@ -16,18 +53,18 @@ export interface MdAstEditorSettings {
   defaultDurationMin: number
   /** Gantt View: サブタスクを個別行として展開表示するかどうか（既定 true）。 */
   ganttExpandSubtasks: boolean
-  /**
-   * 日付入力ピッカーの時刻欄を5分単位に丸めるかどうか（既定 true）。
-   * issue-phase014-markdownEditor-003: ピッカー内のチェックボックスを廃止し、
-   * プラグイン設定へ恒久的な設定として移行した。
-   */
-  roundMinuteStep: boolean
+  /** 日付入力ピッカーの分刻み（1=丸めなし、既定 15）。issue-phase016-markdownEditor-001。 */
+  minuteStep: MinuteStep
   /**
    * 設定ハブ（ViewSettingsHub）が管理する、ビュー別の名前空間ごとの設定値
    * （issue-phase010-markdownEditor-005）。キーはビュー名（例: 'calendar' / 'kanban'）。
    * 各ビューが独自の形状のオブジェクトを読み書きするため、ここでは型を specifiy しない。
    */
   viewSettings: Record<string, unknown>
+  /** 特殊メタキーのユーザー定義別名（issue-phase019-markdownEditor-for-mywork-001）。 */
+  metaKeyAliases: UserMetaKeyAliases
+  /** @ サジェストに日付系の後ろへ表示するよく使うメタ情報名（issue-phase020-markdownEditor-for-mywork-003）。 */
+  frequentMetaKeys: string[]
 }
 
 export const DEFAULT_SETTINGS: MdAstEditorSettings = {
@@ -39,8 +76,10 @@ export const DEFAULT_SETTINGS: MdAstEditorSettings = {
   indexScopeFolder: '',
   defaultDurationMin: 60,
   ganttExpandSubtasks: true,
-  roundMinuteStep: true,
+  minuteStep: 15,
   viewSettings: {},
+  metaKeyAliases: {},
+  frequentMetaKeys: ['memo'],
 }
 
 export class MdAstEditorSettingTab extends PluginSettingTab {
@@ -54,6 +93,7 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this
     containerEl.empty()
+    containerEl.addClass('md-ast-editor-settings')
     containerEl.createEl('h2', { text: 'MD AST Editor 設定' })
 
     new Setting(containerEl)
@@ -81,16 +121,62 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
       )
 
     new Setting(containerEl)
-      .setName('日付ピッカーの時刻を5分単位に丸める')
-      .setDesc('ONの場合、@plan/@schedule/@due の日付入力ピッカーの時刻欄が5分刻みになり、nowボタンの自動入力も直近の5分単位に切り上げられます。')
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.roundMinuteStep)
+      .setName('日付ピッカーの分刻み')
+      .setDesc('@plan/@schedule/@due の日付入力ピッカーの時刻欄で選べる分の刻みです。')
+      .addDropdown(drop =>
+        drop
+          .addOption('1', '丸めなし')
+          .addOption('5', '5分')
+          .addOption('10', '10分')
+          .addOption('15', '15分')
+          .addOption('20', '20分')
+          .addOption('30', '30分')
+          .setValue(String(this.plugin.settings.minuteStep))
           .onChange(async (value) => {
-            this.plugin.settings.roundMinuteStep = value
+            this.plugin.settings.minuteStep = Number(value) as MinuteStep
             await this.plugin.saveSettings()
           }),
       )
+
+    new Setting(containerEl)
+      .setName('よく使うメタ情報名')
+      .setDesc('@入力時のサジェストに schedule/plan/due の後に表示します。カンマ区切り。')
+      .addText(text => {
+        text.setValue(this.plugin.settings.frequentMetaKeys.join(', '))
+        text.inputEl.addEventListener('change', async () => {
+          const keys = parseFrequentMetaKeys(text.inputEl.value)
+          this.plugin.settings.frequentMetaKeys = keys
+          text.inputEl.value = keys.join(', ')
+          await this.plugin.saveSettings()
+        })
+      })
+
+    containerEl.createEl('h3', { text: 'メタ情報の別名' })
+    const aliasInputs = new Map<MetaKey, HTMLInputElement>()
+    for (const key of Object.keys(META_KEYS) as MetaKey[]) {
+      const builtin = Object.entries(META_KEY_ALIASES).filter(([, k]) => k === key).map(([a]) => a)
+      const desc = '標準キー名は固定です。別名はカンマ区切りで入力。' + (builtin.length ? ` 組込別名: ${builtin.join('、')}` : '')
+      new Setting(containerEl)
+        .setName(key)
+        .setDesc(desc)
+        .addText(text => {
+          text.setValue((this.plugin.settings.metaKeyAliases[key] ?? []).join(', '))
+          aliasInputs.set(key, text.inputEl)
+          text.inputEl.addEventListener('change', async () => {
+            const raw: UserMetaKeyAliases = {}
+            for (const [k, el] of aliasInputs) {
+              raw[k] = el.value.split(/[,、]/).map(s => s.trim()).filter(s => s !== '')
+            }
+            const { aliases, errors } = validateUserMetaKeyAliases(raw)
+            if (errors.length) new Notice(errors.join('\n'))
+            this.plugin.settings.metaKeyAliases = aliases
+            for (const [k, el] of aliasInputs) el.value = (aliases[k] ?? []).join(', ')
+            setUserMetaKeyAliases(aliases)
+            await this.plugin.saveSettings()
+            this.plugin.astIndex.forceReparse()
+          })
+        })
+    }
 
     new Setting(containerEl)
       .setName('デバウンス間隔 (ms)')
@@ -186,5 +272,8 @@ export class MdAstEditorSettingTab extends PluginSettingTab {
             }
           }),
       )
+
+    // issue-phase017-005: ビュー別設定セクション。
+    renderViewSettingsSections(containerEl, this.plugin.settingsHub)
   }
 }

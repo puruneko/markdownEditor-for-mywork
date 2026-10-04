@@ -23,6 +23,16 @@ const STATUS_MARK: Record<string, string> = {
 // 既知キーへの正規化は行わず「@<何か>:」の形であれば一律で装飾する。
 const META_RE = /^(\s*- )@([\p{L}\p{N}_]+)(\?)?:/u
 
+const LIST_ARROW_RE = /^(\s*)([-*+]|\d+[.)]) (\[[^\]]\] )?(→|->)/
+
+/** リストマーカー（またはチェックボックス）直後の `→` / `->` の範囲を返す。該当しなければ null。 */
+export function findListArrow(lineText: string): { from: number; to: number } | null {
+  const m = lineText.match(LIST_ARROW_RE)
+  if (!m) return null
+  const to = m[0].length
+  return { from: to - m[4].length, to }
+}
+
 // ----------------------------------------------------------------
 // Build decorations for visible lines
 // ----------------------------------------------------------------
@@ -54,6 +64,15 @@ function buildDecorations(view: EditorView): DecorationSet {
               Decoration.mark({ class: `md-ast-${cls}` }),
             )
           }
+        }
+
+        const arrow = findListArrow(text)
+        if (arrow) {
+          builder.add(
+            line.from + arrow.from,
+            line.from + arrow.to,
+            Decoration.mark({ class: 'md-ast-list-arrow' }),
+          )
         }
 
         // Check for meta key: @schedule: @due: @plan: etc. (optionally with `?` — tentative).
