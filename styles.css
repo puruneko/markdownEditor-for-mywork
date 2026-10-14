@@ -91,6 +91,9 @@
 .md-ast-statusbar-now[data-state="over"] { color: var(--text-error); }
 .md-ast-statusbar-now[data-state="idle"] { color: var(--text-faint); }
 
+/* issue-phase025-003: フォーカスモード */
+.md-ast-focus-dim { opacity: 0.35; }
+
 
 /* ============================================================
  * 見出し強調 — 編集モード（Live Preview）のみ
