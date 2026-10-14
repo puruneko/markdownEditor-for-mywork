@@ -75,6 +75,22 @@
   padding-bottom: 0;
 }
 
+/* issue-phase022-002: カーソル行のタスク操作ボタン */
+.md-ast-task-pills { margin-left: 8px; white-space: nowrap; }
+.md-ast-task-pill {
+  font-size: 11px; line-height: 1.6; padding: 0 7px; margin-left: 4px;
+  border-radius: 9px; border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary); color: var(--text-muted); cursor: pointer;
+}
+.md-ast-task-pill:hover { color: var(--text-normal); border-color: var(--interactive-accent); }
+.md-ast-task-pill[data-action="complete"] { color: var(--text-success); }
+
+/* issue-phase023-001: ステータスバーの「いまの一件」 */
+.md-ast-statusbar-now { cursor: pointer; }
+.md-ast-statusbar-now[data-state="ending"] { color: var(--text-warning); }
+.md-ast-statusbar-now[data-state="over"] { color: var(--text-error); }
+.md-ast-statusbar-now[data-state="idle"] { color: var(--text-faint); }
+
 
 /* ============================================================
  * 見出し強調 — 編集モード（Live Preview）のみ
