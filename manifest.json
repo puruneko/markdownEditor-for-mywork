@@ -1,6 +1,6 @@
 {
   "id": "md-ast-editor",
-  "name": "MD AST Editor",
+  "name": "[wip]my extension",
   "version": "0.0.1",
   "minAppVersion": "1.0.0",
   "description": "Markdownベースのタスク管理エディタ。Calendar・Ganttビューで可視化できます。",
